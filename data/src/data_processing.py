@@ -122,7 +122,7 @@ def construct_dataset(args: Arguments):
                 logger.info(f"Dataset splitting random seed: {seed}")
                 training_instances, valid_instances, test_instances = get_splits(dataset, splitter, seed)
 
-                save_dir = os.path.join(args.output_dir, f"split-{seed}")
+                save_dir = os.path.join(args.output_dir, dataset_name, f"split-{seed}")
                 init_dir(save_dir, args.overwrite_output)
                 logger.info(f"Saving dataset to {save_dir}")
 
