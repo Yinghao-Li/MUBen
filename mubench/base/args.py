@@ -85,6 +85,9 @@ class Arguments:
     n_dnn_hidden_layers: Optional[int] = field(
         default=8, metadata={'help': "The number of DNN hidden layers."}
     )
+    d_dnn_hidden: Optional[int] = field(
+        default=128, metadata={'help': "The dimensionality of DNN hidden layers."}
+    )
 
     # --- Training Arguments ---
     batch_size: Optional[int] = field(
@@ -104,6 +107,11 @@ class Arguments:
     )
     save_preds: Optional[bool] = field(
         default=False, metadata={"help": "Whether save test predicts into disk."}
+    )
+
+    # --- Evaluation Arguments ---
+    n_test: Optional[int] = field(
+        default=1, metadata={'help': "How many test loops to run in one training process"}
     )
 
     # --- Device Arguments ---

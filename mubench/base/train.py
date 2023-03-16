@@ -15,6 +15,7 @@ from typing import Optional
 from seqlbtoolkit.training.train import BaseTrainer
 from seqlbtoolkit.training.status import Status
 
+from ..utils.macro import EVAL_METRICS
 from .metric import get_classification_metrics, get_regression_metrics
 from .collate import Collator
 from .model import DNN
@@ -44,15 +45,15 @@ class Trainer(BaseTrainer, ABC):
 
         self.initialize()
 
-        self._valid_metric = 'roc_auc' if config.task_type == 'classification' else 'mae'
+        self._valid_metric = EVAL_METRICS[config.dataset_name]
         self._status = Status(metric_smaller_is_better=True if config.task_type == 'regression' else False)
 
     def initialize_model(self):
         self._model = DNN(
             d_feature=self.config.d_feature,
             n_lbs=self.config.n_lbs,
-            n_hidden_layers=self.config.n_hidden_layers,
-            d_hidden=self.config.d_hidden,
+            n_hidden_layers=self.config.n_dnn_hidden_layers,
+            d_hidden=self.config.d_dnn_hidden,
             p_dropout=self.config.dropout,
         )
 
@@ -61,15 +62,18 @@ class Trainer(BaseTrainer, ABC):
 
     def initialize_loss(self):
 
-        # classification task
-        if self.config.n_lbs > 1:
-            self._loss_fn = nn.CrossEntropyLoss(
-                weight=getattr(self.config, "class_weights", None)
-            )
-
-        # regression task
+        # Notice that the reduction should always be 'none' here to facilitate
+        # the following masking operation
+        if self.config.task_type == 'classification':
+            if self.config.binary_classification_with_softmax:
+                self._loss_fn = nn.CrossEntropyLoss(reduction='none')
+            else:
+                self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         else:
-            self._loss_fn = nn.MSELoss()
+            if self.config.regression_with_variance:
+                raise NotImplementedError
+            else:
+                self._loss_fn = nn.MSELoss(reduction='none')
 
         return self
 
@@ -99,8 +103,6 @@ class Trainer(BaseTrainer, ABC):
 
     def train(self):
 
-        os.makedirs(self.config.output_dir, exist_ok=True)
-
         self._model.to(self.config.device)
         data_loader = self.get_dataloader(
             self.training_dataset,
@@ -129,6 +131,7 @@ class Trainer(BaseTrainer, ABC):
 
             logits = self.model(batch)
             loss = self._loss_fn(logits, batch.lbs)
+            loss = torch.sum(loss * batch.masks) / batch.masks.sum()
             loss.backward()
 
             self._optimizer.step()

@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from typing import Optional, Union
+from typing import Union
 
 from rdkit import Chem
 from descriptastorus.descriptors import rdNormalizedDescriptors
@@ -25,4 +25,6 @@ def rdkit_2d_features_normalized_generator(mol: Molecule) -> np.ndarray:
     smiles = Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
     generator = rdNormalizedDescriptors.RDKit2DNormalized()
     features = generator.process(smiles)[1:]
+    # replace nan values
+    features = np.where(np.isnan(features), 0, features)
     return features

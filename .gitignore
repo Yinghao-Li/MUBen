@@ -133,5 +133,6 @@ dmypy.json
 .vscode/
 *.csv
 *.bin
+*.pt
 *.zip
 meta.json

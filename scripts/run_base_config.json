@@ -1,5 +1,7 @@
 {
   "disable_wandb": true,
   "dataset_name": "BBBP",
-  "data_dir": "./data/files"
+  "data_dir": "./data/files",
+  "ignore_preprocessed_dataset": false,
+  "n_epochs": 5
 }

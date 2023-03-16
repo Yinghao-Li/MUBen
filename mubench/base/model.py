@@ -55,8 +55,6 @@ class DNN(nn.Module):
         x = self.input_layer(features)
         x = self.hidden_layers(x)
 
-        logits = self.output_layer(x).squeeze()
-        if not logits.shape:
-            logits = logits.unsqueeze(-1)
+        logits = self.output_layer(x)
 
         return logits
