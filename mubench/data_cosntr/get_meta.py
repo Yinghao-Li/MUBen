@@ -15,7 +15,7 @@ from ast import literal_eval
 from transformers import HfArgumentParser
 
 from seqlbtoolkit.io import set_logging, logging_args, save_json
-from macro import DATASET_NAMES
+from mubench.utils.macro import DATASET_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class Arguments:
             self.tasks: list = [None] * len(self.dataset_names)
 
 
-def get_meta(args: Arguments):
+def main(args: Arguments):
     for dataset_name, task in zip(args.dataset_names, args.tasks):
         assert dataset_name in DATASET_NAMES, ValueError(f"Undefined dataset: {dataset_name}")
 
@@ -109,9 +109,9 @@ if __name__ == '__main__':
         arguments, = parser.parse_args_into_dataclasses()
 
     if not getattr(arguments, "log_path", None):
-        arguments.log_path = os.path.join('logs', f'{_current_file_name}', f'{_time}.log')
+        arguments.log_path = os.path.join('./logs', f'{_current_file_name}', f'{_time}.log')
 
     set_logging(log_dir=arguments.log_path)
     logging_args(arguments)
 
-    get_meta(args=arguments)
+    main(args=arguments)

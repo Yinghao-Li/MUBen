@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from functools import cached_property
 from seqlbtoolkit.training.config import BaseConfig
+from ..utils.macro import DATASET_NAMES, MODEL_NAMES, UNCERTAINTY_METHODS
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +19,9 @@ class Arguments:
 
     # --- wandb parameters ---
     wandb_api_key: Optional[str] = field(
-        default=None, metadata={'help': 'The API key that indicates your wandb account.'
-                                        'Can be found here: https://wandb.ai/settings'}
+        default=None, metadata={
+            'help': 'The API key that indicates your wandb account suppose you want to use a user different from '
+                    'whom stored in the environment variables. Can be found here: https://wandb.ai/settings'}
     )
     wandb_project: Optional[str] = field(
         default=None, metadata={'help': 'name of the wandb project.'}
@@ -27,28 +29,48 @@ class Arguments:
     wandb_name: Optional[str] = field(
         default=None, metadata={'help': 'wandb model name.'}
     )
+    disable_wandb: Optional[bool] = field(
+        default=False, metadata={'help': 'Disable WandB even if relevant arguments are filled.'}
+    )
 
     # --- IO arguments ---
+    dataset_name: Optional[str] = field(
+        default='', metadata={
+            "help": "Dataset Name.",
+            "choices": DATASET_NAMES
+        }
+    )
+    dataset_splitting_random_seed: Optional[int] = field(
+        default=0, metadata={
+            "help": "The random seed used during dataset construction. Leave default (0) if not randomly split."
+        }
+    )
     data_dir: Optional[str] = field(
         default='', metadata={'help': 'Directory to datasets'}
     )
-    output_dir: Optional[str] = field(
+    result_dir: Optional[str] = field(
         default='./output', metadata={'help': "where to save model outputs."}
     )
-    plot_dir: Optional[str] = field(
-        default=None, metadata={'help': 'where to save plots'}
+    ignore_preprocessed_dataset: Optional[bool] = field(
+        default=False, metadata={"help": "Ignore pre-processed datasets and re-generate features if necessary."}
     )
-    model_dir: Optional[str] = field(
-        default=None, metadata={'help': "The folder where the trained model is saved"}
-    )
-    model_name: Optional[str] = field(
-        default='model', metadata={'help': "Name of the model"}
-    )
-    overwrite_output: Optional[bool] = field(
+    overwrite_results: Optional[bool] = field(
         default=False, metadata={'help': 'Whether overwrite existing outputs.'}
     )
 
     # --- Model Arguments ---
+    model_name: Optional[str] = field(
+        default='DNN', metadata={
+            'help': "Name of the model",
+            "choices": MODEL_NAMES
+        }
+    )
+    uncertainty_method: Optional[str] = field(
+        default='none', metadata={
+            "help": "Uncertainty estimation method",
+            "choices": UNCERTAINTY_METHODS
+        }
+    )
     dropout: Optional[float] = field(
         default=0.1, metadata={'help': "Dropout ratio."}
     )
@@ -57,6 +79,11 @@ class Arguments:
     )
     regression_with_variance: Optional[bool] = field(
         default=False, metadata={'help': "Use two regression output heads, one for mean and the other for variance."}
+    )
+
+    # --- DNN Arguments ---
+    n_dnn_hidden_layers: Optional[int] = field(
+        default=8, metadata={'help': "The number of DNN hidden layers."}
     )
 
     # --- Training Arguments ---
@@ -88,10 +115,9 @@ class Arguments:
     )
 
     def __post_init__(self):
-        self.apply_wandb = self.wandb_project and self.wandb_name and not self.debug
-
-        if not self.plot_dir:
-            self.plot_dir = os.path.join(self.output_dir, 'plots')
+        self.data_dir = os.path.join(self.data_dir, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
+        self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
+        self.feature_type = "rdkit" if self.model_name == "DNN" else "none"
 
     # The following three functions are copied from transformers.training_args
     @cached_property
@@ -128,16 +154,23 @@ class Arguments:
 class Config(Arguments, BaseConfig):
 
     d_feature = None
-    label_types = None
-    task = "classification"
+    classes = None
+    task_type = "classification"
     n_task = None
 
     @cached_property
     def n_lbs(self):
-        if self.task == 'classification':
-            if len(self.label_types) == 2 and not self.binary_classification_with_softmax:
+        if self.task_type == 'classification':
+            if len(self.classes) == 2 and not self.binary_classification_with_softmax:
                 return 1
             else:
-                return len(self.label_types)
+                return len(self.classes)
         else:
             return 1
+
+    @cached_property
+    def d_feature(self):
+        if self.feature_type == 'rdkit':
+            return 200
+        else:
+            return 0

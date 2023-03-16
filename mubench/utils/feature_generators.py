@@ -1,0 +1,28 @@
+import logging
+import numpy as np
+from typing import Optional, Union
+
+from rdkit import Chem
+from descriptastorus.descriptors import rdNormalizedDescriptors
+
+
+Molecule = Union[str, Chem.Mol]
+logger = logging.getLogger(__name__)
+
+
+def rdkit_2d_features_normalized_generator(mol: Molecule) -> np.ndarray:
+    """
+    Generates RDKit 2D normalized features for a molecule.
+
+    Parameters
+    ----------
+    mol: A molecule (i.e. either a SMILES string or an RDKit molecule).
+
+    Returns
+    -------
+    An 1D numpy array containing the RDKit 2D normalized features.
+    """
+    smiles = Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
+    generator = rdNormalizedDescriptors.RDKit2DNormalized()
+    features = generator.process(smiles)[1:]
+    return features
