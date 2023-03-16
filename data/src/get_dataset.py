@@ -1,4 +1,6 @@
-
+"""
+Construct dataset from raw data files
+"""
 import os
 import sys
 import torch
@@ -85,8 +87,7 @@ def construct_dataset(args: Arguments):
         logger.info(f"Processing dataset {dataset_name}")
         logger.info(f"Loading dataset")
 
-        data_class = getattr(dgllife.data, dataset_name)
-        dataset = data_class()
+        dataset = getattr(dgllife.data, dataset_name)()
 
         if not task:
             task = 'classification' if dataset.labels.dtype in (torch.int8, torch.int16, torch.int, torch.long) \
@@ -96,8 +97,9 @@ def construct_dataset(args: Arguments):
 
         logger.info("Getting meta information")
         meta_dict = {
-            'task': task,
-            'label_types': None if task == 'regression' else torch.unique(dataset.labels).tolist(),
+            'task_type': task,
+            'n_tasks': dataset.labels.shape[1],
+            'classes': None if task == 'regression' else torch.unique(dataset.labels).tolist(),
         }
 
         logger.info(f"Splitting dataset with {SPLITTING[dataset_name]} split strategy.")
