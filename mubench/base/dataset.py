@@ -1,10 +1,12 @@
 import os
 import logging
 import pandas as pd
+import numpy as np
 
 from typing import List, Union
 from ast import literal_eval
 from tqdm.auto import tqdm
+from functools import cached_property
 from seqlbtoolkit.training.dataset import (
     BaseDataset,
     DataInstance,
@@ -27,14 +29,21 @@ class Dataset(BaseDataset):
     @property
     def features(self):
         return self._features
+
+    @property
+    def smiles(self):
+        return self._smiles
     
     @property
     def lbs(self):
         return self._lbs
 
-    @property
+    @cached_property
     def masks(self):
-        return self._masks
+        return self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
+
+    def __len__(self):
+        return len(self._smiles)
 
     def prepare(self, config, partition):
         """
@@ -77,7 +86,7 @@ class Dataset(BaseDataset):
 
         self.data_instances = feature_lists_to_instance_list(
             DataInstance,
-            features=self._features, smiles=self._smiles, lbs=self._lbs, masks=self._masks
+            features=self.features, smiles=self.smiles, lbs=self.lbs, masks=self.masks
         )
 
         return self
@@ -92,9 +101,9 @@ class Dataset(BaseDataset):
         """
         if feature_type == 'rdkit':
             logger.info("Generating normalized RDKit features")
-            self._features = [rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)]
+            self._features = np.stack([rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)])
         else:
-            self._features = [None] * len(self._smiles)
+            self._features = np.empty(len(self)) * np.nan
         return self
 
     def read_csv(self, file_path: str):
@@ -104,7 +113,7 @@ class Dataset(BaseDataset):
 
         df = pd.read_csv(file_path)
         self._smiles = df.smiles.tolist()
-        self._lbs = df.labels.map(literal_eval)
-        self._masks = df.masks.map(literal_eval) if not df.masks.isnull().all() else None
+        self._lbs = np.asarray(df.labels.map(literal_eval).to_list())
+        self._masks = np.asarray(df.masks.map(literal_eval).to_list()) if not df.masks.isnull().all() else None
 
         return self

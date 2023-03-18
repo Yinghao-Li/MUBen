@@ -33,7 +33,7 @@ class Collator:
         features, smiles, lbs, masks = instance_list_to_feature_lists(instance_list)
 
         feature_batch = torch.from_numpy(np.stack(features)).to(torch.float)
-        lbs_batch = torch.as_tensor(lbs).to(self._lbs_type)
-        masks_batch = torch.as_tensor(masks)
+        lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
+        masks_batch = torch.from_numpy(np.stack(masks))
 
         return Batch(features=feature_batch, lbs=lbs_batch, masks=masks_batch)

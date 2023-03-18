@@ -1,10 +1,25 @@
+
 import numpy as np
+from torch import Tensor
+from torch.nn import GaussianNLLLoss
 from sklearn.metrics import (
     roc_auc_score,
     mean_squared_error,
     mean_absolute_error
 )
+from ..utils.math import logit_to_var
 from seqlbtoolkit.training.eval import Metric
+
+
+# noinspection PyShadowingBuiltins
+class GaussianNLL(GaussianNLLLoss):
+    def __init__(self, full: bool = False, eps: float = 1e-6, reduction: str = 'mean') -> None:
+        super().__init__(full=full, eps=eps, reduction=reduction)
+
+    def forward(self, input: Tensor, target: Tensor, *args, **kwargs):
+        mean = input[..., 0]
+        var = logit_to_var(input[..., 1])
+        return super().forward(input=mean, target=target, var=var)
 
 
 class ClassificationMetric(Metric):

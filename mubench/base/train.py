@@ -16,7 +16,11 @@ from seqlbtoolkit.training.train import BaseTrainer
 from seqlbtoolkit.training.status import Status
 
 from ..utils.macro import EVAL_METRICS
-from .metric import get_classification_metrics, get_regression_metrics
+from .metric import (
+    GaussianNLL,
+    get_classification_metrics,
+    get_regression_metrics
+)
 from .collate import Collator
 from .model import DNN
 from .args import Config
@@ -72,7 +76,7 @@ class Trainer(BaseTrainer, ABC):
                 self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         else:
             if self.config.regression_with_variance:
-                raise NotImplementedError
+                self._loss_fn = GaussianNLL(reduction='none')
             else:
                 self._loss_fn = nn.MSELoss(reduction='none')
 
@@ -112,7 +116,7 @@ class Trainer(BaseTrainer, ABC):
         )
 
         for epoch in (tqdm_epoch := tqdm(range(self.config.n_epochs))):
-            training_loss = self.training_step(data_loader)
+            training_loss = self.training_epoch(data_loader)
             # Print the averaged training loss so far.
             tqdm_epoch.set_description(f'[Epoch {epoch}] average Loss: {training_loss:4f}')
 
@@ -123,7 +127,7 @@ class Trainer(BaseTrainer, ABC):
 
         return None
 
-    def training_step(self, data_loader):
+    def training_epoch(self, data_loader):
 
         avg_loss = 0.
         num_items = 0
@@ -131,16 +135,17 @@ class Trainer(BaseTrainer, ABC):
             batch.to(self.config.device)
             logits = self.model(batch)
 
+            # modify data shapes to accommodate different tasks
             if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
                 # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
                 logits = logits.view(-1, self.config.n_lbs)
-                lbs = batch.lbs.view(-1)
-                masks = batch.masks.view(-1)
-            else:
-                lbs = batch.lbs
-                masks = batch.masks
-            loss = self._loss_fn(logits, lbs)
-            loss = torch.sum(loss * masks) / masks.sum()
+                batch.lbs = batch.lbs.view(-1)
+                batch.masks = batch.masks.view(-1)
+            if self.config.task_type == 'regression' and self.config.regression_with_variance:
+                logits = logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
+
+            loss = self._loss_fn(logits, batch.lbs)
+            loss = torch.sum(loss * batch.masks) / batch.masks.sum()
             loss.backward()
 
             self._optimizer.step()
