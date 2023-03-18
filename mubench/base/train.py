@@ -18,8 +18,8 @@ from seqlbtoolkit.training.status import Status
 from ..utils.macro import EVAL_METRICS
 from .metric import (
     GaussianNLL,
-    get_classification_metrics,
-    get_regression_metrics
+    calculate_classification_metrics,
+    calculate_regression_metrics
 )
 from .collate import Collator
 from .model import DNN
@@ -49,7 +49,7 @@ class Trainer(BaseTrainer, ABC):
 
         self.initialize()
 
-        self._valid_metric = EVAL_METRICS[config.dataset_name]
+        self._valid_metric = EVAL_METRICS[config.dataset_name].lower().replace('-', '_')
         self._status = Status(metric_smaller_is_better=True if config.task_type == 'regression' else False)
 
     def initialize_model(self):
@@ -118,12 +118,12 @@ class Trainer(BaseTrainer, ABC):
         for epoch in (tqdm_epoch := tqdm(range(self.config.n_epochs))):
             training_loss = self.training_epoch(data_loader)
             # Print the averaged training loss so far.
-            tqdm_epoch.set_description(f'[Epoch {epoch}] average Loss: {training_loss:4f}')
+            tqdm_epoch.set_description(f'[Epoch {epoch}] average Loss: {training_loss:.4f}')
 
             wandb.log(data={'train/loss': training_loss}, step=epoch+1)
 
-            # if (epoch + 1) % self.config.valid_interval == 0:
-            #     self.eval_and_save(step_idx=epoch+1, metric_name=self._valid_metric)
+            if self.config.valid_epoch_interval and (epoch + 1) % self.config.valid_epoch_interval == 0:
+                self.eval_and_save(step_idx=epoch+1, metric_name=self._valid_metric)
 
         return None
 
@@ -170,15 +170,8 @@ class Trainer(BaseTrainer, ABC):
         with torch.no_grad():
             for batch in dataloader:
                 batch.to(self.config.device)
-
                 logits = self.model(batch)
-
-                if self.config.task == 'classification':
-                    pred_y = torch.softmax(logits, dim=-1).detach().cpu()
-                else:
-                    pred_y = logits.detach().cpu()
-
-                preds.append(pred_y)
+                preds.append(logits.detach().cpu())
 
         preds = torch.cat(preds, dim=0).numpy()
 
@@ -199,13 +192,9 @@ class Trainer(BaseTrainer, ABC):
                 for idx, pred in enumerate(preds):
                     file_path = os.path.join(self.config.output_dir, "preds", f"{idx}.csv")
                     self.save_preds(lbs=dataset.lbs, preds=pred, file_path=file_path)
+            preds = preds.mean(axis=0)
 
-        if self.config.task == 'classification':
-            metrics = get_classification_metrics(dataset.lbs, preds.mean(axis=0))
-        elif self.config.task == 'regression':
-            metrics = get_regression_metrics(dataset.lbs, preds.mean(axis=0))
-        else:
-            raise ValueError("Undefined training task!")
+        metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
 
         return metrics
 
@@ -243,6 +232,29 @@ class Trainer(BaseTrainer, ABC):
             return metrics
 
         raise NotImplementedError("Function for multi-checkpoint caching & evaluation is not implemented!")
+
+    def get_metrics(self, lbs, preds, masks):
+        if masks.shape[-1] == 1 and len(masks.shape) > 1:
+            masks = masks.squeeze(-1)
+        bool_masks = masks.astype(bool)
+
+        if lbs.shape[-1] == 1 and len(lbs.shape) > 1:
+            lbs = lbs.squeeze(-1)
+        lbs = lbs[bool_masks]
+
+        if self.config.n_tasks > 1:
+            preds = preds.reshape(-1, self.config.n_tasks, self.config.n_lbs)
+        if preds.shape[-1] == 1 and len(preds.shape) > 1:
+            preds = preds.squeeze(-1)
+
+        preds = preds[bool_masks]
+
+        if self.config.task_type == 'classification':
+            metrics = calculate_classification_metrics(lbs, preds, self._valid_metric)
+        else:
+            metrics = calculate_regression_metrics(lbs, preds, self._valid_metric)
+
+        return metrics
 
     @staticmethod
     def log_results(metrics):
