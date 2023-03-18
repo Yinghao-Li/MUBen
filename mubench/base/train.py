@@ -3,7 +3,6 @@ from abc import ABC
 import os
 
 import numpy as np
-import pandas as pd
 import torch
 import wandb
 import logging
@@ -51,6 +50,12 @@ class Trainer(BaseTrainer, ABC):
 
         self._valid_metric = EVAL_METRICS[config.dataset_name].lower().replace('-', '_')
         self._status = Status(metric_smaller_is_better=True if config.task_type == 'regression' else False)
+        self._result_dir = os.path.join(
+            self.config.result_dir,
+            self.config.dataset_name,
+            self.config.model_name,
+            self.config.uncertainty_method,
+        )
 
     def initialize_model(self):
         self._model = DNN(
@@ -101,6 +106,8 @@ class Trainer(BaseTrainer, ABC):
 
         test_metrics = self.test()
         self.log_results(test_metrics)
+
+        self.save(output_dir=self._result_dir)
 
         wandb.finish()
 
@@ -177,10 +184,13 @@ class Trainer(BaseTrainer, ABC):
 
         return preds
 
-    def evaluate(self, dataset, n_run: Optional[int] = 1, save_preds: Optional[bool] = False):
+    def evaluate(self, dataset, n_run: Optional[int] = 1, return_preds: Optional[bool] = False):
 
         if n_run == 1:
+
             preds = self.inference(dataset)
+            metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
+
         else:
             preds = list()
             for i_run in (tqdm_run := tqdm(range(n_run))):
@@ -188,15 +198,9 @@ class Trainer(BaseTrainer, ABC):
                 preds.append(self.inference(dataset))
             preds = np.stack(preds)
 
-            if save_preds:
-                for idx, pred in enumerate(preds):
-                    file_path = os.path.join(self.config.output_dir, "preds", f"{idx}.csv")
-                    self.save_preds(lbs=dataset.lbs, preds=pred, file_path=file_path)
-            preds = preds.mean(axis=0)
+            metrics = self.get_metrics(dataset.lbs, preds.mean(axis=0), dataset.masks)
 
-        metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
-
-        return metrics
+        return metrics if not return_preds else (metrics, preds)
 
     def eval_and_save(self,
                       step_idx: Optional[int] = None,
@@ -225,13 +229,24 @@ class Trainer(BaseTrainer, ABC):
 
     def test(self):
 
-        if self._status.model_buffer.size == 1:
-            if self._status.model_buffer.model_state_dicts:
-                self._model.load_state_dict(self._status.model_buffer.model_state_dicts[0])
-            metrics = self.evaluate(self._test_dataset, n_run=self.config.n_test, save_preds=True)
-            return metrics
+        assert self._status.model_buffer.size == 1, \
+            NotImplementedError("Function for multi-checkpoint caching & evaluation is not implemented!")
 
-        raise NotImplementedError("Function for multi-checkpoint caching & evaluation is not implemented!")
+        if self._status.model_buffer.model_state_dicts:
+            self._model.load_state_dict(self._status.model_buffer.model_state_dicts[0])
+        metrics, preds = self.evaluate(self._test_dataset, n_run=self.config.n_test, return_preds=True)
+
+        # save preds
+        if self.config.n_test == 1:
+            preds = [preds]
+
+        for idx, pred in enumerate(preds):
+            file_path = os.path.join(self._result_dir, "preds", f"{idx}.pt")
+            self.save_preds_to_pt(
+                lbs=self._test_dataset.lbs, preds=preds, masks=self.test_dataset.masks, file_path=file_path
+            )
+
+        return metrics
 
     def get_metrics(self, lbs, preds, masks):
         if masks.shape[-1] == 1 and len(masks.shape) > 1:
@@ -267,22 +282,32 @@ class Trainer(BaseTrainer, ABC):
             for k, v in metrics.items():
                 logger.info(f"  {k}: {v:.4f}.")
 
+    def save(self,
+             output_dir: Optional[str] = None,
+             save_optimizer: Optional[bool] = False,
+             save_scheduler: Optional[bool] = False,
+             model_name: Optional[str] = 'model',
+             optimizer_name: Optional[str] = 'optimizer',
+             scheduler_name: Optional[str] = 'scheduler'):
+
+        os.makedirs(output_dir, exist_ok=True)
+        self._model.load_state_dict(self._status.model_buffer.model_state_dicts[0])
+        super().save(output_dir, save_optimizer, save_scheduler, model_name, optimizer_name, scheduler_name)
+
     @staticmethod
-    def save_preds(lbs, preds: np.ndarray, file_path: str):
+    def save_preds_to_pt(lbs, preds, masks, file_path: str):
         """
         Save results to disk as csv files
         """
 
-        data_dict = dict()
+        if not file_path.endswith('.pt'):
+            file_path = f"{file_path}.pt"
 
-        data_dict['true'] = lbs
-
-        assert len(preds.shape) < 3, ValueError("Cannot save results with larger ")
-        if len(preds.shape) == 2:
-            preds = [pred_tuple.tolist() for pred_tuple in preds]
-        data_dict['pred'] = preds
+        data_dict = {
+            "lbs": lbs,
+            "preds": preds,
+            "masks": masks
+        }
 
         os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
-
-        df = pd.DataFrame(data_dict)
-        df.to_csv(file_path)
+        torch.save(data_dict, file_path)
