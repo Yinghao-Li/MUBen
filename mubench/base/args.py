@@ -164,7 +164,7 @@ class Config(Arguments, BaseConfig):
     d_feature = None
     classes = None
     task_type = "classification"
-    n_task = None
+    n_tasks = None
 
     @cached_property
     def n_lbs(self):

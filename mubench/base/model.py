@@ -10,6 +10,7 @@ class DNN(nn.Module):
     def __init__(self,
                  d_feature: int,
                  n_lbs: int,
+                 n_tasks: int,
                  n_hidden_layers: Optional[int] = 4,
                  d_hidden: Optional[int] = 128,
                  p_dropout: Optional[float] = 0.1,
@@ -38,7 +39,7 @@ class DNN(nn.Module):
 
         self.hidden_layers = nn.Sequential(*hidden_layers)
 
-        self.output_layer = nn.Linear(hidden_dims[-1], n_lbs)
+        self.output_layer = nn.Linear(hidden_dims[-1], n_lbs*n_tasks)
 
     def reset_parameters(self):
         def init_weights(m):

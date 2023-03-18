@@ -33,7 +33,7 @@ class Trainer(BaseTrainer, ABC):
                  collate_fn=None):
 
         if not collate_fn:
-            collate_fn = Collator(task=config.task_type)
+            collate_fn = Collator(config)
 
         super().__init__(
             config=config,
@@ -52,6 +52,7 @@ class Trainer(BaseTrainer, ABC):
         self._model = DNN(
             d_feature=self.config.d_feature,
             n_lbs=self.config.n_lbs,
+            n_tasks=self.config.n_tasks,
             n_hidden_layers=self.config.n_dnn_hidden_layers,
             d_hidden=self.config.d_dnn_hidden,
             p_dropout=self.config.dropout,
@@ -128,10 +129,18 @@ class Trainer(BaseTrainer, ABC):
         num_items = 0
         for batch in data_loader:
             batch.to(self.config.device)
-
             logits = self.model(batch)
-            loss = self._loss_fn(logits, batch.lbs)
-            loss = torch.sum(loss * batch.masks) / batch.masks.sum()
+
+            if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
+                # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
+                logits = logits.view(-1, self.config.n_lbs)
+                lbs = batch.lbs.view(-1)
+                masks = batch.masks.view(-1)
+            else:
+                lbs = batch.lbs
+                masks = batch.masks
+            loss = self._loss_fn(logits, lbs)
+            loss = torch.sum(loss * masks) / masks.sum()
             loss.backward()
 
             self._optimizer.step()
