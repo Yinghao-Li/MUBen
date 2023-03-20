@@ -1,18 +1,12 @@
 import os
 import logging
-import pandas as pd
-import numpy as np
 
-from typing import List, Union
-from ast import literal_eval
-from tqdm.auto import tqdm
-from functools import cached_property
+from transformers import AutoTokenizer
 from seqlbtoolkit.training.dataset import (
-    BaseDataset,
     DataInstance,
     feature_lists_to_instance_list,
 )
-from ..utils.feature_generators import rdkit_2d_features_normalized_generator
+from ..base.dataset import Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
 
@@ -21,29 +15,7 @@ class Dataset(BaseDataset):
     def __init__(self):
         super().__init__()
 
-        self._features = None  # This could be any user-defined data structure.
-        self._smiles: Union[List[str], None] = None
-        self._lbs: Union[List[List[Union[int, float]]], None] = None
-        self._masks: Union[List[List[int]], None] = None
-    
-    @property
-    def features(self):
-        return self._features
-
-    @property
-    def smiles(self):
-        return self._smiles
-    
-    @property
-    def lbs(self):
-        return self._lbs
-
-    @cached_property
-    def masks(self):
-        return self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
-
-    def __len__(self):
-        return len(self._smiles)
+        self._atom_ids = None
 
     def prepare(self, config, partition):
         """
@@ -79,19 +51,19 @@ class Dataset(BaseDataset):
             else:
                 raise FileNotFoundError(f"File {file_path} does not exist!")
 
-            self.create_features(feature_type=config.feature_type)
+            self.create_features(tokenizer_name=config.pretrained_model_name_or_path)
 
             # Always save pre-processed dataset to disk
             self.save(preprocessed_path)
 
         self.data_instances = feature_lists_to_instance_list(
             DataInstance,
-            features=self.features, smiles=self.smiles, lbs=self.lbs, masks=self.masks
+            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
         )
 
         return self
 
-    def create_features(self, feature_type):
+    def create_features(self, tokenizer_name):
         """
         Create data features
 
@@ -99,21 +71,7 @@ class Dataset(BaseDataset):
         -------
         self
         """
-        if feature_type == 'rdkit':
-            logger.info("Generating normalized RDKit features")
-            self._features = np.stack([rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)])
-        else:
-            self._features = np.empty(len(self)) * np.nan
-        return self
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        tokenized_instances = tokenizer(self._smiles, add_special_tokens=True)
 
-    def read_csv(self, file_path: str):
-        """
-        Load data
-        """
-
-        df = pd.read_csv(file_path)
-        self._smiles = df.smiles.tolist()
-        self._lbs = np.asarray(df.labels.map(literal_eval).to_list())
-        self._masks = np.asarray(df.masks.map(literal_eval).to_list()) if not df.masks.isnull().all() else None
-
-        return self
+        self._atom_ids = tokenized_instances.input_ids

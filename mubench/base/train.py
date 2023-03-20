@@ -10,6 +10,7 @@ import torch.nn as nn
 from tqdm.auto import tqdm
 from torch.optim import Adam
 from typing import Optional
+from functools import cached_property
 
 from seqlbtoolkit.training.train import BaseTrainer
 from seqlbtoolkit.training.status import Status
@@ -99,12 +100,18 @@ class Trainer(BaseTrainer, ABC):
     def test_dataset(self):
         return self._test_dataset
 
+    @cached_property
+    def n_training_steps(self):
+        num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
+        return num_update_steps_per_epoch * self.config.n_epochs
+
     def run(self):
 
         logger.info("Training model")
         self.train()
 
         test_metrics = self.test()
+        logger.info("Test results:")
         self.log_results(test_metrics)
 
         self.save(output_dir=self._result_dir)
@@ -122,19 +129,21 @@ class Trainer(BaseTrainer, ABC):
             batch_size=self.config.batch_size
         )
 
-        for epoch in (tqdm_epoch := tqdm(range(self.config.n_epochs))):
-            training_loss = self.training_epoch(data_loader)
-            # Print the averaged training loss so far.
-            tqdm_epoch.set_description(f'[Epoch {epoch}] average Loss: {training_loss:.4f}')
+        with tqdm(total=self.n_training_steps) as pbar:
+            pbar.set_description(f'[Epoch 0] Loss: {np.inf:.4f}')
+            for epoch_idx in range(self.config.n_epochs):
+                training_loss = self.training_epoch(data_loader, pbar)
+                # Print the averaged training loss so far.
+                pbar.set_description(f'[Epoch {epoch_idx+1}] Loss: {training_loss:.4f}')
 
-            wandb.log(data={'train/loss': training_loss}, step=epoch+1)
+                wandb.log(data={'train/loss': training_loss}, step=epoch_idx+1)
 
-            if self.config.valid_epoch_interval and (epoch + 1) % self.config.valid_epoch_interval == 0:
-                self.eval_and_save(step_idx=epoch+1, metric_name=self._valid_metric)
+                if self.config.valid_epoch_interval and (epoch_idx + 1) % self.config.valid_epoch_interval == 0:
+                    self.eval_and_save(step_idx=epoch_idx+1, metric_name=self._valid_metric)
 
         return None
 
-    def training_epoch(self, data_loader):
+    def training_epoch(self, data_loader, pbar):
 
         avg_loss = 0.
         num_items = 0
@@ -160,6 +169,8 @@ class Trainer(BaseTrainer, ABC):
 
             avg_loss += loss.item() * len(batch)
             num_items += len(batch)
+
+            pbar.update()
 
         return avg_loss / num_items
 
@@ -211,17 +222,17 @@ class Trainer(BaseTrainer, ABC):
 
         valid_results = self.evaluate(self.valid_dataset)
 
-        logger.info("Validation results:")
-        self.log_results(valid_results)
-
         step_idx = self._status.eval_step + 1 if step_idx is None else step_idx
 
         result_dict = {f"valid/{k}": v for k, v in valid_results.items()}
         wandb.log(data=result_dict, step=step_idx)
 
+        logger.debug(f"[Valid step {step_idx}] results:")
+        self.log_results(valid_results, logging_func=logger.debug)
+
         # ----- check model performance and update buffer -----
         if self._status.model_buffer.check_and_update(getattr(valid_results, metric_name), self.model):
-            logger.info("Model buffer is updated!")
+            logger.debug("Model buffer is updated!")
 
         self._status.eval_step = step_idx
 
@@ -272,15 +283,16 @@ class Trainer(BaseTrainer, ABC):
         return metrics
 
     @staticmethod
-    def log_results(metrics):
+    def log_results(metrics, logging_func=logger.info):
+
         if isinstance(metrics, dict):
             for key, val in metrics.items():
-                logger.info(f"[{key}]")
+                logging_func(f"[{key}]")
                 for k, v in val.items():
-                    logger.info(f"  {k}: {v:.4f}.")
+                    logging_func(f"  {k}: {v:.4f}.")
         else:
             for k, v in metrics.items():
-                logger.info(f"  {k}: {v:.4f}.")
+                logging_func(f"  {k}: {v:.4f}.")
 
     def save(self,
              output_dir: Optional[str] = None,
