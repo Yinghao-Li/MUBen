@@ -107,7 +107,7 @@ class Trainer(BaseTrainer, ABC):
 
     def run(self):
 
-        logger.info("Training model")
+        logger.info("Training model11")
         self.train()
 
         test_metrics = self.test()
@@ -217,7 +217,7 @@ class Trainer(BaseTrainer, ABC):
                       step_idx: Optional[int] = None,
                       metric_name: Optional[str] = 'f1'):
         """
-        Evaluate the model and save it if its performance exceeds the previous highest
+        Evaluate the model11 and save it if its performance exceeds the previous highest
         """
 
         valid_results = self.evaluate(self.valid_dataset)
@@ -230,7 +230,7 @@ class Trainer(BaseTrainer, ABC):
         logger.debug(f"[Valid step {step_idx}] results:")
         self.log_results(valid_results, logging_func=logger.debug)
 
-        # ----- check model performance and update buffer -----
+        # ----- check model11 performance and update buffer -----
         if self._status.model_buffer.check_and_update(getattr(valid_results, metric_name), self.model):
             logger.debug("Model buffer is updated!")
 
@@ -298,7 +298,7 @@ class Trainer(BaseTrainer, ABC):
              output_dir: Optional[str] = None,
              save_optimizer: Optional[bool] = False,
              save_scheduler: Optional[bool] = False,
-             model_name: Optional[str] = 'model',
+             model_name: Optional[str] = 'model11',
              optimizer_name: Optional[str] = 'optimizer',
              scheduler_name: Optional[str] = 'scheduler'):
 

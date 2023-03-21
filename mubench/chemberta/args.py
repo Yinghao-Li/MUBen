@@ -17,10 +17,10 @@ class Arguments(BaseArguments):
     Arguments regarding the training of Neural hidden Markov Model
     """
 
-    # --- Reload model arguments to adjust default values ---
+    # --- Reload model11 arguments to adjust default values ---
     model_name: Optional[str] = field(
         default='ChemBERTa', metadata={
-            'help': "Name of the model",
+            'help': "Name of the model11",
             "choices": MODEL_NAMES
         }
     )
@@ -30,7 +30,7 @@ class Arguments(BaseArguments):
         default=8, metadata={'help': "Batch size."}
     )
     n_epochs: Optional[int] = field(
-        default=50, metadata={'help': "How many epochs to train the model."}
+        default=50, metadata={'help': "How many epochs to train the model11."}
     )
     lr: Optional[float] = field(
         default=5e-5, metadata={'help': "Learning Rate."}

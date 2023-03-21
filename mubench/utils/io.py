@@ -59,7 +59,7 @@ def set_logging(log_path: Optional[str] = None):
 
 def logging_args(args):
     """
-    Logging model arguments into logs
+    Logging model11 arguments into logs
     Last modified: 08/19/21
 
     Parameters
