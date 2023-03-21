@@ -18,7 +18,7 @@ from tqdm import tqdm as core_tqdm
 
 from ..data.moldataset import MoleculeDatapoint, MoleculeDataset
 from ..data.scaler import StandardScaler
-from ..model.models import GroverFpGeneration, GroverFinetuneTask
+from ..model.models import GroverFinetuneTask
 from .nn_utils import initialize_weights
 from .scheduler import NoamLR
 
@@ -141,7 +141,6 @@ def filter_invalid_smiles(data: MoleculeDataset) -> MoleculeDataset:
 def get_data(path: str,
              skip_invalid_smiles: bool = True,
              config=None,
-             features_path: List[str] = None,
              max_data_size: int = None,
              use_compound_names: bool = None) -> MoleculeDataset:
     """
@@ -152,7 +151,6 @@ def get_data(path: str,
     path: Path to a CSV file.
     skip_invalid_smiles: Whether to skip and filter out invalid smiles.
     config: Arguments.
-    features_path: A list of paths to files containing features. If provided, it is used in place of args.features_path.
     max_data_size: The maximum number of data points to load.
     use_compound_names: Whether file has compound names in addition to smiles strings.
 
@@ -164,7 +162,6 @@ def get_data(path: str,
 
     if config is not None:
         # Prefer explicit function arguments but default to args if not provided
-        features_path = features_path if features_path is not None else config.features_path
         max_data_size = max_data_size if max_data_size is not None else config.max_data_size
         use_compound_names = use_compound_names if use_compound_names is not None else config.use_compound_names
     else:
@@ -173,16 +170,9 @@ def get_data(path: str,
     max_data_size = max_data_size or np.inf
 
     # Load features
-    if features_path is not None:
-        features_data = []
-        for feat_path in features_path:
-            features_data.append(load_features(feat_path))  # each is num_data x num_features
-        features_data = np.concatenate(features_data, axis=1)
-        config.features_dim = len(features_data[0])
-    else:
-        features_data = None
-        if config is not None:
-            config.features_dim = 0
+    features_data = None
+    if config is not None:
+        config.features_dim = 0
 
     skip_smiles = set()
 
@@ -511,7 +501,7 @@ def log_scaffold_stats(data: MoleculeDataset,
     for index_set in index_sets:
         data_set = [data[i] for i in index_set]
         targets = [d.targets for d in data_set]
-        targets = np.array(targets, dtype=np.float)
+        targets = np.array(targets, dtype=float)
         target_avgs.append(np.nanmean(targets, axis=0))
         counts.append(np.count_nonzero(~np.isnan(targets), axis=0))
     stats = [(target_avgs[i][:num_labels], counts[i][:num_labels]) for i in range(min(num_scaffolds, len(target_avgs)))]
@@ -736,7 +726,7 @@ def build_model(config, model_idx=0):
     Parameters
     ----------
     config: Arguments.
-    model_idx: model11 index
+    model_idx: model index
 
     Returns
     -------
@@ -747,10 +737,6 @@ def build_model(config, model_idx=0):
     else:
         config.output_size = 1
 
-    if config.task == "fingerprint":
-        model = GroverFpGeneration(config)
-    else:
-        # finetune and evaluation case.
-        model = GroverFinetuneTask(config)
+    model = GroverFinetuneTask(config)
     initialize_weights(model=model, model_idx=model_idx)
     return model

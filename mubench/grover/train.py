@@ -75,7 +75,7 @@ def train(model, data, loss_func, optimizer, scheduler, shared_dict, config: Gro
                                 num_workers=num_workers, collate_fn=mol_collator)
 
     for _, item in enumerate(mol_loader):
-        _, batch, features_batch, mask, targets = item
+        _, batch, _, mask, targets = item
         if next(model.parameters()).is_cuda:
             mask, targets = mask.cuda(), targets.cuda()
         class_weights = torch.ones(targets.shape)
@@ -85,7 +85,7 @@ def train(model, data, loss_func, optimizer, scheduler, shared_dict, config: Gro
 
         # Run model11
         model.zero_grad()
-        preds = model(batch, features_batch)
+        preds = model(batch)
         loss = loss_func(preds, targets) * class_weights * mask
         loss = loss.sum() / mask.sum()
 
@@ -122,7 +122,7 @@ def run_training(config: GroverConfig) -> List[float]:
 
     # pin GPU to local rank.
     idx = config.gpu
-    if config.gpu is not None:
+    if config.gpu is not None and torch.cuda.is_available():
         torch.cuda.set_device(idx)
 
     features_scaler, scaler, shared_dict, test_data, train_data, val_data = load_data(config)
@@ -146,10 +146,10 @@ def run_training(config: GroverConfig) -> List[float]:
                 cur_model = 0
             else:
                 cur_model = model_idx
-            logger.info(f'Loading model11 {cur_model} from {config.checkpoint_paths[cur_model]}')
+            logger.info(f'Loading model {cur_model} from {config.checkpoint_paths[cur_model]}')
             model = load_checkpoint(config.checkpoint_paths[cur_model], current_args=config)
         else:
-            logger.info(f'Building model11 {model_idx}')
+            logger.info(f'Building model {model_idx}')
             model = build_model(model_idx=model_idx, config=config)
 
         if config.fine_tune_coff != 1 and config.checkpoint_paths is not None:
@@ -164,11 +164,11 @@ def run_training(config: GroverConfig) -> List[float]:
         # debug(model11)
         logger.info(f'Number of parameters = {param_count(model):,}')
         if config.cuda:
-            logger.info('Moving model11 to cuda')
+            logger.info('Moving model to cuda')
             model = model.cuda()
 
-        # Ensure that model11 is saved in correct location for evaluation if 0 epochs
-        save_checkpoint(os.path.join(save_dir, 'model11.pt'), model, scaler, features_scaler, config)
+        # Ensure that model is saved in correct location for evaluation if 0 epochs
+        save_checkpoint(os.path.join(save_dir, 'model.pt'), model, scaler, features_scaler, config)
 
         # Learning rate schedulers
         scheduler = build_lr_scheduler(optimizer, config)
@@ -179,7 +179,7 @@ def run_training(config: GroverConfig) -> List[float]:
         train_data = DataLoader(train_data,
                                 batch_size=config.batch_size,
                                 shuffle=shuffle,
-                                num_workers=10,
+                                num_workers=0,
                                 collate_fn=mol_collator)
 
         # Run training

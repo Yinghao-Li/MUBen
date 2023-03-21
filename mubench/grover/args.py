@@ -11,7 +11,6 @@ from tempfile import TemporaryDirectory
 from dataclasses import dataclass
 
 from mubench.grover.util.utils import makedirs
-from mubench.grover.data.molfeaturegenerator import get_available_features_generators
 
 from seqlbtoolkit.training.config import BaseConfig
 
@@ -44,20 +43,6 @@ class GroverArguments:
     max_data_size: Optional[int] = field(
         default=None,
         metadata={'help': 'Maximum number of data points to load'}
-    )
-    features_only: Optional[bool] = field(
-        default=False,
-        metadata={'help': 'Use only the additional features in an FFN, no graph network'}
-    )
-    features_generator: Optional[str] = field(
-        default=None,
-        metadata={'nargs': '*',
-                  'help': 'Method of generating additional features.'}
-    )
-    features_path: Optional[str] = field(
-        default=None,
-        metadata={'nargs': '*',
-                  'help': 'Path to features to use in FNN (instead of features_generator).'}
     )
     save_dir: Optional[str] = field(
         default=None,
@@ -273,7 +258,7 @@ class GroverArguments:
         metadata={'help': 'Turn off caching mol2graph computation'}
     )
     gpu: Optional[int] = field(
-        default=0,
+        default=None,
         metadata={
             'choices': list(range(torch.cuda.device_count())),
             'help': 'Which GPU to use'}
@@ -340,14 +325,6 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         self._update_checkpoint_args()
 
-        if self.features_only:
-            assert self.features_generator or self.features_path
-
-        self.use_input_features = self.features_generator or self.features_path
-
-        if self.features_generator is not None and 'rdkit_2d_normalized' in self.features_generator:
-            assert not self.features_scaling
-
         self.num_lrs = 1
 
         assert (self.split_type == 'predetermined') == (self.folds_file is not None) == (
@@ -362,10 +339,6 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         if self.bond_drop_rate > 0:
             self.no_cache = True
-
-        assert self.features_generator is None or \
-               set(self.features_generator).issubset(set(get_available_features_generators())), \
-            ValueError(f"Argument 'features_generator' should be None or in {get_available_features_generators()}.")
 
         setattr(self, 'fingerprint', False)
 
@@ -384,29 +357,9 @@ class GroverConfig(BaseConfig, GroverArguments):
         self.cuda = not self.no_cuda and torch.cuda.is_available()
         del self.no_cuda
 
-        assert self.features_generator is None or \
-               set(self.features_generator).issubset(get_available_features_generators()), \
-            ValueError(f"Argument 'features_generator' should be None or in {get_available_features_generators()}.")
-
         # Create directory for preds path
         makedirs(self.output_path, isfile=True)
         setattr(self, 'fingerprint', False)
-
-        return self
-
-    def from_fingerprint_args(self, args) -> "GroverConfig":
-
-        self.from_args(args)
-
-        assert self.data_path
-        assert self.output_path
-        assert self.checkpoint_path is not None or self.checkpoint_paths is not None
-
-        self._update_checkpoint_args()
-        self.cuda = not self.no_cuda and torch.cuda.is_available()
-        del self.no_cuda
-        makedirs(self.output_path, isfile=True)
-        setattr(self, 'fingerprint', True)
 
         return self
 

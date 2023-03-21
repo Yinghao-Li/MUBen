@@ -13,8 +13,7 @@ from transformers import (
     set_seed,
 )
 
-from seqlbtoolkit.io import set_logging, logging_args
-
+from mubench.utils.io import set_logging, logging_args
 from mubench.base.dataset import Dataset
 from mubench.base.args import Arguments, Config
 from mubench.base.train import Trainer
@@ -79,10 +78,10 @@ if __name__ == '__main__':
     else:
         arguments, = parser.parse_args_into_dataclasses()
 
-    if not getattr(arguments, "log_dir", None):
-        arguments.log_dir = os.path.join('logs', f'{_current_file_name}', f'{_time}.log')
+    if not getattr(arguments, "log_path", None):
+        arguments.log_path = os.path.join('logs', f'{_current_file_name}', f'{_time}.log')
 
-    set_logging(log_dir=arguments.log_dir)
+    set_logging(log_path=arguments.log_path)
     logging_args(arguments)
 
     set_seed(arguments.seed)

@@ -15,10 +15,10 @@ from ..util.nn_utils import get_activation_function, select_neighbor_and_aggrega
 
 class SelfAttention(nn.Module):
     """
-       Self SelfAttention Layer
-       Given $X\in \mathbb{R}^{n \times in_feature}$, the attention is calculated by: $a=Softmax(W_2tanh(W_1X))$, where
-       $W_1 \in \mathbb{R}^{hidden \times in_feature}$, $W_2 \in \mathbb{R}^{out_feature \times hidden}$.
-       The final output is: $out=aX$, which is unrelated with input $n$.
+    Self SelfAttention Layer
+    Given $X\in \mathbb{R}^{n \times in_feature}$, the attention is calculated by: $a=Softmax(W_2tanh(W_1X))$, where
+    $W_1 \in \mathbb{R}^{hidden \times in_feature}$, $W_2 \in \mathbb{R}^{out_feature \times hidden}$.
+    The final output is: $out=aX$, which is unrelated with input $n$.
     """
 
     def __init__(self, *, hidden, in_feature, out_feature):

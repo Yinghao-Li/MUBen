@@ -1,0 +1,15 @@
+{
+  "data_path": "data/grover-data/bbbp/bbbp.csv",
+  "save_dir": "output/finetune/bbbp/",
+  "checkpoint_path": "models/grover_base.pt",
+  "task": "finetune",
+  "dataset_type": "classification",
+  "split_type": "scaffold_balanced",
+  "ensemble_size": 1,
+  "num_folds": 3,
+  "no_features_scaling": true,
+  "ffn_hidden_size": 200,
+  "batch_size": 32,
+  "epochs": 10,
+  "init_lr": 0.00015
+}
