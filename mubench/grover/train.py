@@ -6,6 +6,7 @@ import numpy as np
 import torch.nn.functional as F
 from torch.optim import Adam
 from scipy.special import softmax, expit
+from typing import Optional
 
 from ..base.train import Trainer as BaseTrainer
 from .collate import Collator
@@ -105,6 +106,31 @@ class Trainer(BaseTrainer, ABC):
         loss = F.mse_loss(atom_logits, bond_logits)
         loss = torch.sum(loss * masks) / masks.sum()
         return loss
+
+    def inference(self, dataset, batch_size: Optional[int] = None):
+
+        dataloader = self.get_dataloader(
+            dataset,
+            batch_size=batch_size if batch_size else self.config.batch_size,
+            shuffle=False
+        )
+        self._model.eval()
+
+        atom_logits_list = list()
+        bond_logits_list = list()
+
+        with torch.no_grad():
+            for batch in dataloader:
+                batch.to(self.config.device)
+                atom_logits, bond_logits = self.model(batch)
+                atom_logits_list.append(atom_logits.detach().cpu())
+                bond_logits_list.append(bond_logits.detach().cpu())
+
+        atom_logits = torch.cat(atom_logits_list, dim=0).numpy()
+        bond_logits = torch.cat(bond_logits_list, dim=0).numpy()
+
+        return atom_logits, bond_logits
+
 
     def normalize_logits(self, logits):
 

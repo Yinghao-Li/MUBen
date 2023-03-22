@@ -151,7 +151,7 @@ class GROVERFinetuneModel(nn.Module):
         return loss_func
 
     def forward(self, batch, **kwargs):
-        molecule_components = batch.molecule_components
+        molecule_components = batch.molecule_graphs.components
         _, _, _, _, _, a_scope, _, _ = molecule_components
 
         output = self.grover(molecule_components)

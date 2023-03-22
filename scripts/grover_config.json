@@ -3,7 +3,7 @@
   "dataset_name": "BBBP",
   "data_dir": "./data/files",
   "ignore_preprocessed_dataset": false,
-  "n_epochs": 5,
+  "n_epochs": 10,
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "checkpoint_path": "models/grover_base.pt",
@@ -12,5 +12,6 @@
   "ffn_hidden_size": 200,
   "batch_size": 32,
   "epochs": 10,
-  "init_lr": 0.00015
+  "init_lr": 0.00015,
+  "retrain_model": true
 }

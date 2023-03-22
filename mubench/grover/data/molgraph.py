@@ -296,7 +296,8 @@ class BatchMolGraph(Batch):
         self.a_scope = torch.tensor(self.a_scope, dtype=torch.long)
         self.b_scope = torch.tensor(self.b_scope, dtype=torch.long)
 
-    def get_components(self):
+    @property
+    def components(self):
         """
         Returns the components of the BatchMolGraph.
 
