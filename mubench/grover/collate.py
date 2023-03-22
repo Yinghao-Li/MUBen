@@ -6,6 +6,7 @@ from seqlbtoolkit.training.dataset import (
     Batch,
     instance_list_to_feature_lists
 )
+from mubench.grover.data.molgraph import BatchMolGraph
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +31,11 @@ class Collator:
         -------
         a Batch of instances
         """
-        features, smiles, lbs, masks = instance_list_to_feature_lists(instance_list)
+        molecule_graphs, lbs, masks = instance_list_to_feature_lists(instance_list)
 
-        feature_batch = torch.from_numpy(np.stack(features)).to(torch.float)
+        # TODO: copied from GROVER implementation but may not be the most efficient way to batchify the graphs
+        molecule_graphs_batch = BatchMolGraph(molecule_graphs)
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))
 
-        return Batch(features=feature_batch, lbs=lbs_batch, masks=masks_batch)
+        return Batch(molecule_graphs=molecule_graphs_batch, lbs=lbs_batch, masks=masks_batch)

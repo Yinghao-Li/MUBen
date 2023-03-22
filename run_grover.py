@@ -6,6 +6,7 @@ import os
 import sys
 import wandb
 import logging
+from rdkit import RDLogger
 from datetime import datetime
 
 from transformers import (
@@ -14,9 +15,10 @@ from transformers import (
 )
 
 from mubench.utils.io import set_logging, logging_args
-from mubench.base.dataset import Dataset
-from mubench.base.args import Arguments, Config
-from mubench.base.train import Trainer
+
+from mubench.grover.dataset import Dataset
+from mubench.grover.args import Arguments, Config
+from mubench.grover.train import Trainer
 
 
 logger = logging.getLogger(__name__)
@@ -83,6 +85,10 @@ if __name__ == '__main__':
 
     set_logging(log_path=arguments.log_path)
     logging_args(arguments)
+
+    # supress rdkit logger
+    lg = RDLogger.logger()
+    lg.setLevel(RDLogger.CRITICAL)
 
     set_seed(arguments.seed)
 

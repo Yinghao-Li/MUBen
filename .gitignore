@@ -135,4 +135,7 @@ dmypy.json
 *.bin
 *.pt
 *.zip
+*.tar.gz
+*.npz
 meta.json
+config.json

@@ -110,6 +110,9 @@ class Arguments:
     )
 
     # --- Evaluation Arguments ---
+    valid_epoch_interval: Optional[int] = field(
+        default=1, metadata={'help': 'Run validation every how many epochs. Set to 0 to disable validation.'}
+    )
     n_test: Optional[int] = field(
         default=1, metadata={'help': "How many test loops to run in one training process"}
     )
@@ -164,7 +167,7 @@ class Config(Arguments, BaseConfig):
     d_feature = None
     classes = None
     task_type = "classification"
-    n_task = None
+    n_tasks = None
 
     @cached_property
     def n_lbs(self):
@@ -173,8 +176,10 @@ class Config(Arguments, BaseConfig):
                 return 1
             else:
                 return len(self.classes)
+        elif self.task_type == 'regression':
+            return 2 if self.regression_with_variance else 1
         else:
-            return 1
+            ValueError(f"Unrecognized task type: {self.task_type}")
 
     @cached_property
     def d_feature(self):

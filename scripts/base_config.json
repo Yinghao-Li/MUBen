@@ -1,0 +1,9 @@
+{
+  "disable_wandb": true,
+  "dataset_name": "ClinTox",
+  "data_dir": "./data/files",
+  "ignore_preprocessed_dataset": false,
+  "n_epochs": 5,
+  "binary_classification_with_softmax": true,
+  "regression_with_variance": false
+}

@@ -14,9 +14,10 @@ from transformers import (
 )
 
 from mubench.utils.io import set_logging, logging_args
-from mubench.base.dataset import Dataset
-from mubench.base.args import Arguments, Config
-from mubench.base.train import Trainer
+
+from mubench.chemberta.dataset import Dataset
+from mubench.chemberta.args import Arguments, Config
+from mubench.chemberta.train import Trainer
 
 
 logger = logging.getLogger(__name__)

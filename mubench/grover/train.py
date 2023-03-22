@@ -6,31 +6,25 @@ import numpy as np
 import torch
 import wandb
 import logging
-import torch.nn as nn
 from tqdm.auto import tqdm
 from torch.optim import Adam
 from typing import Optional
-from functools import cached_property
 
-from seqlbtoolkit.training.train import BaseTrainer
 from seqlbtoolkit.training.status import Status
 
 from ..utils.macro import EVAL_METRICS
-from .metric import (
-    GaussianNLL,
-    calculate_classification_metrics,
-    calculate_regression_metrics
-)
+from ..base.train import Trainer as BaseTrainer
 from .collate import Collator
-from .model import DNN
-from .args import Config
+from .model import GROVERFinetuneModel
+from .args import GroverConfig
+from .util.utils import load_checkpoint
 
 logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer, ABC):
     def __init__(self,
-                 config: Config,
+                 config: GroverConfig,
                  training_dataset=None,
                  valid_dataset=None,
                  test_dataset=None,
@@ -59,51 +53,10 @@ class Trainer(BaseTrainer, ABC):
         )
 
     def initialize_model(self):
-        self._model = DNN(
-            d_feature=self.config.d_feature,
-            n_lbs=self.config.n_lbs,
-            n_tasks=self.config.n_tasks,
-            n_hidden_layers=self.config.n_dnn_hidden_layers,
-            d_hidden=self.config.d_dnn_hidden,
-            p_dropout=self.config.dropout,
-        )
+        self._model = load_checkpoint(self.config)
 
     def initialize_optimizer(self):
         self._optimizer = Adam(self._model.parameters(), lr=self.config.lr)
-
-    def initialize_loss(self):
-
-        # Notice that the reduction should always be 'none' here to facilitate
-        # the following masking operation
-        if self.config.task_type == 'classification':
-            if self.config.binary_classification_with_softmax:
-                self._loss_fn = nn.CrossEntropyLoss(reduction='none')
-            else:
-                self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
-        else:
-            if self.config.regression_with_variance:
-                self._loss_fn = GaussianNLL(reduction='none')
-            else:
-                self._loss_fn = nn.MSELoss(reduction='none')
-
-        return self
-
-    @property
-    def training_dataset(self):
-        return self._training_dataset
-
-    @property
-    def valid_dataset(self):
-        return self._valid_dataset
-
-    @property
-    def test_dataset(self):
-        return self._test_dataset
-
-    @cached_property
-    def n_training_steps(self):
-        num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
-        return num_update_steps_per_epoch * self.config.n_epochs
 
     def run(self):
 
@@ -151,7 +104,17 @@ class Trainer(BaseTrainer, ABC):
             batch.to(self.config.device)
             logits = self.model(batch)
 
-            loss = self.get_loss(logits, batch)
+            # modify data shapes to accommodate different tasks
+            if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
+                # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
+                logits = logits.view(-1, self.config.n_lbs)
+                batch.lbs = batch.lbs.view(-1)
+                batch.masks = batch.masks.view(-1)
+            if self.config.task_type == 'regression' and self.config.regression_with_variance:
+                logits = logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
+
+            loss = self._loss_fn(logits, batch.lbs)
+            loss = torch.sum(loss * batch.masks) / batch.masks.sum()
             loss.backward()
 
             self._optimizer.step()
@@ -163,34 +126,6 @@ class Trainer(BaseTrainer, ABC):
             pbar.update()
 
         return avg_loss / num_items
-
-    def get_loss(self, logits, batch) -> torch.Tensor:
-        """
-        Children trainers can directly reload this function instead of
-        reloading `training epoch`, which could be more complicated
-
-        Parameters
-        ----------
-        logits: logits predicted by the model
-        batch: batched training data
-
-        Returns
-        -------
-        loss, torch.Tensor
-        """
-
-        # modify data shapes to accommodate different tasks
-        if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
-            # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
-            logits = logits.view(-1, self.config.n_lbs)
-            batch.lbs = batch.lbs.view(-1)
-            batch.masks = batch.masks.view(-1)
-        if self.config.task_type == 'regression' and self.config.regression_with_variance:
-            logits = logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
-
-        loss = self._loss_fn(logits, batch.lbs)
-        loss = torch.sum(loss * batch.masks) / batch.masks.sum()
-        return loss
 
     def inference(self, dataset, batch_size: Optional[int] = None):
 
@@ -276,68 +211,3 @@ class Trainer(BaseTrainer, ABC):
             )
 
         return metrics
-
-    def get_metrics(self, lbs, preds, masks):
-        if masks.shape[-1] == 1 and len(masks.shape) > 1:
-            masks = masks.squeeze(-1)
-        bool_masks = masks.astype(bool)
-
-        if lbs.shape[-1] == 1 and len(lbs.shape) > 1:
-            lbs = lbs.squeeze(-1)
-        lbs = lbs[bool_masks]
-
-        if self.config.n_tasks > 1:
-            preds = preds.reshape(-1, self.config.n_tasks, self.config.n_lbs)
-        if preds.shape[-1] == 1 and len(preds.shape) > 1:
-            preds = preds.squeeze(-1)
-
-        preds = preds[bool_masks]
-
-        if self.config.task_type == 'classification':
-            metrics = calculate_classification_metrics(lbs, preds, self._valid_metric)
-        else:
-            metrics = calculate_regression_metrics(lbs, preds, self._valid_metric)
-
-        return metrics
-
-    @staticmethod
-    def log_results(metrics, logging_func=logger.info):
-
-        if isinstance(metrics, dict):
-            for key, val in metrics.items():
-                logging_func(f"[{key}]")
-                for k, v in val.items():
-                    logging_func(f"  {k}: {v:.4f}.")
-        else:
-            for k, v in metrics.items():
-                logging_func(f"  {k}: {v:.4f}.")
-
-    def save(self,
-             output_dir: Optional[str] = None,
-             save_optimizer: Optional[bool] = False,
-             save_scheduler: Optional[bool] = False,
-             model_name: Optional[str] = 'model',
-             optimizer_name: Optional[str] = 'optimizer',
-             scheduler_name: Optional[str] = 'scheduler'):
-
-        os.makedirs(output_dir, exist_ok=True)
-        self._model.load_state_dict(self._status.model_buffer.model_state_dicts[0])
-        super().save(output_dir, save_optimizer, save_scheduler, model_name, optimizer_name, scheduler_name)
-
-    @staticmethod
-    def save_preds_to_pt(lbs, preds, masks, file_path: str):
-        """
-        Save results to disk as csv files
-        """
-
-        if not file_path.endswith('.pt'):
-            file_path = f"{file_path}.pt"
-
-        data_dict = {
-            "lbs": lbs,
-            "preds": preds,
-            "masks": masks
-        }
-
-        os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
-        torch.save(data_dict, file_path)
