@@ -60,6 +60,9 @@ class Trainer(BaseTrainer, ABC):
             self.config.uncertainty_method,
         )
 
+        # constants
+        self._best_model_name = 'model_best.bin'
+
     def initialize_model(self):
         self._model = DNN(
             d_feature=self.config.d_feature,
@@ -122,14 +125,19 @@ class Trainer(BaseTrainer, ABC):
 
     def run(self):
 
-        logger.info("Training model")
-        self.train()
+        # TODO: more appropriate continue training setup
+        if os.path.exists(os.path.join(self._result_dir, self._best_model_name)) and not self.config.retrain_model:
+            logger.info("Find existing model, will skip training.")
+            self.load_best_model(model_dir=self._result_dir)
+        else:
+            logger.info("Training model")
+            self.train()
 
         test_metrics = self.test()
         logger.info("Test results:")
         self.log_results(test_metrics)
 
-        self.save(output_dir=self._result_dir)
+        self.save_best_model(output_dir=self._result_dir)
 
         wandb.finish()
 
@@ -340,17 +348,19 @@ class Trainer(BaseTrainer, ABC):
             for k, v in metrics.items():
                 logging_func(f"  {k}: {v:.4f}.")
 
-    def save(self,
-             output_dir: Optional[str] = None,
-             save_optimizer: Optional[bool] = False,
-             save_scheduler: Optional[bool] = False,
-             model_name: Optional[str] = 'model',
-             optimizer_name: Optional[str] = 'optimizer',
-             scheduler_name: Optional[str] = 'scheduler'):
+    def save_best_model(self, output_dir: Optional[str] = None):
 
         os.makedirs(output_dir, exist_ok=True)
-        self._model.load_state_dict(self._status.model_buffer.model_state_dicts[0])
-        super().save(output_dir, save_optimizer, save_scheduler, model_name, optimizer_name, scheduler_name)
+
+        output_dir = output_dir if output_dir is not None else getattr(self._config, 'output_dir', 'output')
+        self._status.model_buffer.save(os.path.join(output_dir, self._best_model_name))
+
+        return self
+
+    def load_best_model(self, model_dir):
+        self._status.model_buffer.load(os.path.join(model_dir, self._best_model_name))
+
+        return self
 
     @staticmethod
     def save_preds_to_pt(lbs, preds, masks, file_path: str):

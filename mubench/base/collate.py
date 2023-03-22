@@ -30,7 +30,7 @@ class Collator:
         -------
         a Batch of instances
         """
-        features, smiles, lbs, masks = instance_list_to_feature_lists(instance_list)
+        features, lbs, masks = instance_list_to_feature_lists(instance_list)
 
         feature_batch = torch.from_numpy(np.stack(features)).to(torch.float)
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)

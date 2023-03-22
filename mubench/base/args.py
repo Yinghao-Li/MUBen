@@ -90,6 +90,9 @@ class Arguments:
     )
 
     # --- Training Arguments ---
+    retrain_model: Optional[bool] = field(
+        default=False, metadata={"help": "Train the model from scratch even if there are models saved in result dir"}
+    )
     batch_size: Optional[int] = field(
         default=32, metadata={'help': "Batch size."}
     )
@@ -104,9 +107,6 @@ class Arguments:
     )
     debug: Optional[bool] = field(
         default=False, metadata={"help": "Debugging mode with fewer training data"}
-    )
-    save_preds: Optional[bool] = field(
-        default=False, metadata={"help": "Whether save test predicts into disk."}
     )
 
     # --- Evaluation Arguments ---

@@ -109,7 +109,7 @@ class Dataset(BaseDataset):
 
         data_instances = feature_lists_to_instance_list(
             DataInstance,
-            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
+            features=self._features, lbs=self.lbs, masks=self.masks
         )
 
         return data_instances
