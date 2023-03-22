@@ -8,7 +8,6 @@ from tempfile import TemporaryDirectory
 from dataclasses import dataclass
 
 from ..util.utils import makedirs
-from ..data.molfeaturegenerator import get_available_features_generators
 
 from mubench.grover.args import GroverArguments
 
@@ -69,14 +68,6 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         self._update_checkpoint_args()
 
-        if self.features_only:
-            assert self.features_generator or self.features_path
-
-        self.use_input_features = self.features_generator or self.features_path
-
-        if self.features_generator is not None and 'rdkit_2d_normalized' in self.features_generator:
-            assert not self.features_scaling
-
         self.num_lrs = 1
 
         assert (self.split_type == 'predetermined') == (self.folds_file is not None) == (
@@ -91,10 +82,6 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         if self.bond_drop_rate > 0:
             self.no_cache = True
-
-        assert self.features_generator is None or \
-               set(self.features_generator).issubset(set(get_available_features_generators())), \
-               ValueError(f"Argument 'features_generator' should be None or in {get_available_features_generators()}.")
 
         setattr(self, 'fingerprint', False)
 
@@ -112,10 +99,6 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         self.cuda = not self.no_cuda and torch.cuda.is_available()
         del self.no_cuda
-
-        assert self.features_generator is None or \
-               set(self.features_generator).issubset(get_available_features_generators()), \
-               ValueError(f"Argument 'features_generator' should be None or in {get_available_features_generators()}.")
 
         # Create directory for preds path
         makedirs(self.output_path, isfile=True)

@@ -8,8 +8,8 @@ from torch import nn as nn
 from typing import List, Dict
 
 from .layers import Readout, GTransEncoder
-from ..data.molgraph import get_atom_fdim, get_bond_fdim
-from ..util.nn_utils import get_activation_function
+from mubench.grover.data.molgraph import get_atom_fdim, get_bond_fdim
+from mubench.grover.util.nn_utils import get_activation_function
 
 
 class GROVEREmbedding(nn.Module):
@@ -64,12 +64,12 @@ class GROVEREmbedding(nn.Module):
                     "atom_from_bond": output[1][0], "bond_from_bond": output[1][1]}
 
 
-class GroverFinetuneTask(nn.Module):
+class GROVERFinetuneModel(nn.Module):
     """
     The finetune
     """
     def __init__(self, config):
-        super(GroverFinetuneTask, self).__init__()
+        super(GROVERFinetuneModel, self).__init__()
 
         self.hidden_size = config.hidden_size
         self.iscuda = config.cuda

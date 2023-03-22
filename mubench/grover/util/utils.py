@@ -17,8 +17,8 @@ from torch import nn as nn
 from tqdm import tqdm as core_tqdm
 
 from ..data.moldataset import MoleculeDatapoint, MoleculeDataset
-from ..data.scaler import StandardScaler
-from ..model.models import GroverFinetuneTask
+from mubench.utils.scaler import StandardScaler
+from mubench.grover.model import GROVERFinetuneModel
 from .nn_utils import initialize_weights
 from .scheduler import NoamLR
 
@@ -196,8 +196,6 @@ def get_data(path: str,
         data = MoleculeDataset([
             MoleculeDatapoint(
                 line=line,
-                config=config,
-                features=features_data[i] if features_data is not None else None,
                 use_compound_names=use_compound_names
             ) for i, line in tqdm(enumerate(lines), total=len(lines), disable=True)
         ])
@@ -223,7 +221,7 @@ def get_data_from_smiles(smiles: List[str], skip_invalid_smiles: bool = True, co
     :return: A MoleculeDataset with all of the provided SMILES.
     """
 
-    data = MoleculeDataset([MoleculeDatapoint(line=[smile], config=config) for smile in smiles])
+    data = MoleculeDataset([MoleculeDatapoint(line=[smile]) for smile in smiles])
 
     # Filter out invalid SMILES
     if skip_invalid_smiles:
@@ -538,7 +536,7 @@ def load_args(path: str):
     return torch.load(path, map_location=lambda storage, loc: storage)['args']
 
 
-def get_ffn_layer_id(model: GroverFinetuneTask):
+def get_ffn_layer_id(model: GROVERFinetuneModel):
     """
     Get the ffn layer id for GroverFinetune Task. (Adhoc!)
     :param model:
@@ -557,7 +555,7 @@ def build_optimizer(model: nn.Module, config):
     """
 
     # Only adjust the learning rate for the GroverFinetuneTask.
-    if type(model) == GroverFinetuneTask:
+    if type(model) == GROVERFinetuneModel:
         ffn_params = get_ffn_layer_id(model)
     else:
         # if not, init adam optimizer normally.
@@ -737,6 +735,6 @@ def build_model(config, model_idx=0):
     else:
         config.output_size = 1
 
-    model = GroverFinetuneTask(config)
+    model = GROVERFinetuneModel(config)
     initialize_weights(model=model, model_idx=model_idx)
     return model

@@ -9,11 +9,11 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ..data.molgraph import MolCollator
-from ..data.moldataset import MoleculeDataset
-from ..data.scaler import StandardScaler
-from ..util.config import GroverConfig
-from ..util.utils import (
+from mubench.grover.data.molgraph import MolCollator
+from mubench.grover.data.moldataset import MoleculeDataset
+from mubench.utils.scaler import StandardScaler
+from mubench.grover.util.config import GroverConfig
+from mubench.grover.util.utils import (
     get_data,
     get_data_from_smiles,
     load_args,

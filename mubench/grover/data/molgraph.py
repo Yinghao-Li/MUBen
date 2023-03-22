@@ -86,15 +86,13 @@ class MolGraph:
     - b2revb: A mapping from a bond index to the index of the reverse bond.
     """
 
-    def __init__(self, smiles: str, args):
+    def __init__(self, smiles: str, bond_drop_rate):
         """
         Computes the graph structure and featurization of a molecule.
 
         :param smiles: A smiles string.
-        :param args: Arguments.
         """
         self.smiles = smiles
-        self.args = args
         self.n_atoms = 0  # number of atoms
         self.n_bonds = 0  # number of bonds
         self.f_atoms = []  # mapping from atom index to atom features
@@ -140,8 +138,8 @@ class MolGraph:
                 if bond is None:
                     continue
 
-                if args.bond_drop_rate > 0:
-                    if np.random.binomial(1, args.bond_drop_rate):
+                if bond_drop_rate > 0:
+                    if np.random.binomial(1, bond_drop_rate):
                         continue
 
                 f_bond = self.bond_features(bond)
@@ -282,13 +280,6 @@ class BatchMolGraph:
         self.a_scope = torch.LongTensor(self.a_scope)
         self.b_scope = torch.LongTensor(self.b_scope)
 
-    def set_new_atom_feature(self, f_atoms):
-        """
-        Set the new atom feature. Do not update bond feature.
-        :param f_atoms:
-        """
-        self.f_atoms = f_atoms
-
     def get_components(self) -> \
             Tuple[FloatTensor, FloatTensor, LongTensor, LongTensor, LongTensor, LongTensor, LongTensor, LongTensor]:
         """
@@ -298,36 +289,6 @@ class BatchMolGraph:
         and two lists indicating the scope of the atoms and bonds (i.e. which molecules they belong to).
         """
         return self.f_atoms, self.f_bonds, self.a2b, self.b2a, self.b2revb, self.a_scope, self.b_scope, self.a2a
-
-    def get_b2b(self) -> torch.LongTensor:
-        """
-        Computes (if necessary) and returns a mapping from each bond index to all the incoming bond indices.
-
-        :return: A PyTorch tensor containing the mapping from each bond index to all the incoming bond indices.
-        """
-
-        if self.b2b is None:
-            b2b = self.a2b[self.b2a]  # num_bonds x max_num_bonds
-            # b2b includes reverse edge for each bond so need to mask out
-            revmask = (b2b != self.b2revb.unsqueeze(1).repeat(1, b2b.size(1))).long()  # num_bonds x max_num_bonds
-            self.b2b = b2b * revmask
-
-        return self.b2b
-
-    def get_a2a(self) -> torch.LongTensor:
-        """
-        Computes (if necessary) and returns a mapping from each atom index to all neighboring atom indices.
-
-        :return: A PyTorch tensor containing the mapping from each bond index to all the incodming bond indices.
-        """
-        if self.a2a is None:
-            # b = a1 --> a2
-            # a2b maps a2 to all incoming bonds b
-            # b2a maps each bond b to the atom it comes from a1
-            # thus b2a[a2b] maps atom a2 to neighboring atoms a1
-            self.a2a = self.b2a[self.a2b]  # num_atoms x max_num_bonds
-
-        return self.a2a
 
 
 def mol2graph(smiles_batch: List[str], shared_dict, args) -> BatchMolGraph:
@@ -365,10 +326,9 @@ class MolCollator(object):
 
     def __call__(self, batch):
         smiles_batch = [d.smiles for d in batch]
-        features_batch = [d.features for d in batch]
         target_batch = [d.targets for d in batch]
         batch_mol_graph = mol2graph(smiles_batch, self.shared_dict, self.args)
         batch = batch_mol_graph.get_components()
         mask = torch.Tensor([[x is not None for x in tb] for tb in target_batch])
         targets = torch.Tensor([[0 if x is None else x for x in tb] for tb in target_batch])
-        return smiles_batch, batch, features_batch, mask, targets
+        return smiles_batch, batch, mask, targets

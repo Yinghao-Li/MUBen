@@ -28,3 +28,10 @@ def rdkit_2d_features_normalized_generator(mol: Molecule) -> np.ndarray:
     # replace nan values
     features = np.where(np.isnan(features), 0, features)
     return features
+
+
+# Fix nans in features
+# if self.features is not None:
+#     replace_token = 0
+#     self.features = np.where(np.isnan(self.features), replace_token, self.features)
+

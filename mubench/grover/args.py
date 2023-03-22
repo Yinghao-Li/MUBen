@@ -234,7 +234,7 @@ class GroverArguments:
     )
     bond_drop_rate: Optional[float] = field(
         default=0,
-        metadata={'help': 'Drop out bond in molecular.'}
+        metadata={'help': 'Drop out bond in molecules.'}
     )
     distinct_init: Optional[bool] = field(
         default=False,
@@ -274,7 +274,7 @@ class GroverArguments:
 
 
 @dataclass
-class GroverConfig(BaseConfig, GroverArguments):
+class Config(BaseConfig, GroverArguments):
     """
     Grover model11 & trainer configuration
     """
@@ -287,7 +287,7 @@ class GroverConfig(BaseConfig, GroverArguments):
     crossval_index_sets = None
     regression_scaling = True
 
-    def from_train_args(self, args: Namespace) -> "GroverConfig":
+    def from_train_args(self, args: Namespace) -> "Config":
 
         self.from_args(args)
 
@@ -344,7 +344,7 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         return self
 
-    def from_predict_args(self, args) -> "GroverConfig":
+    def from_predict_args(self, args) -> "Config":
 
         self.from_args(args)
 
