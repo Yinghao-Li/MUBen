@@ -5,7 +5,6 @@ import os
 import torch
 import pickle
 import logging
-from argparse import Namespace
 from tempfile import TemporaryDirectory
 
 from dataclasses import dataclass

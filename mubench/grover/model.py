@@ -136,14 +136,12 @@ class GROVERFinetuneModel(nn.Module):
             else:
                 raise ValueError(f'Dataset type "{args.dataset_type}" not supported.')
 
-            # TODO: Here, should we need to involve the model status? Using len(preds) is just a hack.
             if type(preds) is not tuple:
                 # in eval mode.
                 return pred_loss(preds, targets)
 
             # in train mode.
             dist_loss = nn.MSELoss(reduction='none')
-            # dist_loss = nn.CosineSimilarity(dim=0)
 
             dist = dist_loss(preds[0], preds[1])
             pred_loss1 = pred_loss(preds[0], targets)
@@ -153,23 +151,23 @@ class GROVERFinetuneModel(nn.Module):
         return loss_func
 
     def forward(self, batch, **kwargs):
-        _, _, _, _, _, a_scope, _, _ = batch
+        molecule_components = batch.molecule_components
+        _, _, _, _, _, a_scope, _, _ = molecule_components
 
-        output = self.grover(batch)
+        output = self.grover(molecule_components)
         # Share readout
         mol_atom_from_bond_output = self.readout(output["atom_from_bond"], a_scope)
         mol_atom_from_atom_output = self.readout(output["atom_from_atom"], a_scope)
 
-        if self.training:
-            atom_ffn_output = self.mol_atom_from_atom_ffn(mol_atom_from_atom_output)
-            bond_ffn_output = self.mol_atom_from_bond_ffn(mol_atom_from_bond_output)
-            return atom_ffn_output, bond_ffn_output
-        else:
-            atom_ffn_output = self.mol_atom_from_atom_ffn(mol_atom_from_atom_output)
-            bond_ffn_output = self.mol_atom_from_bond_ffn(mol_atom_from_bond_output)
-            if self.classification:
-                atom_ffn_output = self.sigmoid(atom_ffn_output)
-                bond_ffn_output = self.sigmoid(bond_ffn_output)
-            output = (atom_ffn_output + bond_ffn_output) / 2
-
-        return output
+        atom_ffn_output = self.mol_atom_from_atom_ffn(mol_atom_from_atom_output)
+        bond_ffn_output = self.mol_atom_from_bond_ffn(mol_atom_from_bond_output)
+        return atom_ffn_output, bond_ffn_output
+        # else:
+        #     atom_ffn_output = self.mol_atom_from_atom_ffn(mol_atom_from_atom_output)
+        #     bond_ffn_output = self.mol_atom_from_bond_ffn(mol_atom_from_bond_output)
+        #     if self.classification:
+        #         atom_ffn_output = self.sigmoid(atom_ffn_output)
+        #         bond_ffn_output = self.sigmoid(bond_ffn_output)
+        #     output = (atom_ffn_output + bond_ffn_output) / 2
+        #
+        # return output

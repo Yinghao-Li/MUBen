@@ -9,6 +9,7 @@ import logging
 import numpy as np
 import torch
 from rdkit import Chem
+from seqlbtoolkit.training.dataset import Batch
 
 logger = logging.getLogger(__name__)
 
@@ -232,7 +233,7 @@ class MolGraph:
         return self
 
 
-class BatchMolGraph:
+class BatchMolGraph(Batch):
     """
     A BatchMolGraph represents the graph structure and featurization of a batch of molecules.
 
@@ -247,6 +248,7 @@ class BatchMolGraph:
     """
 
     def __init__(self, mol_graphs: List[MolGraph]):
+        super().__init__()
 
         self.atom_fdim = get_atom_fdim()
         self.bond_fdim = get_bond_fdim() + self.atom_fdim
@@ -318,7 +320,7 @@ def mol2graph(smiles_batch: List[str], shared_dict, args) -> BatchMolGraph:
         if smiles in shared_dict:
             mol_graph = shared_dict[smiles]
         else:
-            mol_graph = MolGraph(smiles, args)
+            mol_graph = MolGraph(smiles, args.bond_drop_rate)
             if not args.no_cache:
                 shared_dict[smiles] = mol_graph
         mol_graphs.append(mol_graph)

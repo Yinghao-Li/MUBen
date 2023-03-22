@@ -522,7 +522,6 @@ class MTBlock(nn.Module):
                  dropout=0.0,
                  bias=True,
                  atom_messages=False,
-                 cuda=True,
                  res_connection=False):
         """
 
@@ -821,9 +820,6 @@ class GTransEncoder(nn.Module):
 
     def forward(self, batch, features_batch=None):
         f_atoms, f_bonds, a2b, b2a, b2revb, a_scope, b_scope, a2a = batch
-        if self.cuda or next(self.parameters()).is_cuda:
-            f_atoms, f_bonds, a2b, b2a, b2revb = f_atoms.cuda(), f_bonds.cuda(), a2b.cuda(), b2a.cuda(), b2revb.cuda()
-            a2a = a2a.cuda()
 
         node_batch = f_atoms, f_bonds, a2b, b2a, b2revb, a_scope, b_scope, a2a
         edge_batch = f_atoms, f_bonds, a2b, b2a, b2revb, a_scope, b_scope, a2a

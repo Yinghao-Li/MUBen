@@ -9,8 +9,10 @@ import logging
 import torch.nn as nn
 from tqdm.auto import tqdm
 from torch.optim import Adam
+from torch.optim.lr_scheduler import StepLR
 from typing import Optional
 from functools import cached_property
+from scipy.special import softmax, expit
 
 from seqlbtoolkit.training.train import BaseTrainer
 from seqlbtoolkit.training.status import Status
@@ -69,7 +71,20 @@ class Trainer(BaseTrainer, ABC):
         )
 
     def initialize_optimizer(self):
+        """
+        Initialize model optimizer
+        """
         self._optimizer = Adam(self._model.parameters(), lr=self.config.lr)
+        return self
+
+    def initialize_scheduler(self):
+        """
+        Initialize learning rate scheduler
+        """
+        # Notice that this scheduler does not change the lr!
+        # This implementation is for the compatibility with other models that are trained with functional schedulers
+        self._scheduler = StepLR(optimizer=self._optimizer, step_size=int(1e9), gamma=1)
+        return self
 
     def initialize_loss(self):
 
@@ -149,13 +164,15 @@ class Trainer(BaseTrainer, ABC):
         num_items = 0
         for batch in data_loader:
             batch.to(self.config.device)
+
+            self._optimizer.zero_grad()
             logits = self.model(batch)
 
             loss = self.get_loss(logits, batch)
             loss.backward()
 
             self._optimizer.step()
-            self._optimizer.zero_grad()
+            self._scheduler.step()
 
             avg_loss += loss.item() * len(batch)
             num_items += len(batch)
@@ -180,16 +197,17 @@ class Trainer(BaseTrainer, ABC):
         """
 
         # modify data shapes to accommodate different tasks
+        lbs, masks = batch.lbs, batch.masks  # so that we don't mess up batch instances
         if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
             # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
             logits = logits.view(-1, self.config.n_lbs)
-            batch.lbs = batch.lbs.view(-1)
-            batch.masks = batch.masks.view(-1)
+            lbs = lbs.view(-1)
+            masks = masks.view(-1)
         if self.config.task_type == 'regression' and self.config.regression_with_variance:
             logits = logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
 
-        loss = self._loss_fn(logits, batch.lbs)
-        loss = torch.sum(loss * batch.masks) / batch.masks.sum()
+        loss = self._loss_fn(logits, lbs)
+        loss = torch.sum(loss * masks) / masks.sum()
         return loss
 
     def inference(self, dataset, batch_size: Optional[int] = None):
@@ -201,35 +219,45 @@ class Trainer(BaseTrainer, ABC):
         )
         self._model.eval()
 
-        preds = list()
+        logits_list = list()
 
         with torch.no_grad():
             for batch in dataloader:
                 batch.to(self.config.device)
                 logits = self.model(batch)
-                preds.append(logits.detach().cpu())
+                logits_list.append(logits.detach().cpu())
 
-        preds = torch.cat(preds, dim=0).numpy()
+        logits = torch.cat(logits_list, dim=0).numpy()
 
-        return preds
+        return logits
 
     def evaluate(self, dataset, n_run: Optional[int] = 1, return_preds: Optional[bool] = False):
 
         if n_run == 1:
 
-            preds = self.inference(dataset)
+            preds = self.normalize_logits(self.inference(dataset))
             metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
 
         else:
             preds = list()
             for i_run in (tqdm_run := tqdm(range(n_run))):
                 tqdm_run.set_description(f'[Test {i_run}]')
-                preds.append(self.inference(dataset))
+                preds.append(self.normalize_logits(self.inference(dataset)))
             preds = np.stack(preds)
-
             metrics = self.get_metrics(dataset.lbs, preds.mean(axis=0), dataset.masks)
 
         return metrics if not return_preds else (metrics, preds)
+
+    def normalize_logits(self, logits):
+
+        if self.config.task_type == 'classification':
+            if len(logits.shape) > 1 and logits.shape[-1] >= 2:
+                preds = softmax(logits, axis=-1)
+            else:
+                preds = expit(logits)  # sigmoid function
+        else:
+            preds = logits if logits.shape[-1] == 1 or len(logits.shape) == 1 else logits[..., 0]
+        return preds
 
     def eval_and_save(self,
                       step_idx: Optional[int] = None,

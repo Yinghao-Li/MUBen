@@ -38,4 +38,4 @@ class Collator:
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))
 
-        return Batch(molecule_graphs=molecule_graphs_batch, lbs=lbs_batch, masks=masks_batch)
+        return Batch(molecule_components=molecule_graphs_batch.get_components(), lbs=lbs_batch, masks=masks_batch)

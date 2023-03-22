@@ -36,7 +36,10 @@ class ValidMetric(Metric):
             setattr(self, k, v)
 
 
-def calculate_classification_metrics(lbs: np.ndarray, logits: np.ndarray, metrics: Union[str, List[str]]):
+def calculate_classification_metrics(lbs: np.ndarray,
+                                     logits: np.ndarray,
+                                     metrics: Union[str, List[str]],
+                                     normalized: Optional[bool] = False):
     """
     Calculate the classification metrics
 
@@ -45,6 +48,7 @@ def calculate_classification_metrics(lbs: np.ndarray, logits: np.ndarray, metric
     lbs: true labels
     logits: predicted logits, of shape (dataset_size, n_tasks, n_lbs)
     metrics: which metric to calculate
+    normalized: whether the logits are already normalized and became probabilities
 
     Returns
     -------
@@ -52,25 +56,29 @@ def calculate_classification_metrics(lbs: np.ndarray, logits: np.ndarray, metric
     """
     if isinstance(metrics, str):
         metrics = [metrics]
-    if len(logits.shape) > 1 and logits.shape[-1] >= 2:
-        preds = softmax(logits, axis=-1)
-    else:
-        preds = expit(logits)  # sigmoid function
 
-    assert not (len(logits.shape) > 1 and preds.shape[-1] > 2), \
+    if not normalized:
+        if len(logits.shape) > 1 and logits.shape[-1] >= 2:
+            probs = softmax(logits, axis=-1)
+        else:
+            probs = expit(logits)  # sigmoid function
+    else:
+        probs = logits
+
+    assert not (len(logits.shape) > 1 and probs.shape[-1] > 2), \
         ValueError('Currently only support binary classification metrics!')
 
     results = dict()
     for metric in metrics:
         if metric == 'roc_auc':
-            if preds.shape[-1] == 2:
-                preds = preds[..., 1]
-            val = roc_auc_score(lbs, preds)
+            if probs.shape[-1] == 2:
+                probs = probs[..., 1]
+            val = roc_auc_score(lbs, probs)
 
         elif metric == 'prc_auc':
-            if preds.shape[-1] == 2:
-                preds = preds[..., 1]
-            p, r, _ = precision_recall_curve(lbs, preds)
+            if probs.shape[-1] == 2:
+                probs = probs[..., 1]
+            p, r, _ = precision_recall_curve(lbs, probs)
             val = auc(r, p)
 
         else:
@@ -81,14 +89,14 @@ def calculate_classification_metrics(lbs: np.ndarray, logits: np.ndarray, metric
     return ValidMetric(**results)
 
 
-def calculate_regression_metrics(lbs: np.ndarray, logits: np.ndarray, metrics: Union[str, List[str]]):
+def calculate_regression_metrics(lbs: np.ndarray, preds: np.ndarray, metrics: Union[str, List[str]]):
     """
     Calculate the regression metrics
 
     Parameters
     ----------
     lbs: true labels
-    logits: predicted logits, of shape (dataset_size, n_tasks, n_lbs)
+    preds: predicted values, of shape (dataset_size, n_tasks)
     metrics: which metric to calculate
 
     Returns
@@ -97,7 +105,6 @@ def calculate_regression_metrics(lbs: np.ndarray, logits: np.ndarray, metrics: U
     """
     if isinstance(metrics, str):
         metrics = [metrics]
-    preds = logits if logits.shape[-1] == 1 or len(logits.shape) == 1 else logits[..., 0]
 
     results = dict()
     for metric in metrics:

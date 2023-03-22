@@ -10,7 +10,6 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-# noinspection PyArgumentList
 def set_logging(log_path: Optional[str] = None):
     """
     setup logging
