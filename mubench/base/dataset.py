@@ -67,7 +67,7 @@ class Dataset(BaseDataset):
         ))
         # Load Pre-processed dataset if exist
         if os.path.exists(preprocessed_path) and not config.ignore_preprocessed_dataset:
-            logger.info(f"Loading dataset {preprocessed_path}")
+            logger.info(f"Loading pre-processed dataset {preprocessed_path}")
             self.load(preprocessed_path)
         # else, load dataset from csv and generate features
         else:
@@ -79,19 +79,17 @@ class Dataset(BaseDataset):
             else:
                 raise FileNotFoundError(f"File {file_path} does not exist!")
 
-            self.create_features(feature_type=config.feature_type)
+            logger.info("Creating features")
+            self.create_features(config)
 
             # Always save pre-processed dataset to disk
+            logger.info("Saving pre-processed dataset")
             self.save(preprocessed_path)
 
-        self.data_instances = feature_lists_to_instance_list(
-            DataInstance,
-            features=self.features, smiles=self.smiles, lbs=self.lbs, masks=self.masks
-        )
-
+        self.data_instances = self.get_instances()
         return self
 
-    def create_features(self, feature_type):
+    def create_features(self, config):
         """
         Create data features
 
@@ -99,12 +97,22 @@ class Dataset(BaseDataset):
         -------
         self
         """
+        feature_type = config.feature_type
         if feature_type == 'rdkit':
             logger.info("Generating normalized RDKit features")
             self._features = np.stack([rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)])
         else:
             self._features = np.empty(len(self)) * np.nan
         return self
+
+    def get_instances(self):
+
+        data_instances = feature_lists_to_instance_list(
+            DataInstance,
+            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
+        )
+
+        return data_instances
 
     def read_csv(self, file_path: str):
         """

@@ -17,53 +17,7 @@ class Dataset(BaseDataset):
 
         self._atom_ids = None
 
-    def prepare(self, config, partition):
-        """
-        Prepare dataset for training and test
-
-        Parameters
-        ----------
-        config: configurations
-        partition: dataset partition; in [train, valid, test]
-
-        Returns
-        -------
-        self
-        """
-
-        assert partition in ['train', 'valid', 'test'], \
-            ValueError(f"Argument `partition` should be one of 'train', 'valid' or 'test'!")
-
-        preprocessed_path = os.path.normpath(os.path.join(
-            config.data_dir, "processed", config.model_name, f"{partition}.pt"
-        ))
-        # Load Pre-processed dataset if exist
-        if os.path.exists(preprocessed_path) and not config.ignore_preprocessed_dataset:
-            logger.info(f"Loading dataset {preprocessed_path}")
-            self.load(preprocessed_path)
-        # else, load dataset from csv and generate features
-        else:
-            file_path = os.path.normpath(os.path.join(config.data_dir, f"{partition}.csv"))
-            logger.info(f"Loading dataset {file_path}")
-
-            if file_path and os.path.exists(file_path):
-                self.read_csv(file_path)
-            else:
-                raise FileNotFoundError(f"File {file_path} does not exist!")
-
-            self.create_features(tokenizer_name=config.pretrained_model_name_or_path)
-
-            # Always save pre-processed dataset to disk
-            self.save(preprocessed_path)
-
-        self.data_instances = feature_lists_to_instance_list(
-            DataInstance,
-            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
-        )
-
-        return self
-
-    def create_features(self, tokenizer_name):
+    def create_features(self, config):
         """
         Create data features
 
@@ -71,7 +25,17 @@ class Dataset(BaseDataset):
         -------
         self
         """
+        tokenizer_name = config.pretrained_model_name_or_path
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
         tokenized_instances = tokenizer(self._smiles, add_special_tokens=True)
 
         self._atom_ids = tokenized_instances.input_ids
+
+    def get_instances(self):
+
+        data_instances = feature_lists_to_instance_list(
+            DataInstance,
+            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
+        )
+
+        return data_instances

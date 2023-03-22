@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def get_model_args():
     """
-    Get model11 structure related parameters
+    Get model structure related parameters
 
     :return: a list containing parameters
     """
@@ -528,10 +528,10 @@ def makedirs(path: str, isfile: bool = False):
 
 def load_args(path: str):
     """
-    Loads the arguments a model11 was trained with.
+    Loads the arguments a model was trained with.
 
-    :param path: Path where model11 checkpoint is saved.
-    :return: The arguments Namespace that the model11 was trained with.
+    :param path: Path where model checkpoint is saved.
+    :return: The arguments Namespace that the model was trained with.
     """
     return torch.load(path, map_location=lambda storage, loc: storage)['args']
 
@@ -549,7 +549,7 @@ def build_optimizer(model: nn.Module, config):
     """
     Builds an Optimizer.
 
-    :param model: The model11 to optimize.
+    :param model: The model to optimize.
     :param config: Arguments.
     :return: An initialized Optimizer.
     """
@@ -580,7 +580,7 @@ def build_lr_scheduler(optimizer, config):
 
     param optimizer: The Optimizer whose learning rate will be scheduled.
     param args: Arguments.
-    param total_epochs: The total number of epochs for which the model11 will be task.
+    param total_epochs: The total number of epochs for which the model will be task.
     return: An initialized learning rate scheduler.
     """
 
@@ -598,34 +598,26 @@ def build_lr_scheduler(optimizer, config):
     )
 
 
-def load_checkpoint(path: str,
-                    current_args=None,
-                    cuda: bool = None):
+def load_checkpoint(config):
     """
-    Loads a model11 checkpoint.
+    Loads a model checkpoint.
 
-    :param path: Path where checkpoint is saved.
-    :param current_args: The current arguments. Replaces the arguments loaded from the checkpoint if provided.
-    :param cuda: Whether to move model11 to cuda.
+    :param config: The current arguments. Replaces the arguments loaded from the checkpoint if provided.
     :return: The loaded MPNN.
     """
 
-    # Load model11 and args
-    state = torch.load(path, map_location=lambda storage, loc: storage)
+    # Load model and args
+    state = torch.load(config.checkpoint_path, map_location=lambda storage, loc: storage)
     args, loaded_state_dict = state['args'], state['state_dict']
-    model_ralated_args = get_model_args()
+    model_args = get_model_args()
 
-    if current_args is not None:
+    if config is not None:
         for key, value in vars(args).items():
-            if key in model_ralated_args:
-                setattr(current_args, key, value)
-    else:
-        current_args = args
+            if key in model_args:
+                setattr(config, key, value)
 
-    # args.cuda = cuda if cuda is not None else args.cuda
-
-    # Build model11
-    model = build_model(current_args)
+    # Build model
+    model = build_model(config)
     model_state_dict = model.state_dict()
 
     # Skip missing parameters and parameters of mismatched size
@@ -633,21 +625,17 @@ def load_checkpoint(path: str,
     for param_name in loaded_state_dict.keys():
         new_param_name = param_name
         if new_param_name not in model_state_dict:
-            logger.info(f'Pretrained parameter "{param_name}" cannot be found in model11 parameters.')
+            logger.info(f'Pretrained parameter "{param_name}" cannot be found in model parameters.')
         elif model_state_dict[new_param_name].shape != loaded_state_dict[param_name].shape:
             logger.info(f'Pretrained parameter "{param_name}" '
                         f'of shape {loaded_state_dict[param_name].shape} does not match corresponding '
-                        f'model11 parameter of shape {model_state_dict[new_param_name].shape}.')
+                        f'model parameter of shape {model_state_dict[new_param_name].shape}.')
         else:
             pretrained_state_dict[new_param_name] = loaded_state_dict[param_name]
     logger.info(f'Pretrained parameter loaded.')
     # Load pretrained weights
     model_state_dict.update(pretrained_state_dict)
     model.load_state_dict(model_state_dict)
-
-    if cuda:
-        logger.info('Moving model11 to cuda')
-        model = model.cuda()
 
     return model
 
@@ -657,7 +645,7 @@ def get_loss_func(config, model=None):
     Gets the loss function corresponding to a given dataset type.
 
     :param config: Namespace containing the dataset type ("classification" or "regression").
-    :param model: model11
+    :param model: model
     :return: A PyTorch loss function.
     """
     if hasattr(model, "get_loss_func"):
@@ -672,9 +660,9 @@ def get_loss_func(config, model=None):
 
 def load_scalars(path: str):
     """
-    Loads the scalars a model11 was trained with.
+    Loads the scalars a model was trained with.
 
-    :param path: Path where model11 checkpoint is saved.
+    :param path: Path where model checkpoint is saved.
     :return: A tuple with the data scaler and the features scaler.
     """
     state = torch.load(path, map_location=lambda storage, loc: storage)
@@ -694,9 +682,9 @@ def save_checkpoint(path: str,
                     features_scaler,
                     config=None):
     """
-    Saves a model11 checkpoint.
+    Saves a model checkpoint.
 
-    param model11: A MPNN.
+    param model: A MPNN.
     param scaler: A StandardScaler fitted on the data.
     param features_scaler: A StandardScaler fitted on the features.
     param args: Arguments namespace.

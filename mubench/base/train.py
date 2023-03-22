@@ -107,7 +107,7 @@ class Trainer(BaseTrainer, ABC):
 
     def run(self):
 
-        logger.info("Training model11")
+        logger.info("Training model")
         self.train()
 
         test_metrics = self.test()
@@ -151,17 +151,7 @@ class Trainer(BaseTrainer, ABC):
             batch.to(self.config.device)
             logits = self.model(batch)
 
-            # modify data shapes to accommodate different tasks
-            if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
-                # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
-                logits = logits.view(-1, self.config.n_lbs)
-                batch.lbs = batch.lbs.view(-1)
-                batch.masks = batch.masks.view(-1)
-            if self.config.task_type == 'regression' and self.config.regression_with_variance:
-                logits = logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
-
-            loss = self._loss_fn(logits, batch.lbs)
-            loss = torch.sum(loss * batch.masks) / batch.masks.sum()
+            loss = self.get_loss(logits, batch)
             loss.backward()
 
             self._optimizer.step()
@@ -173,6 +163,34 @@ class Trainer(BaseTrainer, ABC):
             pbar.update()
 
         return avg_loss / num_items
+
+    def get_loss(self, logits, batch) -> torch.Tensor:
+        """
+        Children trainers can directly reload this function instead of
+        reloading `training epoch`, which could be more complicated
+
+        Parameters
+        ----------
+        logits: logits predicted by the model
+        batch: batched training data
+
+        Returns
+        -------
+        loss, torch.Tensor
+        """
+
+        # modify data shapes to accommodate different tasks
+        if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
+            # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
+            logits = logits.view(-1, self.config.n_lbs)
+            batch.lbs = batch.lbs.view(-1)
+            batch.masks = batch.masks.view(-1)
+        if self.config.task_type == 'regression' and self.config.regression_with_variance:
+            logits = logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
+
+        loss = self._loss_fn(logits, batch.lbs)
+        loss = torch.sum(loss * batch.masks) / batch.masks.sum()
+        return loss
 
     def inference(self, dataset, batch_size: Optional[int] = None):
 
@@ -217,7 +235,7 @@ class Trainer(BaseTrainer, ABC):
                       step_idx: Optional[int] = None,
                       metric_name: Optional[str] = 'f1'):
         """
-        Evaluate the model11 and save it if its performance exceeds the previous highest
+        Evaluate the model and save it if its performance exceeds the previous highest
         """
 
         valid_results = self.evaluate(self.valid_dataset)
@@ -230,7 +248,7 @@ class Trainer(BaseTrainer, ABC):
         logger.debug(f"[Valid step {step_idx}] results:")
         self.log_results(valid_results, logging_func=logger.debug)
 
-        # ----- check model11 performance and update buffer -----
+        # ----- check model performance and update buffer -----
         if self._status.model_buffer.check_and_update(getattr(valid_results, metric_name), self.model):
             logger.debug("Model buffer is updated!")
 
@@ -298,7 +316,7 @@ class Trainer(BaseTrainer, ABC):
              output_dir: Optional[str] = None,
              save_optimizer: Optional[bool] = False,
              save_scheduler: Optional[bool] = False,
-             model_name: Optional[str] = 'model11',
+             model_name: Optional[str] = 'model',
              optimizer_name: Optional[str] = 'optimizer',
              scheduler_name: Optional[str] = 'scheduler'):
 

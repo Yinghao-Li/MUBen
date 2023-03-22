@@ -5,12 +5,12 @@ https://github.com/chemprop/chemprop/blob/master/chemprop/features/featurization
 """
 from typing import List, Tuple, Union
 
+import logging
 import numpy as np
 import torch
 from rdkit import Chem
 
-# Atom feature sizes
-from torch import FloatTensor, LongTensor
+logger = logging.getLogger(__name__)
 
 MAX_ATOMIC_NUM = 100
 
@@ -214,14 +214,29 @@ class MolGraph:
             fbond += onek_encoding_unk(int(bond.GetStereo()), list(range(6)))
         return fbond
 
+    def remove_intermediate_attrs(self):
+        """
+        Remove intermediate attributes so that the class can be serialized
+
+        Returns
+        -------
+        self
+        """
+        attrs_to_keep = ("n_atoms", "n_bonds", "f_atoms", "f_bonds", "a2b", "b2a", "b2revb")
+
+        attrs = list(self.__dict__.keys())
+        for attr in attrs:
+            if not (attr.startswith("__") or attr in attrs_to_keep):
+                delattr(self, attr)
+
+        return self
+
 
 class BatchMolGraph:
     """
     A BatchMolGraph represents the graph structure and featurization of a batch of molecules.
 
     A BatchMolGraph contains the attributes of a MolGraph plus:
-    - smiles_batch: A list of smiles strings.
-    - n_mols: The number of molecules in the batch.
     - atom_fdim: The dimensionality of the atom features.
     - bond_fdim: The dimensionality of the bond features (technically the combined atom/bond features).
     - a_scope: A list of tuples indicating the start and end atom indices for each molecule.
@@ -232,8 +247,6 @@ class BatchMolGraph:
     """
 
     def __init__(self, mol_graphs: List[MolGraph]):
-        self.smiles_batch = [mol_graph.smiles for mol_graph in mol_graphs]
-        self.n_mols = len(self.smiles_batch)
 
         self.atom_fdim = get_atom_fdim()
         self.bond_fdim = get_bond_fdim() + self.atom_fdim
@@ -270,18 +283,18 @@ class BatchMolGraph:
         # max with 1 to fix a crash in rare case of all single-heavy-atom mols
         self.max_num_bonds = max(1, max(len(in_bonds) for in_bonds in a2b))
 
-        self.f_atoms = torch.FloatTensor(f_atoms)
-        self.f_bonds = torch.FloatTensor(f_bonds)
-        self.a2b = torch.LongTensor([a2b[a] + [0] * (self.max_num_bonds - len(a2b[a])) for a in range(self.n_atoms)])
-        self.b2a = torch.LongTensor(b2a)
-        self.b2revb = torch.LongTensor(b2revb)
+        self.f_atoms = torch.tensor(f_atoms, dtype=torch.float)
+        self.f_bonds = torch.tensor(f_bonds, dtype=torch.float)
+        self.a2b = torch.tensor([a2b[a] + [0] * (self.max_num_bonds - len(a2b[a])) for a in range(self.n_atoms)],
+                                dtype=torch.long)
+        self.b2a = torch.tensor(b2a, dtype=torch.long)
+        self.b2revb = torch.tensor(b2revb, dtype=torch.long)
         self.b2b = None  # try to avoid computing b2b b/c O(n_atoms^3)
         self.a2a = self.b2a[self.a2b]  # only needed if using atom messages
-        self.a_scope = torch.LongTensor(self.a_scope)
-        self.b_scope = torch.LongTensor(self.b_scope)
+        self.a_scope = torch.tensor(self.a_scope, dtype=torch.long)
+        self.b_scope = torch.tensor(self.b_scope, dtype=torch.long)
 
-    def get_components(self) -> \
-            Tuple[FloatTensor, FloatTensor, LongTensor, LongTensor, LongTensor, LongTensor, LongTensor, LongTensor]:
+    def get_components(self):
         """
         Returns the components of the BatchMolGraph.
 

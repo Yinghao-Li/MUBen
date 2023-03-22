@@ -1,5 +1,5 @@
 """
-The basic building blocks in model11.
+The basic building blocks in model.
 """
 import math
 from typing import Union
@@ -344,7 +344,7 @@ class Attention(nn.Module):
 
 class MultiHeadedAttention(nn.Module):
     """
-    The multi-head attention module. Take in model11 size and number of heads.
+    The multi-head attention module. Take in model size and number of heads.
     """
 
     def __init__(self, h, d_model, dropout=0.1, bias=False):
@@ -529,12 +529,11 @@ class MTBlock(nn.Module):
         :param args: the arguments.
         :param num_attn_head: the number of attention head.
         :param input_dim: the input dimension.
-        :param hidden_size: the hidden size of the model11.
+        :param hidden_size: the hidden size of the model.
         :param activation: the activation function.
         :param dropout: the dropout ratio
         :param bias: if true: all linear layer contains bias term.
         :param atom_messages: the MPNEncoder type
-        :param cuda: if true, the model11 run with GPU.
         :param res_connection: enables the skip-connection in MTBlock.
         """
         super(MTBlock, self).__init__()
@@ -543,7 +542,6 @@ class MTBlock(nn.Module):
         self.hidden_size = hidden_size
         self.heads = nn.ModuleList()
         self.input_dim = input_dim
-        self.cuda = cuda
         self.res_connection = res_connection
         self.act_func = get_activation_function(activation)
         self.dropout_layer = nn.Dropout(p=dropout)
@@ -626,12 +624,11 @@ class GTransEncoder(nn.Module):
                  num_attn_head=4,
                  atom_emb_output: Union[bool, str] = False,  # options: True, False, None, "atom", "bond", "both"
                  bias=False,
-                 cuda=True,
                  res_connection=False):
         """
 
         :param args: the arguments.
-        :param hidden_size: the hidden size of the model11.
+        :param hidden_size: the hidden size of the model.
         :param edge_fdim: the dimension of additional feature for edge/bond.
         :param node_fdim: the dimension of additional feature for node/atom.
         :param dropout: the dropout ratio
@@ -648,7 +645,6 @@ class GTransEncoder(nn.Module):
         -"both": aggregating to atom&bond. output size:  (num_atoms, hidden_size)    (num_bonds, hidden_size)
                                                          (num_bonds, hidden_size)    (num_atoms, hidden_size)
         :param bias: enable bias term in all linear layers.
-        :param cuda: run with cuda.
         :param res_connection: enables the skip-connection in MTBlock.
         """
         super(GTransEncoder, self).__init__()
@@ -662,7 +658,6 @@ class GTransEncoder(nn.Module):
         self.hidden_size = hidden_size
         self.dropout = dropout
         self.activation = activation
-        self.cuda = cuda
         self.bias = bias
         self.res_connection = res_connection
         self.edge_blocks = nn.ModuleList()
@@ -684,8 +679,7 @@ class GTransEncoder(nn.Module):
                                             activation=activation,
                                             dropout=dropout,
                                             bias=self.bias,
-                                            atom_messages=False,
-                                            cuda=cuda))
+                                            atom_messages=False))
             self.node_blocks.append(MTBlock(args=args,
                                             num_attn_head=num_attn_head,
                                             input_dim=node_input_dim_i,
@@ -693,8 +687,7 @@ class GTransEncoder(nn.Module):
                                             activation=activation,
                                             dropout=dropout,
                                             bias=self.bias,
-                                            atom_messages=True,
-                                            cuda=cuda))
+                                            atom_messages=True))
 
         self.atom_emb_output = atom_emb_output
 
@@ -785,8 +778,7 @@ class GTransEncoder(nn.Module):
                             a2a=None,
                             a2b=None,
                             b2a=None,
-                            b2revb=None
-                            ):
+                            b2revb=None):
         """
         Transfer the output of atom/bond multi-head attention to the final atom/bond output.
         :param to_atom: if true, the output is atom emebedding, otherwise, the output is bond embedding.

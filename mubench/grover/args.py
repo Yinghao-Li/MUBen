@@ -10,18 +10,29 @@ from tempfile import TemporaryDirectory
 
 from dataclasses import dataclass
 
-from mubench.grover.util.utils import makedirs
-
-from seqlbtoolkit.training.config import BaseConfig
+from ..base.args import (
+    Config as BaseConfig,
+    Arguments as BaseArguments
+)
+from .util.utils import makedirs
+from ..utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class GroverArguments:
+class Arguments(BaseArguments):
     """
     Grover fine-tuning/prediction arguments
     """
+    # --- Reload model arguments to adjust default values ---
+    model_name: Optional[str] = field(
+        default='GROVER', metadata={
+            'help': "Name of the model",
+            "choices": MODEL_NAMES
+        }
+    )
+
     task: Optional[str] = field(
         default=None,
         metadata={'choices': ['finetune', 'eval', 'predict', 'fingerprint'],
@@ -46,7 +57,7 @@ class GroverArguments:
     )
     save_dir: Optional[str] = field(
         default=None,
-        metadata={'help': 'Directory where model11 checkpoints will be saved'}
+        metadata={'help': 'Directory where model checkpoints will be saved'}
     )
     save_smiles_splits: Optional[bool] = field(
         default=False,
@@ -54,12 +65,12 @@ class GroverArguments:
     )
     checkpoint_dir: Optional[str] = field(
         default=None,
-        metadata={'help': 'Directory from which to load model11 checkpoints'
+        metadata={'help': 'Directory from which to load model checkpoints'
                           '(walks directory and ensembles all models that are found)'}
     )
     checkpoint_path: Optional[str] = field(
         default=None,
-        metadata={'help': 'Path to model11 checkpoint (.pt file)'}
+        metadata={'help': 'Path to model checkpoint (.pt file)'}
     )
 
     # Data splitting.
@@ -203,7 +214,7 @@ class GroverArguments:
     )
     select_by_loss: Optional[bool] = field(
         default=False,
-        metadata={'help': 'Use validation loss as refence standard to select best model11 to predict'}
+        metadata={'help': 'Use validation loss as refence standard to select best model to predict'}
     )
 
     embedding_output_type: Optional[str] = field(
@@ -238,7 +249,7 @@ class GroverArguments:
     )
     distinct_init: Optional[bool] = field(
         default=False,
-        metadata={'help': 'Using distinct weight init for model11 ensemble'}
+        metadata={'help': 'Using distinct weight init for model ensemble'}
     )
     fine_tune_coff: Optional[float] = field(
         default=1,
@@ -274,9 +285,14 @@ class GroverArguments:
 
 
 @dataclass
-class Config(BaseConfig, GroverArguments):
+class Config(Arguments, BaseConfig):
+    pass
+
+
+@dataclass
+class GroverConfig(BaseConfig, Arguments):
     """
-    Grover model11 & trainer configuration
+    Grover model & trainer configuration
     """
 
     cuda = None
@@ -287,7 +303,7 @@ class Config(BaseConfig, GroverArguments):
     crossval_index_sets = None
     regression_scaling = True
 
-    def from_train_args(self, args: Namespace) -> "Config":
+    def from_train_args(self, args) -> "GroverConfig":
 
         self.from_args(args)
 
@@ -344,25 +360,6 @@ class Config(BaseConfig, GroverArguments):
 
         return self
 
-    def from_predict_args(self, args) -> "Config":
-
-        self.from_args(args)
-
-        assert self.data_path
-        assert self.output_path
-        assert self.checkpoint_dir is not None or self.checkpoint_path is not None or self.checkpoint_paths is not None
-
-        self._update_checkpoint_args()
-
-        self.cuda = not self.no_cuda and torch.cuda.is_available()
-        del self.no_cuda
-
-        # Create directory for preds path
-        makedirs(self.output_path, isfile=True)
-        setattr(self, 'fingerprint', False)
-
-        return self
-
     def _update_checkpoint_args(self) -> None:
         """
         Walks the checkpoint directory to find all checkpoints, updating args.checkpoint_paths and args.ensemble_size.
@@ -395,4 +392,4 @@ class Config(BaseConfig, GroverArguments):
         self.ensemble_size = len(self.checkpoint_paths)
 
         if self.ensemble_size == 0:
-            raise ValueError(f'Failed to find any model11 checkpoints in directory "{self.checkpoint_dir}"')
+            raise ValueError(f'Failed to find any model checkpoints in directory "{self.checkpoint_dir}"')

@@ -27,7 +27,7 @@ class Arguments:
         default=None, metadata={'help': 'name of the wandb project.'}
     )
     wandb_name: Optional[str] = field(
-        default=None, metadata={'help': 'wandb model11 name.'}
+        default=None, metadata={'help': 'wandb model name.'}
     )
     disable_wandb: Optional[bool] = field(
         default=False, metadata={'help': 'Disable WandB even if relevant arguments are filled.'}
@@ -49,7 +49,7 @@ class Arguments:
         default='', metadata={'help': 'Directory to datasets'}
     )
     result_dir: Optional[str] = field(
-        default='./output', metadata={'help': "where to save model11 outputs."}
+        default='./output', metadata={'help': "where to save model outputs."}
     )
     ignore_preprocessed_dataset: Optional[bool] = field(
         default=False, metadata={"help": "Ignore pre-processed datasets and re-generate features if necessary."}
@@ -61,7 +61,7 @@ class Arguments:
     # --- Model Arguments ---
     model_name: Optional[str] = field(
         default='DNN', metadata={
-            'help': "Name of the model11",
+            'help': "Name of the model",
             "choices": MODEL_NAMES
         }
     )
@@ -94,7 +94,7 @@ class Arguments:
         default=32, metadata={'help': "Batch size."}
     )
     n_epochs: Optional[int] = field(
-        default=50, metadata={'help': "How many epochs to train the model11."}
+        default=50, metadata={'help': "How many epochs to train the model."}
     )
     lr: Optional[float] = field(
         default=1e-4, metadata={'help': "Learning Rate."}

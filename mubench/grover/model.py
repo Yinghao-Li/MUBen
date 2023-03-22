@@ -2,8 +2,6 @@
 The GROVER models for pretraining, finetuning and fingerprint generating.
 """
 
-import numpy as np
-import torch
 from torch import nn as nn
 from typing import List, Dict
 
@@ -27,22 +25,16 @@ class GROVEREmbedding(nn.Module):
         self.embedding_output_type = args.embedding_output_type
         edge_dim = get_bond_fdim() + get_atom_fdim()
         node_dim = get_atom_fdim()
-        if not hasattr(args, "backbone"):
-            print("No backbone specified in args, use gtrans backbone.")
-            args.backbone = "gtrans"
-        if args.backbone == "gtrans" or args.backbone == "dualtrans":
-            # dualtrans is the old name.
-            self.encoders = GTransEncoder(args,
-                                          hidden_size=args.hidden_size,
-                                          edge_fdim=edge_dim,
-                                          node_fdim=node_dim,
-                                          dropout=args.dropout,
-                                          activation=args.activation,
-                                          num_mt_block=args.num_mt_block,
-                                          num_attn_head=args.num_attn_head,
-                                          atom_emb_output=self.embedding_output_type,
-                                          bias=args.bias,
-                                          cuda=args.cuda)
+        self.encoders = GTransEncoder(args,
+                                      hidden_size=args.hidden_size,
+                                      edge_fdim=edge_dim,
+                                      node_fdim=node_dim,
+                                      dropout=args.dropout,
+                                      activation=args.activation,
+                                      num_mt_block=args.num_mt_block,
+                                      num_attn_head=args.num_attn_head,
+                                      atom_emb_output=self.embedding_output_type,
+                                      bias=args.bias)
 
     def forward(self, graph_batch: List) -> Dict:
         """
@@ -64,6 +56,48 @@ class GROVEREmbedding(nn.Module):
                     "atom_from_bond": output[1][0], "bond_from_bond": output[1][1]}
 
 
+def create_ffn(config):
+    """
+    Creates the feed-forward network for the model.
+
+    :param config: Arguments.
+    """
+    # Note: args.features_dim is set according the real loaded features data
+    if config.self_attention:
+        first_linear_dim = config.hidden_size * config.attn_out
+    else:
+        first_linear_dim = config.hidden_size
+
+    dropout = nn.Dropout(config.dropout)
+    activation = get_activation_function(config.activation)
+    # TODO: ffn_hidden_size
+    # Create FFN layers
+    if config.ffn_num_layers == 1:
+        ffn = [
+            dropout,
+            nn.Linear(first_linear_dim, config.output_size)
+        ]
+    else:
+        ffn = [
+            dropout,
+            nn.Linear(first_linear_dim, config.ffn_hidden_size)
+        ]
+        for _ in range(config.ffn_num_layers - 2):
+            ffn.extend([
+                activation,
+                dropout,
+                nn.Linear(config.ffn_hidden_size, config.ffn_hidden_size),
+            ])
+        ffn.extend([
+            activation,
+            dropout,
+            nn.Linear(config.ffn_hidden_size, config.output_size),
+        ])
+
+    # Create FFN model
+    return nn.Sequential(*ffn)
+
+
 class GROVERFinetuneModel(nn.Module):
     """
     The finetune
@@ -72,7 +106,6 @@ class GROVERFinetuneModel(nn.Module):
         super(GROVERFinetuneModel, self).__init__()
 
         self.hidden_size = config.hidden_size
-        self.iscuda = config.cuda
 
         self.grover = GROVEREmbedding(config)
 
@@ -83,56 +116,12 @@ class GROVERFinetuneModel(nn.Module):
         else:
             self.readout = Readout(rtype="mean", hidden_size=self.hidden_size)
 
-        self.mol_atom_from_atom_ffn = self.create_ffn(config)
-        self.mol_atom_from_bond_ffn = self.create_ffn(config)
+        self.mol_atom_from_atom_ffn = create_ffn(config)
+        self.mol_atom_from_bond_ffn = create_ffn(config)
 
         self.classification = config.dataset_type == 'classification'
         if self.classification:
             self.sigmoid = nn.Sigmoid()
-
-    def create_ffn(self, config):
-        """
-        Creates the feed-forward network for the model11.
-
-        :param config: Arguments.
-        """
-        # Note: args.features_dim is set according the real loaded features data
-        if config.self_attention:
-            first_linear_dim = config.hidden_size * config.attn_out
-            # TODO: Ad-hoc!
-            # if args.use_input_features:
-            first_linear_dim += config.features_dim
-        else:
-            first_linear_dim = config.hidden_size + config.features_dim
-
-        dropout = nn.Dropout(config.dropout)
-        activation = get_activation_function(config.activation)
-        # TODO: ffn_hidden_size
-        # Create FFN layers
-        if config.ffn_num_layers == 1:
-            ffn = [
-                dropout,
-                nn.Linear(first_linear_dim, config.output_size)
-            ]
-        else:
-            ffn = [
-                dropout,
-                nn.Linear(first_linear_dim, config.ffn_hidden_size)
-            ]
-            for _ in range(config.ffn_num_layers - 2):
-                ffn.extend([
-                    activation,
-                    dropout,
-                    nn.Linear(config.ffn_hidden_size, config.ffn_hidden_size),
-                ])
-            ffn.extend([
-                activation,
-                dropout,
-                nn.Linear(config.ffn_hidden_size, config.output_size),
-            ])
-
-        # Create FFN model11
-        return nn.Sequential(*ffn)
 
     @staticmethod
     def get_loss_func(args):

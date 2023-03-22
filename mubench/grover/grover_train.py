@@ -17,7 +17,7 @@ from mubench.utils.scaler import StandardScaler
 from mubench.grover.util.metrics import get_metric_func
 from mubench.grover.util.nn_utils import initialize_weights, param_count
 from mubench.grover.util.scheduler import NoamLR
-from mubench.grover.util.config import GroverConfig
+from mubench.grover.util.config import Config
 from mubench.grover.util.utils import (
     build_optimizer,
     build_lr_scheduler,
@@ -38,9 +38,9 @@ logger = logging.getLogger(__name__)
 
 
 # noinspection PyUnresolvedReferences
-def train(model, data, loss_func, optimizer, scheduler, shared_dict, config: GroverConfig, n_iter: int = 0):
+def train(model, data, loss_func, optimizer, scheduler, shared_dict, config: Config, n_iter: int = 0):
     """
-    Trains a model11 for an epoch.
+    Trains a model for an epoch.
 
     Parameters
     ----------
@@ -82,7 +82,7 @@ def train(model, data, loss_func, optimizer, scheduler, shared_dict, config: Gro
         if config.cuda:
             class_weights = class_weights.cuda()
 
-        # Run model11
+        # Run model
         model.zero_grad()
         preds = model(batch)
         loss = loss_func(preds, targets) * class_weights * mask
@@ -106,9 +106,9 @@ def train(model, data, loss_func, optimizer, scheduler, shared_dict, config: Gro
 
 
 # noinspection PyUnresolvedReferences
-def run_training(config: GroverConfig) -> List[float]:
+def run_training(config: Config) -> List[float]:
     """
-    Trains a model11 and returns test scores on the model11 checkpoint with the highest validation score.
+    Trains a model and returns test scores on the model checkpoint with the highest validation score.
 
     Parameters
     ----------
@@ -139,14 +139,14 @@ def run_training(config: GroverConfig) -> List[float]:
         save_dir = os.path.join(config.save_dir, f'model_{model_idx}')
         makedirs(save_dir)
 
-        # Load/build model11
+        # Load/build model
         if config.checkpoint_paths is not None:
             if len(config.checkpoint_paths) == 1:
                 cur_model = 0
             else:
                 cur_model = model_idx
             logger.info(f'Loading model {cur_model} from {config.checkpoint_paths[cur_model]}')
-            model = load_checkpoint(config.checkpoint_paths[cur_model], current_args=config)
+            model = load_checkpoint(config.checkpoint_paths[cur_model], config=config)
         else:
             logger.info(f'Building model {model_idx}')
             model = build_model(model_idx=model_idx, config=config)
@@ -160,7 +160,7 @@ def run_training(config: GroverConfig) -> List[float]:
 
         optimizer = build_optimizer(model, config)
 
-        # debug(model11)
+        # debug(model)
         logger.info(f'Number of parameters = {param_count(model):,}')
         if config.cuda:
             logger.info('Moving model to cuda')
@@ -231,26 +231,26 @@ def run_training(config: GroverConfig) -> List[float]:
                   't_time: {:.4f}s'.format(t_time),
                   'v_time: {:.4f}s'.format(v_time))
 
-            # Save model11 checkpoint if improved validation score
+            # Save model checkpoint if improved validation score
             if config.select_by_loss:
                 if val_loss < min_val_loss:
                     min_val_loss, best_epoch = val_loss, epoch
-                    save_checkpoint(os.path.join(save_dir, 'model11.pt'), model, scaler, features_scaler, config)
+                    save_checkpoint(os.path.join(save_dir, 'model.pt'), model, scaler, features_scaler, config)
             else:
                 if config.minimize_score and avg_val_score < best_score or \
                         not config.minimize_score and avg_val_score > best_score:
                     best_score, best_epoch = avg_val_score, epoch
-                    save_checkpoint(os.path.join(save_dir, 'model11.pt'), model, scaler, features_scaler, config)
+                    save_checkpoint(os.path.join(save_dir, 'model.pt'), model, scaler, features_scaler, config)
 
             if epoch - best_epoch > config.early_stop_epoch:
                 break
 
-        # Evaluate on test set using model11 with the best validation score
+        # Evaluate on test set using model with the best validation score
         if config.select_by_loss:
             logger.info(f'Model {model_idx} best val loss = {min_val_loss:.6f} on epoch {best_epoch}')
         else:
             logger.info(f'Model {model_idx} best validation {config.metric} = {best_score:.6f} on epoch {best_epoch}')
-        model = load_checkpoint(os.path.join(save_dir, 'model11.pt'), cuda=config.cuda)
+        model = load_checkpoint(os.path.join(save_dir, 'model.pt'), cuda=config.cuda)
 
         test_preds, _ = predict(
             model=model,
@@ -311,7 +311,7 @@ def run_training(config: GroverConfig) -> List[float]:
     return ensemble_scores
 
 
-def load_data(config: GroverConfig):
+def load_data(config: Config):
     """
     load the training data.
     """

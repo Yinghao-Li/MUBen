@@ -6,31 +6,25 @@ import numpy as np
 import torch
 import wandb
 import logging
-import torch.nn as nn
 from tqdm.auto import tqdm
 from torch.optim import Adam
 from typing import Optional
-from functools import cached_property
 
-from seqlbtoolkit.training.train import BaseTrainer
 from seqlbtoolkit.training.status import Status
 
 from ..utils.macro import EVAL_METRICS
-from ..base.metric import (
-    GaussianNLL,
-    calculate_classification_metrics,
-    calculate_regression_metrics
-)
+from ..base.train import Trainer as BaseTrainer
 from .collate import Collator
 from .model import GROVERFinetuneModel
-from .args import Config
+from .args import GroverConfig
+from .util.utils import load_checkpoint
 
 logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer, ABC):
     def __init__(self,
-                 config: Config,
+                 config: GroverConfig,
                  training_dataset=None,
                  valid_dataset=None,
                  test_dataset=None,
@@ -59,55 +53,14 @@ class Trainer(BaseTrainer, ABC):
         )
 
     def initialize_model(self):
-        self._model = DNN(
-            d_feature=self.config.d_feature,
-            n_lbs=self.config.n_lbs,
-            n_tasks=self.config.n_tasks,
-            n_hidden_layers=self.config.n_dnn_hidden_layers,
-            d_hidden=self.config.d_dnn_hidden,
-            p_dropout=self.config.dropout,
-        )
+        self._model = load_checkpoint(self.config)
 
     def initialize_optimizer(self):
         self._optimizer = Adam(self._model.parameters(), lr=self.config.lr)
 
-    def initialize_loss(self):
-
-        # Notice that the reduction should always be 'none' here to facilitate
-        # the following masking operation
-        if self.config.task_type == 'classification':
-            if self.config.binary_classification_with_softmax:
-                self._loss_fn = nn.CrossEntropyLoss(reduction='none')
-            else:
-                self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
-        else:
-            if self.config.regression_with_variance:
-                self._loss_fn = GaussianNLL(reduction='none')
-            else:
-                self._loss_fn = nn.MSELoss(reduction='none')
-
-        return self
-
-    @property
-    def training_dataset(self):
-        return self._training_dataset
-
-    @property
-    def valid_dataset(self):
-        return self._valid_dataset
-
-    @property
-    def test_dataset(self):
-        return self._test_dataset
-
-    @cached_property
-    def n_training_steps(self):
-        num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
-        return num_update_steps_per_epoch * self.config.n_epochs
-
     def run(self):
 
-        logger.info("Training model11")
+        logger.info("Training model")
         self.train()
 
         test_metrics = self.test()
@@ -217,7 +170,7 @@ class Trainer(BaseTrainer, ABC):
                       step_idx: Optional[int] = None,
                       metric_name: Optional[str] = 'f1'):
         """
-        Evaluate the model11 and save it if its performance exceeds the previous highest
+        Evaluate the model and save it if its performance exceeds the previous highest
         """
 
         valid_results = self.evaluate(self.valid_dataset)
@@ -230,7 +183,7 @@ class Trainer(BaseTrainer, ABC):
         logger.debug(f"[Valid step {step_idx}] results:")
         self.log_results(valid_results, logging_func=logger.debug)
 
-        # ----- check model11 performance and update buffer -----
+        # ----- check model performance and update buffer -----
         if self._status.model_buffer.check_and_update(getattr(valid_results, metric_name), self.model):
             logger.debug("Model buffer is updated!")
 
@@ -258,68 +211,3 @@ class Trainer(BaseTrainer, ABC):
             )
 
         return metrics
-
-    def get_metrics(self, lbs, preds, masks):
-        if masks.shape[-1] == 1 and len(masks.shape) > 1:
-            masks = masks.squeeze(-1)
-        bool_masks = masks.astype(bool)
-
-        if lbs.shape[-1] == 1 and len(lbs.shape) > 1:
-            lbs = lbs.squeeze(-1)
-        lbs = lbs[bool_masks]
-
-        if self.config.n_tasks > 1:
-            preds = preds.reshape(-1, self.config.n_tasks, self.config.n_lbs)
-        if preds.shape[-1] == 1 and len(preds.shape) > 1:
-            preds = preds.squeeze(-1)
-
-        preds = preds[bool_masks]
-
-        if self.config.task_type == 'classification':
-            metrics = calculate_classification_metrics(lbs, preds, self._valid_metric)
-        else:
-            metrics = calculate_regression_metrics(lbs, preds, self._valid_metric)
-
-        return metrics
-
-    @staticmethod
-    def log_results(metrics, logging_func=logger.info):
-
-        if isinstance(metrics, dict):
-            for key, val in metrics.items():
-                logging_func(f"[{key}]")
-                for k, v in val.items():
-                    logging_func(f"  {k}: {v:.4f}.")
-        else:
-            for k, v in metrics.items():
-                logging_func(f"  {k}: {v:.4f}.")
-
-    def save(self,
-             output_dir: Optional[str] = None,
-             save_optimizer: Optional[bool] = False,
-             save_scheduler: Optional[bool] = False,
-             model_name: Optional[str] = 'model11',
-             optimizer_name: Optional[str] = 'optimizer',
-             scheduler_name: Optional[str] = 'scheduler'):
-
-        os.makedirs(output_dir, exist_ok=True)
-        self._model.load_state_dict(self._status.model_buffer.model_state_dicts[0])
-        super().save(output_dir, save_optimizer, save_scheduler, model_name, optimizer_name, scheduler_name)
-
-    @staticmethod
-    def save_preds_to_pt(lbs, preds, masks, file_path: str):
-        """
-        Save results to disk as csv files
-        """
-
-        if not file_path.endswith('.pt'):
-            file_path = f"{file_path}.pt"
-
-        data_dict = {
-            "lbs": lbs,
-            "preds": preds,
-            "masks": masks
-        }
-
-        os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
-        torch.save(data_dict, file_path)

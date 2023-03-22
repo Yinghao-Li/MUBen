@@ -1,5 +1,5 @@
 """
-The utility function for model11 construction.
+The utility function for model construction.
 This implementation is adapted from
 https://github.com/chemprop/chemprop/blob/master/chemprop/nn_utils.py
 """
@@ -63,7 +63,7 @@ def get_activation_function(activation: str) -> nn.Module:
 
 def initialize_weights(model: nn.Module, distinct_init=False, model_idx=0):
     """
-    Initializes the weights of a model11 in place.
+    Initializes the weights of a model in place.
     """
     init_fns = [nn.init.kaiming_normal_, nn.init.kaiming_uniform_,
                 nn.init.xavier_normal_, nn.init.xavier_uniform_]

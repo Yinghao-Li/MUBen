@@ -1,5 +1,5 @@
 """
-The predict function using the finetuned model11 to make the prediction. .
+The predict function using the finetuned model to make the prediction. .
 """
 from typing import List, Tuple, Any
 
@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from mubench.grover.data.molgraph import MolCollator
 from mubench.grover.data.moldataset import MoleculeDataset
 from mubench.utils.scaler import StandardScaler
-from mubench.grover.util.config import GroverConfig
+from mubench.grover.util.config import Config
 from mubench.grover.util.utils import (
     get_data,
     get_data_from_smiles,
@@ -27,7 +27,7 @@ from mubench.grover.util.utils import (
 # noinspection PyUnresolvedReferences
 def predict(model: nn.Module,
             data: MoleculeDataset,
-            config: GroverConfig,
+            config: Config,
             batch_size: int,
             loss_func,
             shared_dict,
@@ -37,7 +37,7 @@ def predict(model: nn.Module,
 
     Parameters
     ----------
-    model: A model11.
+    model: A model.
     data: A MoleculeDataset.
     config: arguments
     batch_size: Batch size.
@@ -92,7 +92,7 @@ def predict(model: nn.Module,
 
 
 # noinspection PyUnresolvedReferences
-def make_predictions(args: GroverConfig, smiles: List[str] = None):
+def make_predictions(args: Config, smiles: List[str] = None):
     """
     Makes predictions. If smiles is provided, makes predictions on smiles.
     Otherwise makes predictions on args.test_data.
@@ -154,15 +154,15 @@ def make_predictions(args: GroverConfig, smiles: List[str] = None):
         if train_args.features_scaling:
             test_data.normalize_features(features_scaler)
 
-    # Predict with each model11 individually and sum predictions
+    # Predict with each model individually and sum predictions
     sum_preds = np.zeros((len(test_data), args.num_tasks))
     print(f'Predicting...')
     shared_dict = {}
     # loss_func = torch.nn.BCEWithLogitsLoss()
     count = 0
     for checkpoint_path in tqdm(args.checkpoint_paths, total=len(args.checkpoint_paths)):
-        # Load model11
-        model = load_checkpoint(checkpoint_path, cuda=args.cuda, current_args=args)
+        # Load model
+        model = load_checkpoint(checkpoint_path, cuda=args.cuda, config=args)
         model_preds, _ = predict(
             model=model,
             data=test_data,
@@ -217,7 +217,7 @@ def evaluate_predictions(preds: List[List[float]],
     """
     Evaluates predictions using a metric function and filtering out invalid targets.
 
-    param preds: A list of lists of shape (data_size, num_tasks) with model11 predictions.
+    param preds: A list of lists of shape (data_size, num_tasks) with model predictions.
     param targets: A list of lists of shape (data_size, num_tasks) with targets.
     param num_tasks: Number of tasks.
     param metric_func: Metric function which takes in a list of targets and a list of predictions.
@@ -273,7 +273,7 @@ def evaluate(model: nn.Module,
              loss_func,
              batch_size: int,
              dataset_type: str,
-             args: GroverConfig,
+             args: Config,
              shared_dict,
              scaler: StandardScaler = None) -> Tuple[List[float], Any]:
     """
@@ -281,7 +281,7 @@ def evaluate(model: nn.Module,
 
     Parameters
     ----------
-    model: A model11.
+    model: A model.
     data: A MoleculeDataset.
     num_tasks: Number of tasks.
     metric_func: Metric function which takes in a list of targets and a list of predictions.

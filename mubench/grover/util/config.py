@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from ..util.utils import makedirs
 
-from mubench.grover.args import GroverArguments
+from mubench.grover.args import Arguments
 
 from seqlbtoolkit.training.config import BaseConfig
 
@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class GroverConfig(BaseConfig, GroverArguments):
+class Config(BaseConfig, Arguments):
     """
-    Grover model11 & trainer configuration
+    Grover model & trainer configuration
     """
 
     cuda = None
@@ -30,7 +30,7 @@ class GroverConfig(BaseConfig, GroverArguments):
     crossval_index_sets = None
     regression_scaling = True
 
-    def from_train_args(self, args: Namespace) -> "GroverConfig":
+    def from_train_args(self, args: Namespace) -> "Config":
 
         self.from_args(args)
 
@@ -87,7 +87,7 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         return self
 
-    def from_predict_args(self, args) -> "GroverConfig":
+    def from_predict_args(self, args) -> "Config":
 
         self.from_args(args)
 
@@ -106,7 +106,7 @@ class GroverConfig(BaseConfig, GroverArguments):
 
         return self
 
-    def from_fingerprint_args(self, args) -> "GroverConfig":
+    def from_fingerprint_args(self, args) -> "Config":
 
         self.from_args(args)
 
@@ -154,4 +154,4 @@ class GroverConfig(BaseConfig, GroverArguments):
         self.ensemble_size = len(self.checkpoint_paths)
 
         if self.ensemble_size == 0:
-            raise ValueError(f'Failed to find any model11 checkpoints in directory "{self.checkpoint_dir}"')
+            raise ValueError(f'Failed to find any model checkpoints in directory "{self.checkpoint_dir}"')
