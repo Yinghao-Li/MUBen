@@ -10,7 +10,7 @@ from typing import Optional
 
 from ..base.train import Trainer as BaseTrainer
 from .collate import Collator
-from .args import GroverConfig
+from .args import Config
 from .model import NoamLR, load_checkpoint
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class Trainer(BaseTrainer, ABC):
     def __init__(self,
-                 config: GroverConfig,
+                 config: Config,
                  training_dataset=None,
                  valid_dataset=None,
                  test_dataset=None,

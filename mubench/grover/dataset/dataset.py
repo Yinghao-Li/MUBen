@@ -5,7 +5,7 @@ from seqlbtoolkit.training.dataset import (
 )
 
 from mubench.base.dataset import Dataset as BaseDataset
-from .molgraph import MolGraph
+from .molgraph import MolGraph, MolGraphAttrs
 
 
 class Dataset(BaseDataset):
@@ -23,7 +23,7 @@ class Dataset(BaseDataset):
         self
         """
         bond_drop_rate = config.bond_drop_rate
-        self._molecule_graph = [MolGraph(smiles, bond_drop_rate).remove_intermediate_attrs()
+        self._molecule_graph = [MolGraphAttrs().from_mol_graph(MolGraph(smiles, bond_drop_rate))
                                 for smiles in tqdm(self._smiles)]
 
     def get_instances(self):

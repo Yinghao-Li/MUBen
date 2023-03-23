@@ -33,7 +33,6 @@ class Collator:
         """
         molecule_graphs, lbs, masks = instance_list_to_feature_lists(instance_list)
 
-        # TODO: copied from GROVER implementation but may not be the most efficient way to batchify the graphs
         molecule_graphs_batch = BatchMolGraph(molecule_graphs)
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))

@@ -8,6 +8,7 @@ from typing import List, Tuple, Union
 import logging
 import numpy as np
 import torch
+from dataclasses import dataclass
 from rdkit import Chem
 from seqlbtoolkit.training.dataset import Batch
 
@@ -215,21 +216,21 @@ class MolGraph:
             fbond += onek_encoding_unk(int(bond.GetStereo()), list(range(6)))
         return fbond
 
-    def remove_intermediate_attrs(self):
-        """
-        Remove intermediate attributes so that the class can be serialized
 
-        Returns
-        -------
-        self
-        """
-        attrs_to_keep = ("n_atoms", "n_bonds", "f_atoms", "f_bonds", "a2b", "b2a", "b2revb")
+@dataclass
+class MolGraphAttrs:
+    n_atoms = None
+    n_bonds = None
+    f_atoms = None
+    f_bonds = None
+    a2b = None
+    b2a = None
+    b2revb = None
 
-        attrs = list(self.__dict__.keys())
+    def from_mol_graph(self, graph: MolGraph):
+        attrs = ("n_atoms", "n_bonds", "f_atoms", "f_bonds", "a2b", "b2a", "b2revb")
         for attr in attrs:
-            if not (attr.startswith("__") or attr in attrs_to_keep):
-                delattr(self, attr)
-
+            setattr(self, attr, getattr(graph, attr))
         return self
 
 
@@ -247,7 +248,7 @@ class BatchMolGraph(Batch):
     - a2a: (Optional): A mapping from an atom index to neighboring atom indices.
     """
 
-    def __init__(self, mol_graphs: List[MolGraph]):
+    def __init__(self, mol_graphs: List[MolGraphAttrs]):
         super().__init__()
 
         self.atom_fdim = get_atom_fdim()

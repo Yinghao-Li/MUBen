@@ -7,7 +7,7 @@ from typing import List, Dict
 
 from .layers import Readout, GTransEncoder
 from .utils_nn import get_activation_function
-from mubench.grover.dataset.molgraph import get_atom_fdim, get_bond_fdim
+from ..dataset.molgraph import get_atom_fdim, get_bond_fdim
 
 
 class GROVEREmbedding(nn.Module):
@@ -75,7 +75,7 @@ def create_ffn(config):
     if config.ffn_num_layers == 1:
         ffn = [
             dropout,
-            nn.Linear(first_linear_dim, config.output_size)
+            nn.Linear(first_linear_dim, config.n_lbs*config.n_tasks)
         ]
     else:
         ffn = [
@@ -91,7 +91,7 @@ def create_ffn(config):
         ffn.extend([
             activation,
             dropout,
-            nn.Linear(config.ffn_hidden_size, config.output_size),
+            nn.Linear(config.ffn_hidden_size, config.n_lbs*config.n_tasks),
         ])
 
     # Create FFN model
@@ -118,10 +118,6 @@ class GROVERFinetuneModel(nn.Module):
 
         self.mol_atom_from_atom_ffn = create_ffn(config)
         self.mol_atom_from_bond_ffn = create_ffn(config)
-
-        self.classification = config.dataset_type == 'classification'
-        if self.classification:
-            self.sigmoid = nn.Sigmoid()
 
     @staticmethod
     def get_loss_func(args):
@@ -162,12 +158,3 @@ class GROVERFinetuneModel(nn.Module):
         atom_ffn_output = self.mol_atom_from_atom_ffn(mol_atom_from_atom_output)
         bond_ffn_output = self.mol_atom_from_bond_ffn(mol_atom_from_bond_output)
         return atom_ffn_output, bond_ffn_output
-        # else:
-        #     atom_ffn_output = self.mol_atom_from_atom_ffn(mol_atom_from_atom_output)
-        #     bond_ffn_output = self.mol_atom_from_bond_ffn(mol_atom_from_bond_output)
-        #     if self.classification:
-        #         atom_ffn_output = self.sigmoid(atom_ffn_output)
-        #         bond_ffn_output = self.sigmoid(bond_ffn_output)
-        #     output = (atom_ffn_output + bond_ffn_output) / 2
-        #
-        # return output
