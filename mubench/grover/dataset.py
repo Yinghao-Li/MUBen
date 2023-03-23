@@ -5,7 +5,7 @@ from seqlbtoolkit.training.dataset import (
 )
 
 from ..base.dataset import Dataset as BaseDataset
-from .data.molgraph import MolGraph
+from .molgraph import MolGraph
 
 
 class Dataset(BaseDataset):

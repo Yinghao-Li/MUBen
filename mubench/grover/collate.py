@@ -6,7 +6,7 @@ from seqlbtoolkit.training.dataset import (
     Batch,
     instance_list_to_feature_lists
 )
-from mubench.grover.data.molgraph import BatchMolGraph
+from mubench.grover.molgraph import BatchMolGraph
 
 logger = logging.getLogger(__name__)
 
