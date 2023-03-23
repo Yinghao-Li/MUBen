@@ -64,3 +64,9 @@ UNCERTAINTY_METHODS = [
     "FocalLoss",
     "GaussianProcess",
 ]
+
+FINGERPRINT_FEATURE_TYPES = [
+    "none",
+    "rdkit",
+    "morgan"
+]

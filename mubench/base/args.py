@@ -6,7 +6,12 @@ from dataclasses import dataclass, field
 
 from functools import cached_property
 from seqlbtoolkit.training.config import BaseConfig
-from ..utils.macro import DATASET_NAMES, MODEL_NAMES, UNCERTAINTY_METHODS
+from ..utils.macro import (
+    DATASET_NAMES,
+    MODEL_NAMES,
+    UNCERTAINTY_METHODS,
+    FINGERPRINT_FEATURE_TYPES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +86,14 @@ class Arguments:
         default=False, metadata={'help': "Use two regression output heads, one for mean and the other for variance."}
     )
 
+    # -- Feature Arguments ---
+    feature_type: Optional[str] = field(
+        default='none', metadata={
+            "help": "Fingerprint generation function",
+            "choices": FINGERPRINT_FEATURE_TYPES
+        }
+    )
+
     # --- DNN Arguments ---
     n_dnn_hidden_layers: Optional[int] = field(
         default=8, metadata={'help': "The number of DNN hidden layers."}
@@ -128,7 +141,10 @@ class Arguments:
     def __post_init__(self):
         self.data_dir = os.path.join(self.data_dir, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
-        self.feature_type = "rdkit" if self.model_name == "DNN" else "none"
+
+        if self.model_name == 'DNN' and self.feature_type == 'none':
+            raise ValueError(f"Must assign a value to `feature_type` while using DNN model. "
+                             f"Options are {[t for t in FINGERPRINT_FEATURE_TYPES if t != 'none']}")
 
     # The following three functions are copied from transformers.training_args
     @cached_property
@@ -185,5 +201,7 @@ class Config(Arguments, BaseConfig):
     def d_feature(self):
         if self.feature_type == 'rdkit':
             return 200
+        elif self.feature_type == 'rdkit':
+            return 1024
         else:
             return 0
