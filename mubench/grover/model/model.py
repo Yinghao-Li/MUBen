@@ -6,8 +6,8 @@ from torch import nn as nn
 from typing import List, Dict
 
 from .layers import Readout, GTransEncoder
-from mubench.grover.molgraph import get_atom_fdim, get_bond_fdim
-from mubench.grover.util.nn_utils import get_activation_function
+from .utils_nn import get_activation_function
+from mubench.grover.dataset.molgraph import get_atom_fdim, get_bond_fdim
 
 
 class GROVEREmbedding(nn.Module):

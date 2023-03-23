@@ -11,8 +11,7 @@ from typing import Optional
 from ..base.train import Trainer as BaseTrainer
 from .collate import Collator
 from .args import GroverConfig
-from .util.utils import load_checkpoint
-from .util.scheduler import NoamLR
+from .model import NoamLR, load_checkpoint
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +129,6 @@ class Trainer(BaseTrainer, ABC):
         bond_logits = torch.cat(bond_logits_list, dim=0).numpy()
 
         return atom_logits, bond_logits
-
 
     def normalize_logits(self, logits):
 

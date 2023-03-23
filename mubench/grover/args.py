@@ -13,7 +13,6 @@ from ..base.args import (
     Config as BaseConfig,
     Arguments as BaseArguments
 )
-from .util.utils import makedirs
 from ..utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
@@ -312,7 +311,7 @@ class GroverConfig(BaseConfig, Arguments):
         assert self.dataset_type is not None
 
         if self.save_dir is not None:
-            makedirs(self.save_dir)
+            os.makedirs(self.save_dir, exist_ok=True)
         else:
             TEMP_DIR = TemporaryDirectory()
             self.save_dir = TEMP_DIR.name

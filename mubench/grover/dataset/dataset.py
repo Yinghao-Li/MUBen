@@ -4,7 +4,7 @@ from seqlbtoolkit.training.dataset import (
     feature_lists_to_instance_list,
 )
 
-from ..base.dataset import Dataset as BaseDataset
+from mubench.base.dataset import Dataset as BaseDataset
 from .molgraph import MolGraph
 
 
