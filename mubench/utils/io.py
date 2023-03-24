@@ -154,3 +154,25 @@ def prettify_json(text, indent=2, collapse_level=4):
     text = re.sub(r'[\r\n]+ {%d}([])}])' % (indent * (collapse_level - 1)), r'\g<1>', text)
     text = re.sub(r'(\S) +([])}])', r'\g<1>\g<2>', text)
     return text
+
+
+def convert_arguments_from_argparse(args):
+    """
+    Convert argparse Namespace to transformers style arguments
+
+    Parameters
+    ----------
+    args: Namespace
+
+    Returns
+    -------
+    str
+    """
+    args_string = ''
+    for k, v in args.__dict__.items():
+        default_value = f"'{v}'" if isinstance(v, str) else v
+        arg_str = f"{k}: Optional[{type(v)}] = field(\n"
+        arg_str += f"    default={default_value}, metadata={{'help': ''}}\n"
+        arg_str += f")\n\n"
+        args_string += arg_str
+    return args_string

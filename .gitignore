@@ -137,5 +137,6 @@ dmypy.json
 *.zip
 *.tar.gz
 *.npz
+*.lmdb
 meta.json
 config.json
