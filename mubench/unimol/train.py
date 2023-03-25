@@ -5,7 +5,7 @@ from torch.optim import Adam
 
 from ..base.train import Trainer as BaseTrainer
 from .collate import Collator
-from .model import ChemBERTa
+from .unimol_model import ChemBERTa
 from .args import Config
 
 logger = logging.getLogger(__name__)

@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List
 import torch
 
 import numpy as np
-from mubench.unimol.model.unicore.data import (
+from mubench.unimol.unimol_model.unicore.data import (
     Dictionary,
     NestedDictionaryDataset,
     LMDBDataset,
