@@ -23,7 +23,7 @@ from .metric import (
     calculate_classification_metrics,
     calculate_regression_metrics
 )
-from .collate import Collator
+from .dataset import Collator
 from .model import DNN
 from .args import Config
 

@@ -1,17 +1,11 @@
 import logging
-import pandas as pd
 from multiprocessing import get_context
 from tqdm.auto import tqdm
-from typing import Optional
-
-from transformers import AutoTokenizer
-from seqlbtoolkit.training.dataset import (
-    DataInstance,
-    feature_lists_to_instance_list,
-)
 
 from .utils import smiles_to_coords
+from .process import ProcessingPipeline
 from mubench.base.dataset import Dataset as BaseDataset
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +16,37 @@ class Dataset(BaseDataset):
 
         self._atoms = None
         self._cooridnates = None
-        self._mol = None
+        self.data_processor = None
+
+    def __getitem__(self, idx):
+        atoms, coordinates, distances, edge_types = self.data_processor(
+            atoms=self._atoms[idx],
+            coordinates=self._cooridnates[idx]
+        )
+        feature_dict = {
+            'atoms': atoms,
+            'coordinates': coordinates,
+            'distances': distances,
+            'edge_types': edge_types,
+            'lbs': self.lbs[idx],
+            'masks': self.masks[idx]
+        }
+        return feature_dict
+
+    # noinspection PyMethodOverriding
+    def prepare(self, config, partition, dictionary):
+        super().prepare(config, partition)
+
+        processor_variant = 'training' if partition == 'train' else 'inference'
+        data_processor = ProcessingPipeline(
+            dictionary=dictionary,
+            max_atoms=config.max_atoms,
+            max_seq_len=config.max_seq_len,
+            remove_hydrogen_flag=config.remove_hydrogen,
+            remove_polar_hydrogen_flag=config.remove_polar_hydrogen
+        )
+        self.data_processor = getattr(data_processor, f'process_{processor_variant}')
+        return self
 
     def create_features(self, config):
         """
@@ -35,24 +59,17 @@ class Dataset(BaseDataset):
 
         self._atoms = list()
         self._cooridnates = list()
-        self._mol = list()
 
-        with get_context('fork').Pool(config.n_threads) as pool:
+        with get_context('fork').Pool(config.n_feature_generating_threads) as pool:
 
             for outputs in tqdm(pool.imap(smiles_to_coords, self._smiles), total=len(self._smiles)):
-                atoms, coordinates, mol = outputs
+                atoms, coordinates = outputs
                 self._atoms.append(atoms)
                 self._cooridnates.append(coordinates)
-                self._mol.append(mol)
 
         return self
 
     def get_instances(self):
 
-        data_instances = feature_lists_to_instance_list(
-            DataInstance,
-            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
-        )
-
-        return data_instances
+        return None
 

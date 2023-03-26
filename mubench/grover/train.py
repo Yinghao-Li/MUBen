@@ -9,7 +9,7 @@ from scipy.special import softmax, expit
 from typing import Optional
 
 from ..base.train import Trainer as BaseTrainer
-from .collate import Collator
+from .dataset import Collator
 from .args import Config
 from .model import NoamLR, load_checkpoint
 

@@ -13,51 +13,51 @@ from .transformer_encoder_with_pair import TransformerEncoderWithPair
 logger = logging.getLogger(__name__)
 
 
-class UniMolModel(nn.Module):
-    def __init__(self, args, dictionary):
+class UniMol(nn.Module):
+    def __init__(self, config, dictionary):
         super().__init__()
-        base_architecture(args)
-        self.args = args
+        base_architecture(config)
+        self.config = config
         self.padding_idx = dictionary.pad()
         self.embed_tokens = nn.Embedding(
-            len(dictionary), args.encoder_embed_dim, self.padding_idx
+            len(dictionary), config.encoder_embed_dim, self.padding_idx
         )
         self._num_updates = None
         self.encoder = TransformerEncoderWithPair(
-            encoder_layers=args.encoder_layers,
-            embed_dim=args.encoder_embed_dim,
-            ffn_embed_dim=args.encoder_ffn_embed_dim,
-            attention_heads=args.encoder_attention_heads,
-            emb_dropout=args.emb_dropout,
-            dropout=args.dropout,
-            attention_dropout=args.attention_dropout,
-            activation_dropout=args.activation_dropout,
-            max_seq_len=args.max_seq_len,
-            activation_fn=args.activation_fn,
-            no_final_head_layer_norm=args.delta_pair_repr_norm_loss < 0,
+            encoder_layers=config.encoder_layers,
+            embed_dim=config.encoder_embed_dim,
+            ffn_embed_dim=config.encoder_ffn_embed_dim,
+            attention_heads=config.encoder_attention_heads,
+            emb_dropout=config.emb_dropout,
+            dropout=config.dropout,
+            attention_dropout=config.attention_dropout,
+            activation_dropout=config.activation_dropout,
+            max_seq_len=config.max_seq_len,
+            activation_fn=config.activation_fn,
+            no_final_head_layer_norm=config.delta_pair_repr_norm_loss < 0,
         )
-        if args.masked_token_loss > 0:
+        if config.masked_token_loss > 0:
             self.lm_head = MaskLMHead(
-                embed_dim=args.encoder_embed_dim,
+                embed_dim=config.encoder_embed_dim,
                 output_dim=len(dictionary),
-                activation_fn=args.activation_fn,
+                activation_fn=config.activation_fn,
                 weight=None,
             )
 
         K = 128
         n_edge_type = len(dictionary) * len(dictionary)
         self.gbf_proj = NonLinearHead(
-            K, args.encoder_attention_heads, args.activation_fn
+            K, config.encoder_attention_heads, config.activation_fn
         )
         self.gbf = GaussianLayer(K, n_edge_type)
 
-        if args.masked_coord_loss > 0:
+        if config.masked_coord_loss > 0:
             self.pair2coord_proj = NonLinearHead(
-                args.encoder_attention_heads, 1, args.activation_fn
+                config.encoder_attention_heads, 1, config.activation_fn
             )
-        if args.masked_dist_loss > 0:
+        if config.masked_dist_loss > 0:
             self.dist_head = DistanceHead(
-                args.encoder_attention_heads, args.activation_fn
+                config.encoder_attention_heads, config.activation_fn
             )
         self.classification_heads = nn.ModuleDict()
         self.apply(init_bert_params)
@@ -105,9 +105,9 @@ class UniMolModel(nn.Module):
         encoder_coord = None
 
         if not features_only:
-            if self.args.masked_token_loss > 0:
+            if self.config.masked_token_loss > 0:
                 logits = self.lm_head(encoder_rep, encoder_masked_tokens)
-            if self.args.masked_coord_loss > 0:
+            if self.config.masked_coord_loss > 0:
                 coords_emb = src_coord
                 if padding_mask is not None:
                     atom_num = (torch.sum(1 - padding_mask.type_as(x), dim=1) - 1).view(
@@ -120,12 +120,12 @@ class UniMolModel(nn.Module):
                 coord_update = delta_pos / atom_num * attn_probs
                 coord_update = torch.sum(coord_update, dim=2)
                 encoder_coord = coords_emb + coord_update
-            if self.args.masked_dist_loss > 0:
+            if self.config.masked_dist_loss > 0:
                 encoder_distance = self.dist_head(encoder_pair_rep)
 
         if classification_head_name is not None:
             logits = self.classification_heads[classification_head_name](encoder_rep)
-        if self.args.mode == 'infer':
+        if self.config.mode == 'infer':
             return encoder_rep, encoder_pair_rep
         else:
             return (
@@ -151,11 +151,11 @@ class UniMolModel(nn.Module):
                     )
                 )
         self.classification_heads[name] = ClassificationHead(
-            input_dim=self.args.encoder_embed_dim,
-            inner_dim=inner_dim or self.args.encoder_embed_dim,
+            input_dim=self.config.encoder_embed_dim,
+            inner_dim=inner_dim or self.config.encoder_embed_dim,
             num_classes=num_classes,
-            activation_fn=self.args.pooler_activation_fn,
-            pooler_dropout=self.args.pooler_dropout,
+            activation_fn=self.config.pooler_activation_fn,
+            pooler_dropout=self.config.pooler_dropout,
         )
 
     def set_num_updates(self, num_updates):
@@ -297,22 +297,22 @@ class GaussianLayer(nn.Module):
         return gaussian(x.float(), mean, std).type_as(self.means.weight)
 
 
-def base_architecture(args):
-    args.encoder_layers = 15
-    args.encoder_embed_dim = 512
-    args.encoder_ffn_embed_dim = 2048
-    args.encoder_attention_heads = 64
-    args.dropout = getattr(args, "dropout", 0.1)
-    args.emb_dropout = getattr(args, "emb_dropout", 0.1)
-    args.attention_dropout = getattr(args, "attention_dropout", 0.1)
-    args.activation_dropout = getattr(args, "activation_dropout", 0.0)
-    args.pooler_dropout = getattr(args, "pooler_dropout", 0.0)
-    args.max_seq_len = getattr(args, "max_seq_len", 512)
-    args.activation_fn = getattr(args, "activation_fn", "gelu")
-    args.pooler_activation_fn = getattr(args, "pooler_activation_fn", "tanh")
-    args.post_ln = getattr(args, "post_ln", False)
-    args.masked_token_loss = getattr(args, "masked_token_loss", -1.0)
-    args.masked_coord_loss = getattr(args, "masked_coord_loss", -1.0)
-    args.masked_dist_loss = getattr(args, "masked_dist_loss", -1.0)
-    args.x_norm_loss = getattr(args, "x_norm_loss", -1.0)
-    args.delta_pair_repr_norm_loss = getattr(args, "delta_pair_repr_norm_loss", -1.0)
+def base_architecture(config):
+    config.encoder_layers = 15
+    config.encoder_embed_dim = 512
+    config.encoder_ffn_embed_dim = 2048
+    config.encoder_attention_heads = 64
+    config.dropout = getattr(config, "dropout", 0.1)
+    config.emb_dropout = getattr(config, "emb_dropout", 0.1)
+    config.attention_dropout = getattr(config, "attention_dropout", 0.1)
+    config.activation_dropout = getattr(config, "activation_dropout", 0.0)
+    config.pooler_dropout = getattr(config, "pooler_dropout", 0.0)
+    config.max_seq_len = getattr(config, "max_seq_len", 512)
+    config.activation_fn = getattr(config, "activation_fn", "gelu")
+    config.pooler_activation_fn = getattr(config, "pooler_activation_fn", "tanh")
+    config.post_ln = getattr(config, "post_ln", False)
+    config.masked_token_loss = getattr(config, "masked_token_loss", -1.0)
+    config.masked_coord_loss = getattr(config, "masked_coord_loss", -1.0)
+    config.masked_dist_loss = getattr(config, "masked_dist_loss", -1.0)
+    config.x_norm_loss = getattr(config, "x_norm_loss", -1.0)
+    config.delta_pair_repr_norm_loss = getattr(config, "delta_pair_repr_norm_loss", -1.0)

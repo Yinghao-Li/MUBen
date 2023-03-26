@@ -1,11 +1,10 @@
 from abc import ABC
 
-import wandb
 import logging
 from torch.optim import Adam
 
 from ..base.train import Trainer as BaseTrainer
-from .collate import Collator
+from .dataset import Collator
 from .model import ChemBERTa
 from .args import Config
 

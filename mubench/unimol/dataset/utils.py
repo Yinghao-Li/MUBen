@@ -73,18 +73,4 @@ def smiles_to_coords(smiles):
         coordinates.append(smiles_to_2d_coords(smiles).astype(np.float32))
     mol = AllChem.AddHs(mol)
     atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]  # after add H
-    return atoms, coordinates, mol
-    # return {'atoms': atoms, 'coordinates': coordinates, 'mol': mol, 'smi': smiles, 'target': target}
-
-
-def load_csv(file_path, n_threads=16):
-
-    df = pd.read_csv(file_path)
-    content_list = zip(*[df[c].values.tolist() for c in df])
-    with Pool(n_threads) as pool:
-        i = 0
-        outputs = list()
-        for inner_output in tqdm(pool.imap(smiles_to_coords, content_list), total=len(df)):
-            if inner_output is not None:
-                outputs.append(inner_output)
-                i += 1
+    return atoms, coordinates

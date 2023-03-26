@@ -1,10 +1,75 @@
 import torch
 import numpy as np
-from typing import List, Union
+from typing import List, Union, Optional
 from scipy.spatial import distance_matrix
-from . import Dictionary
+from .dictionary import Dictionary
 
 Matrix = Union[torch.Tensor, np.ndarray]  # to separate from list
+
+
+class ProcessingPipeline:
+    def __init__(self,
+                 dictionary: Dictionary,
+                 coordinate_padding: Optional[float] = 0.0,
+                 max_atoms: Optional[int] = 256,
+                 max_seq_len: Optional[int] = 512,
+                 remove_hydrogen_flag: Optional[bool] = False,
+                 remove_polar_hydrogen_flag: Optional[bool] = False):
+
+        self._dictionary = dictionary
+        self._coordinate_padding = coordinate_padding
+        self._max_atoms = max_atoms
+        self._max_seq_len = max_seq_len
+        self._remove_hydrogen_flag = remove_hydrogen_flag
+        self._remove_polar_hydrogen_flag = remove_polar_hydrogen_flag
+
+    def process_instance(self, atoms: np.ndarray, coordinates: np.ndarray):
+        atoms, coordinates = check_atom_types(atoms, coordinates)
+        atoms, coordinates = remove_hydrogen(
+            atoms, coordinates, self._remove_hydrogen_flag, self._remove_polar_hydrogen_flag
+        )
+        atoms, coordinates = cropping(atoms, coordinates, self._max_atoms)
+
+        atoms = tokenize_atoms(atoms, self._dictionary, self._max_seq_len)
+        atoms = prepend_and_append(atoms, self._dictionary.bos(), self._dictionary.eos())
+
+        edge_types = get_edge_type(atoms, len(self._dictionary))
+
+        coordinates = normalize_coordinates(coordinates)
+        coordinates = from_numpy(coordinates)
+        coordinates = prepend_and_append(coordinates, self._coordinate_padding, self._coordinate_padding)
+
+        distances = get_distance(coordinates)
+
+        return atoms, coordinates, distances, edge_types
+
+    def process_training(self, atoms: List[str], coordinates: List[np.ndarray]):
+        coordinates = conformer_sampling(coordinates)
+        atoms = np.array(atoms)
+        atoms, coordinates, distances, edge_types = self.process_instance(atoms, coordinates)
+
+        return atoms.unsqueeze(0), coordinates.unsqueeze(0), distances.unsqueeze(0), edge_types.unsqueeze(0)
+
+    def process_inference(self, atoms: List[str], coordinates: List[np.ndarray]):
+        atoms = np.array(atoms)
+        atoms_ = list()
+        coordinates_ = list()
+        distances_ = list()
+        edge_types_ = list()
+
+        for coord in coordinates:
+            a, c, d, e = self.process_instance(atoms, coord)
+            atoms_.append(a)
+            coordinates_.append(c)
+            distances_.append(d)
+            edge_types_.append(e)
+
+        atoms_ = torch.stack(atoms_)
+        coordinates_ = torch.stack(coordinates_)
+        distances_ = torch.stack(distances_)
+        edge_types_ = torch.stack(edge_types_)
+
+        return atoms_, coordinates_, distances_, edge_types_
 
 
 def conformer_sampling(coordinates: List[Matrix]):
@@ -34,10 +99,6 @@ def check_atom_types(atoms: Matrix, coordinates: Matrix):
         coordinates = coordinates[:min_len]
 
     return atoms, coordinates
-
-
-def tta():
-    raise NotImplementedError("Should be implemented in other ways.")
 
 
 def remove_hydrogen(atoms: Matrix, coordinates: Matrix, remove_hydrogen_flag=False, remove_polar_hydrogen_flag=False):
@@ -95,7 +156,7 @@ def prepend_and_append(item: torch.Tensor, prepend_value, append_value):
     return item
 
 
-def edit_edge_type(atoms: Matrix, num_types: int):
+def get_edge_type(atoms: Matrix, num_types: int):
     offset = atoms.view(-1, 1) * num_types + atoms.view(1, -1)
     return offset
 
@@ -105,7 +166,7 @@ def from_numpy(coordinates: np.ndarray):
     return coordinates
 
 
-def get_distance(coordinates: np.ndarray):
+def get_distance(coordinates: torch.Tensor):
     pos = coordinates.view(-1, 3).numpy()
     dist = distance_matrix(pos, pos).astype(np.float32)
     return torch.from_numpy(dist)

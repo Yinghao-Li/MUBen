@@ -15,25 +15,15 @@ from typing import List, Callable, Any, Dict
 import torch
 import torch.nn.functional as F
 
-try:
-    import unicore_fused_multi_tensor
-    HAS_MULTI_TENSOR = True
-except:
-    print("fused_multi_tensor is not installed corrected")
-    HAS_MULTI_TENSOR = False
-
-try:
-    import unicore_fused_rounding
-    HAS_FUSED_ROUNDING = True
-except:
-    print("fused_rounding is not installed corrected")
-    HAS_FUSED_ROUNDING = False
+HAS_MULTI_TENSOR = False
+HAS_FUSED_ROUNDING = False
 
 if not torch.cuda.is_available() or torch.cuda.get_device_capability()[0] < 7:
     HAS_MULTI_TENSOR = False
     HAS_FUSED_ROUNDING = False
 
 logger = logging.getLogger(__name__)
+
 
 def apply_to_sample(f, sample):
     if hasattr(sample, "__len__") and len(sample) == 0:
@@ -68,7 +58,6 @@ def move_to_cuda(sample, device=None):
 
 
 def move_to_cpu(sample):
-
     def _move_to_cpu(tensor):
         # PyTorch has poor support for half tensors (float16) on CPU.
         # Move any such tensors to float32.
@@ -77,57 +66,6 @@ def move_to_cpu(sample):
         return tensor.cpu()
 
     return apply_to_sample(_move_to_cpu, sample)
-
-def multi_tensor_total_norm(grads, chunk_size=2048 * 32) -> torch.Tensor:
-    per_device_grads = {}
-    norms = []
-    for grad in grads:
-        device = grad.device
-        dtype = grad.dtype
-        if device not in per_device_grads:
-            per_device_grads[device] = {}
-        if dtype not in per_device_grads[device]:
-            per_device_grads[device][dtype] = []
-        per_device_grads[device][dtype].append(grad)
-    for device in per_device_grads.keys():
-        for dtype in per_device_grads[device].keys():
-            cur_grads = per_device_grads[device][dtype]
-            if HAS_MULTI_TENSOR and device.type == "cuda":
-                norm = unicore_fused_multi_tensor.l2norm(
-                    chunk_size, [cur_grads]
-                )
-                norms.append(norm)
-            else:
-                norms += [torch.norm(g, p=2, dtype=torch.float32) for g in cur_grads]
-    total_norm = torch.norm(torch.stack(norms), p=2, dtype=torch.float32)
-    return total_norm
-
-@torch.no_grad()
-def clip_grad_norm_(params, max_norm, aggregate_norm_fn=None) -> torch.Tensor:
-    if isinstance(params, torch.Tensor):
-        params = [params]
-    params = list(params)
-    grads = [p.grad.detach() for p in filter(lambda p: p.grad is not None, params)]
-    if len(grads) == 0:
-        if len(params) > 0:
-            return params[0].new_tensor(0.0)
-        else:
-            return torch.tensor(0.0)
-
-    if len(grads) == 1:
-        total_norm = torch.norm(grads[0], p=2, dtype=torch.float32)
-    else:
-        total_norm = multi_tensor_total_norm(grads)
-
-    if aggregate_norm_fn is not None:
-        total_norm = aggregate_norm_fn(total_norm)
-
-    if max_norm > 0:
-        max_norm = float(max_norm)
-        clip_coef = (max_norm / (total_norm + 1e-6)).clamp_(max=1)
-        for g in grads:
-            g.mul_(clip_coef)
-    return total_norm
 
 
 def import_user_module(args):
@@ -162,6 +100,7 @@ def import_user_module(args):
                     "({}) is not globally unique. Please rename the directory to "
                     "something unique and try again.".format(module_path, module_name)
                 )
+
 
 def get_activation_fn(activation: str) -> Callable:
     """ Returns the activation function corresponding to `activation` """
@@ -215,8 +154,10 @@ def torch_seed(seed, *addl_seeds):
     if seed is None:
         yield
         return
+
     def check_seed(s):
         assert type(s) == int or type(s) == np.int32 or type(s) == np.int64
+
     check_seed(seed)
     if len(addl_seeds) > 0:
         for s in addl_seeds:
@@ -294,9 +235,9 @@ def eval_bool(x, default=False):
 
 
 def checkpoint_sequential(
-    functions,
-    input,
-    enabled=True,
+        functions,
+        input,
+        enabled=True,
 ):
     def wrap_tuple(a):
         return (a,) if type(a) is not tuple else a
@@ -404,13 +345,10 @@ tensor_tree_map = partial(tree_map, leaf_type=torch.Tensor)
 
 
 def fp32_to_bf16_sr(t, o):
-    if HAS_FUSED_ROUNDING and t.device.type == "cuda":
-        unicore_fused_rounding.fp32_to_bf16_sr(t, o)
-    else:
-        r = (torch.rand(size=t.size(), device=t.device, dtype=torch.float32) - 0.5) / 256
-        m, e = torch.frexp(t)
-        t = t + torch.ldexp(r, e)
-        o.data.copy_(t.bfloat16())
+    r = (torch.rand(size=t.size(), device=t.device, dtype=torch.float32) - 0.5) / 256
+    m, e = torch.frexp(t)
+    t = t + torch.ldexp(r, e)
+    o.data.copy_(t.bfloat16())
 
 
 def set_jit_fusion_options():
@@ -427,11 +365,10 @@ def set_jit_fusion_options():
 def validate_with_ema(trainer, ema=False):
     if not ema:
         yield
-        return 
+        return
     _wrapped_model = trainer._wrapped_model
     trainer._wrapped_model = trainer.ema.model_ema
     try:
         yield
     finally:
         trainer._wrapped_model = _wrapped_model
-    

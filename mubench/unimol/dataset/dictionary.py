@@ -8,6 +8,39 @@ import numpy as np
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
+UNIMOL_DICT = [
+    "[PAD]",
+    "[CLS]",
+    "[SEP]",
+    "[UNK]",
+    "C",
+    "N",
+    "O",
+    "S",
+    "H",
+    "Cl",
+    "F",
+    "Br",
+    "I",
+    "Si",
+    "P",
+    "B",
+    "Na",
+    "K",
+    "Al",
+    "Ca",
+    "Sn",
+    "As",
+    "Hg",
+    "Fe",
+    "Zn",
+    "Cr",
+    "Se",
+    "Gd",
+    "Au",
+    "Li"
+]
+
 
 class Dictionary:
     """A mapping from symbols to consecutive integers"""
@@ -90,7 +123,7 @@ class Dictionary:
         return self.index(self.unk_word)
 
     @classmethod
-    def load(cls, f):
+    def load(cls, f=None):
         """Loads the dictionary from a text file with the format:
 
         ```
@@ -100,7 +133,7 @@ class Dictionary:
         ```
         """
         d = cls()
-        d.add_from_file(f)
+        _ = d.add_from_file(f) if f else d.add_from_macro(UNIMOL_DICT)
         return d
 
     def add_from_file(self, f):
@@ -144,3 +177,12 @@ class Dictionary:
                 raise ValueError(
                     "Incorrect dictionary format, expected '<token> <cnt> [flags]'"
                 )
+
+    def add_from_macro(self, token_list):
+        """
+        Loads a pre-existing dictionary from a macro defined in a py script
+        to this instance.
+        """
+        for line_idx, token in enumerate(token_list):
+            count = len(token_list) - line_idx
+            self.add_symbol(token, n=count, overwrite=False)

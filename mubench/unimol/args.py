@@ -25,6 +25,14 @@ class Arguments(BaseArguments):
         }
     )
 
+    # --- update model parameters from Uni-Mol ---
+    checkpoint_path: Optional[str] = field(
+        default='', metadata={'help': "Path to the pre-trained model"}
+    )
+    n_feature_generating_threads: Optional[int] = field(
+        default=8, metadata={'help': "Number of feature generation threads"}
+    )
+
     # --- Arguments from Uni-Mol original implementation ---
     no_progress_bar: Optional[bool] = field(
         default=False, metadata={'help': ''}
@@ -128,10 +136,6 @@ class Arguments(BaseArguments):
 
     task: Optional[str] = field(
         default='mol_finetune', metadata={'help': ''}
-    )
-
-    num_workers: Optional[int] = field(
-        default=8, metadata={'help': ''}
     )
 
     skip_invalid_size_inputs_valid_test: Optional[bool] = field(
@@ -244,10 +248,6 @@ class Arguments(BaseArguments):
 
     nprocs_per_node: Optional[int] = field(
         default=1, metadata={'help': ''}
-    )
-
-    path: Optional[str] = field(
-        default='./models/unimol.pt', metadata={'help': ''}
     )
 
     quiet: Optional[bool] = field(

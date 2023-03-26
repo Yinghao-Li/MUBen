@@ -12,6 +12,10 @@ from seqlbtoolkit.training.dataset import (
     DataInstance,
     feature_lists_to_instance_list,
 )
+from .features import (
+    rdkit_2d_features_normalized_generator,
+    morgan_binary_features_generator
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +24,7 @@ class Dataset(BaseDataset):
     def __init__(self):
         super().__init__()
 
-        self._features = None  # This could be any user-defined data structure.
+        self._features = None
         self._smiles: Union[List[str], None] = None
         self._lbs: Union[List[List[Union[int, float]]], None] = None
         self._masks: Union[List[List[int]], None] = None
@@ -44,7 +48,7 @@ class Dataset(BaseDataset):
     def __len__(self):
         return len(self._smiles)
 
-    def prepare(self, config, partition):
+    def prepare(self, config, partition, **kwargs):
         """
         Prepare dataset for training and test
 
@@ -130,53 +134,3 @@ class Dataset(BaseDataset):
         self._masks = np.asarray(df.masks.map(literal_eval).to_list()) if not df.masks.isnull().all() else None
 
         return self
-
-
-def rdkit_2d_features_normalized_generator(mol) -> np.ndarray:
-    """
-    Generates RDKit 2D normalized features for a molecule.
-
-    Parameters
-    ----------
-    mol: A molecule (i.e. either a SMILES string or an RDKit molecule).
-
-    Returns
-    -------
-    An 1D numpy array containing the RDKit 2D normalized features.
-    """
-    from rdkit import Chem
-    from descriptastorus.descriptors import rdNormalizedDescriptors
-
-    smiles = Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
-    generator = rdNormalizedDescriptors.RDKit2DNormalized()
-    features = generator.process(smiles)[1:]
-    # replace nan values
-    features = np.where(np.isnan(features), 0, features)
-    return features
-
-
-def morgan_binary_features_generator(mol, radius: int = 2, num_bits: int = 1024) -> np.ndarray:
-    """
-    Generates a binary Morgan fingerprint for a molecule.
-
-    Parameters
-    ----------
-    mol: A molecule (i.e. either a SMILES string or an RDKit molecule).
-    radius: Morgan fingerprint radius.
-    num_bits: Number of bits in Morgan fingerprint.
-
-    Returns
-    -------
-    An 1-D numpy array containing the binary Morgan fingerprint.
-    """
-    from rdkit import Chem, DataStructs
-    from rdkit.Chem import AllChem
-
-    mol = Chem.MolFromSmiles(mol) if type(mol) == str else mol
-    features_vec = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=num_bits)
-    features = np.zeros((1,))
-    DataStructs.ConvertToNumpyArray(features_vec, features)
-
-    # replace nan values
-    features = np.where(np.isnan(features), 0, features)
-    return features
