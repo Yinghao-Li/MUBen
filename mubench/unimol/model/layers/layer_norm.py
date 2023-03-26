@@ -9,7 +9,6 @@ from torch.nn import init
 from torch.nn import functional as F
 
 
-
 class LayerNorm(torch.nn.Module):
     def __init__(self, normalized_shape, eps=1e-5, elementwise_affine=True):
         super(LayerNorm, self).__init__()

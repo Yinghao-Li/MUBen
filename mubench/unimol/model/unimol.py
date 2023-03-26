@@ -5,9 +5,8 @@
 import logging
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from .layers import LayerNorm, init_bert_params, utils
-from .transformer_encoder_with_pair import TransformerEncoderWithPair
+from .layers import init_bert_params, utils
+from .encoder import TransformerEncoderWithPair
 
 
 logger = logging.getLogger(__name__)
@@ -36,20 +35,13 @@ class UniMol(nn.Module):
             activation_fn=config.activation_fn,
             no_final_head_layer_norm=config.delta_pair_repr_norm_loss < 0,
         )
-        if config.masked_token_loss > 0:
-            self.lm_head = MaskLMHead(
-                embed_dim=config.encoder_embed_dim,
-                output_dim=len(dictionary),
-                activation_fn=config.activation_fn,
-                weight=None,
-            )
 
-        K = 128
+        k = 128
         n_edge_type = len(dictionary) * len(dictionary)
         self.gbf_proj = NonLinearHead(
-            K, config.encoder_attention_heads, config.activation_fn
+            k, config.encoder_attention_heads, config.activation_fn
         )
-        self.gbf = GaussianLayer(K, n_edge_type)
+        self.gbf = GaussianLayer(k, n_edge_type)
 
         if config.masked_coord_loss > 0:
             self.pair2coord_proj = NonLinearHead(
@@ -60,22 +52,19 @@ class UniMol(nn.Module):
                 config.encoder_attention_heads, config.activation_fn
             )
         self.classification_heads = nn.ModuleDict()
+
         self.apply(init_bert_params)
 
-    def forward(
-        self,
-        src_tokens,
-        src_distance,
-        src_coord,
-        src_edge_type,
-        encoder_masked_tokens=None,
-        features_only=False,
-        classification_head_name=None,
-        **kwargs
-    ):
+        self.output_layer = ClassificationHead(
+            input_dim=self.config.encoder_embed_dim,
+            inner_dim=self.config.encoder_embed_dim,
+            num_classes=self.config.n_lbs * self.config.n_tasks,
+            activation_fn=self.config.pooler_activation_fn,
+            pooler_dropout=self.config.pooler_dropout,
+        )
 
-        if classification_head_name is not None:
-            features_only = True
+    def forward(self, batch, **kwargs):
+        src_tokens, src_distance, src_edge_type = batch.atoms, batch.distances, batch.edge_types
 
         padding_mask = src_tokens.eq(self.padding_idx)
         if not padding_mask.any():
@@ -92,71 +81,10 @@ class UniMol(nn.Module):
             return graph_attn_bias_inner
 
         graph_attn_bias = get_dist_features(src_distance, src_edge_type)
-        (
-            encoder_rep,
-            encoder_pair_rep,
-            delta_encoder_pair_rep,
-            x_norm,
-            delta_encoder_pair_rep_norm,
-        ) = self.encoder(x, padding_mask=padding_mask, attn_mask=graph_attn_bias)
-        encoder_pair_rep[encoder_pair_rep == float("-inf")] = 0
+        encoder_rep, _, _, _, _ = self.encoder(x, padding_mask=padding_mask, attn_mask=graph_attn_bias)
 
-        encoder_distance = None
-        encoder_coord = None
-
-        if not features_only:
-            if self.config.masked_token_loss > 0:
-                logits = self.lm_head(encoder_rep, encoder_masked_tokens)
-            if self.config.masked_coord_loss > 0:
-                coords_emb = src_coord
-                if padding_mask is not None:
-                    atom_num = (torch.sum(1 - padding_mask.type_as(x), dim=1) - 1).view(
-                        -1, 1, 1, 1
-                    )
-                else:
-                    atom_num = src_coord.shape[1] - 1
-                delta_pos = coords_emb.unsqueeze(1) - coords_emb.unsqueeze(2)
-                attn_probs = self.pair2coord_proj(delta_encoder_pair_rep)
-                coord_update = delta_pos / atom_num * attn_probs
-                coord_update = torch.sum(coord_update, dim=2)
-                encoder_coord = coords_emb + coord_update
-            if self.config.masked_dist_loss > 0:
-                encoder_distance = self.dist_head(encoder_pair_rep)
-
-        if classification_head_name is not None:
-            logits = self.classification_heads[classification_head_name](encoder_rep)
-        if self.config.mode == 'infer':
-            return encoder_rep, encoder_pair_rep
-        else:
-            return (
-                logits,
-                encoder_distance,
-                encoder_coord,
-                x_norm,
-                delta_encoder_pair_rep_norm,
-            )         
-
-    def register_classification_head(
-        self, name, num_classes=None, inner_dim=None, **kwargs
-    ):
-        """Register a classification head."""
-        if name in self.classification_heads:
-            prev_num_classes = self.classification_heads[name].out_proj.out_features
-            prev_inner_dim = self.classification_heads[name].dense.out_features
-            if num_classes != prev_num_classes or inner_dim != prev_inner_dim:
-                logger.warning(
-                    're-registering head "{}" with num_classes {} (prev: {}) '
-                    "and inner_dim {} (prev: {})".format(
-                        name, num_classes, prev_num_classes, inner_dim, prev_inner_dim
-                    )
-                )
-        self.classification_heads[name] = ClassificationHead(
-            input_dim=self.config.encoder_embed_dim,
-            inner_dim=inner_dim or self.config.encoder_embed_dim,
-            num_classes=num_classes,
-            activation_fn=self.config.pooler_activation_fn,
-            pooler_dropout=self.config.pooler_dropout,
-        )
+        logits = self.output_layer(encoder_rep)
+        return logits
 
     def set_num_updates(self, num_updates):
         """State from trainer to pass along to model at every update."""
@@ -164,34 +92,6 @@ class UniMol(nn.Module):
 
     def get_num_updates(self):
         return self._num_updates
-
-
-class MaskLMHead(nn.Module):
-    """Head for masked language modeling."""
-
-    def __init__(self, embed_dim, output_dim, activation_fn, weight=None):
-        super().__init__()
-        self.dense = nn.Linear(embed_dim, embed_dim)
-        self.activation_fn = utils.get_activation_fn(activation_fn)
-        self.layer_norm = LayerNorm(embed_dim)
-
-        if weight is None:
-            weight = nn.Linear(embed_dim, output_dim, bias=False).weight
-        self.weight = weight
-        self.bias = nn.Parameter(torch.zeros(output_dim))
-
-    def forward(self, features, masked_tokens=None, **kwargs):
-        # Only project the masked tokens while training,
-        # saves both memory and computation
-        if masked_tokens is not None:
-            features = features[masked_tokens, :]
-
-        x = self.dense(features)
-        x = self.activation_fn(x)
-        x = self.layer_norm(x)
-        # project back to size of vocabulary with bias
-        x = F.linear(x, self.weight) + self.bias
-        return x
 
 
 class ClassificationHead(nn.Module):

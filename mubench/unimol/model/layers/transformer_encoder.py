@@ -16,6 +16,7 @@ from . import TransformerEncoderLayer, LayerNorm
 def init_bert_params(module):
     if not getattr(module, 'can_global_init', True):
         return
+
     def normal_(data):
         data.copy_(
             data.cpu().normal_(mean=0.0, std=0.02).to(data.device)

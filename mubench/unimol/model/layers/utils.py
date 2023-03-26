@@ -5,13 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import contextlib
-import importlib
 import logging
-import os
-import sys
 import numpy as np
 from functools import partial
-from typing import List, Callable, Any, Dict
+from typing import List, Callable
 import torch
 import torch.nn.functional as F
 
@@ -55,51 +52,6 @@ def move_to_cuda(sample, device=None):
         return tensor.to(device=device, non_blocking=True)
 
     return apply_to_sample(_move_to_cuda, sample)
-
-
-def move_to_cpu(sample):
-    def _move_to_cpu(tensor):
-        # PyTorch has poor support for half tensors (float16) on CPU.
-        # Move any such tensors to float32.
-        if tensor.dtype in {torch.bfloat16, torch.float16}:
-            tensor = tensor.to(dtype=torch.float32)
-        return tensor.cpu()
-
-    return apply_to_sample(_move_to_cpu, sample)
-
-
-def import_user_module(args):
-    module_path = getattr(args, "user_dir", None)
-    if module_path is not None:
-        module_path = os.path.abspath(args.user_dir)
-        if not os.path.exists(module_path) and not os.path.isfile(os.path.dirname(module_path)):
-            unicore_rel_path = os.path.join(os.path.dirname(__file__), args.user_dir)
-            if os.path.exists(unicore_rel_path):
-                module_path = unicore_rel_path
-            else:
-                unicore_rel_path = os.path.join(
-                    os.path.dirname(__file__), "..", args.user_dir
-                )
-                if os.path.exists(unicore_rel_path):
-                    module_path = unicore_rel_path
-                else:
-                    raise FileNotFoundError(module_path)
-
-        # ensure that user modules are only imported once
-        import_user_module.memo = getattr(import_user_module, "memo", set())
-        if module_path not in import_user_module.memo:
-            import_user_module.memo.add(module_path)
-
-            module_parent, module_name = os.path.split(module_path)
-            if module_name not in sys.modules:
-                sys.path.insert(0, module_parent)
-                importlib.import_module(module_name)
-            else:
-                raise ImportError(
-                    "Failed to import --user-dir={} because the corresponding module name "
-                    "({}) is not globally unique. Please rename the directory to "
-                    "something unique and try again.".format(module_path, module_name)
-                )
 
 
 def get_activation_fn(activation: str) -> Callable:
@@ -349,16 +301,6 @@ def fp32_to_bf16_sr(t, o):
     m, e = torch.frexp(t)
     t = t + torch.ldexp(r, e)
     o.data.copy_(t.bfloat16())
-
-
-def set_jit_fusion_options():
-    """Set PyTorch JIT layer fusion options."""
-    # flags required to enable jit fusion kernels
-    # legacy pytorch fuser
-    torch._C._jit_set_profiling_mode(False)
-    torch._C._jit_set_profiling_executor(False)
-    torch._C._jit_override_can_fuse_on_cpu(True)
-    torch._C._jit_override_can_fuse_on_gpu(True)
 
 
 @contextlib.contextmanager
