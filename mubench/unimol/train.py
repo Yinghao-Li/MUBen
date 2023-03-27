@@ -3,6 +3,7 @@ from abc import ABC
 import logging
 import torch
 import numpy as np
+from torch.optim import AdamW
 
 from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator, Dictionary
@@ -54,9 +55,14 @@ class Trainer(BaseTrainer, ABC):
         logger.info(model_loading_info)
         return self
 
-    # def initialize_optimizer(self):
-    #     params = list(filter(lambda p: p.requires_grad, self.model.parameters()))
-    #     return None
+    def initialize_optimizer(self):
+        # Original implementation seems set weight decay to 0, which is weird.
+        # We'll keep it as default here
+        self._optimizer = AdamW(
+            self.model.parameters(),
+            lr=self.config.lr, betas=(0.9, 0.99), eps=1E-6
+        )
+        return None
 
     def normalize_logits(self, logits: np.ndarray) -> np.ndarray:
 

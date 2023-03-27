@@ -8,11 +8,11 @@ import wandb
 import logging
 import torch.nn as nn
 from tqdm.auto import tqdm
-from torch.optim import Adam
-from torch.optim.lr_scheduler import StepLR
+from torch.optim import AdamW
 from typing import Optional
 from functools import cached_property
 from scipy.special import softmax, expit
+from transformers import get_scheduler
 
 from seqlbtoolkit.training.train import BaseTrainer
 from seqlbtoolkit.training.status import Status
@@ -77,16 +77,27 @@ class Trainer(BaseTrainer, ABC):
         """
         Initialize model optimizer
         """
-        self._optimizer = Adam(self._model.parameters(), lr=self.config.lr)
+        self._optimizer = AdamW(self._model.parameters(), lr=self.config.lr)
         return self
 
     def initialize_scheduler(self):
         """
         Initialize learning rate scheduler
         """
-        # Notice that this scheduler does not change the lr!
-        # This implementation is for the compatibility with other models that are trained with functional schedulers
-        self._scheduler = StepLR(optimizer=self._optimizer, step_size=int(1e9), gamma=1)
+        num_update_steps_per_epoch = int(np.ceil(
+            len(self._training_dataset) / self.config.batch_size
+        ))
+        num_warmup_steps = int(np.ceil(
+            num_update_steps_per_epoch * self.config.warmup_ratio * self.config.n_epochs
+        ))
+        num_training_steps = int(np.ceil(num_update_steps_per_epoch * self.config.n_epochs))
+
+        self._scheduler = get_scheduler(
+            self.config.lr_scheduler_type,
+            self._optimizer,
+            num_warmup_steps=num_warmup_steps,
+            num_training_steps=num_training_steps,
+        )
         return self
 
     def initialize_loss(self):
@@ -181,6 +192,9 @@ class Trainer(BaseTrainer, ABC):
                 loss = self.get_loss(logits, batch)
 
             loss.backward()
+
+            if self.config.grad_norm > 0:
+                nn.utils.clip_grad_norm_(self._model.parameters(), self.config.grad_norm)
 
             self._optimizer.step()
             self._scheduler.step()

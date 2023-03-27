@@ -115,6 +115,19 @@ class Arguments:
     lr: Optional[float] = field(
         default=1e-4, metadata={'help': "Learning Rate."}
     )
+    grad_norm: Optional[float] = field(
+        default=0, metadata={"help": "Gradient norm. Default is 0 (do not clip gradient)"}
+    )
+    lr_scheduler_type: Optional[str] = field(
+        default='constant', metadata={
+            'help': "Learning rate scheduler with warm ups defined in `transformers`, Please refer to "
+                    "https://huggingface.co/docs/transformers/main_classes/optimizer_schedules#schedules for details",
+            'choices': ['linear', 'cosine', 'cosine_with_restarts', 'polynomial', 'constant', 'constant_with_warmup']
+        }
+    )
+    warmup_ratio: Optional[float] = field(
+        default=0.1, metadata={"help": "Learning rate scheduler warm-up ratio"}
+    )
     seed: Optional[int] = field(
         default=42, metadata={"help": "Random seed that will be set at the beginning of training."}
     )
