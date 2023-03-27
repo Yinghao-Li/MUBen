@@ -106,7 +106,7 @@ class Dataset(BaseDataset):
         if feature_type == 'rdkit':
             logger.info("Generating normalized RDKit features")
             self._features = np.stack([rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)])
-        if feature_type == 'morgan':
+        elif feature_type == 'morgan':
             logger.info("Generating Morgan binary features")
             self._features = np.stack(
                 [morgan_binary_features_generator(smiles) for smiles in tqdm(self._smiles)])

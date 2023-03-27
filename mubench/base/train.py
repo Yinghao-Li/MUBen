@@ -174,9 +174,12 @@ class Trainer(BaseTrainer, ABC):
             batch.to(self.config.device)
 
             self._optimizer.zero_grad()
-            logits = self.model(batch)
 
-            loss = self.get_loss(logits, batch)
+            # mixed-precision training
+            with torch.autocast(device_type=self.config.device_str, dtype=torch.bfloat16):
+                logits = self.model(batch)
+                loss = self.get_loss(logits, batch)
+
             loss.backward()
 
             self._optimizer.step()
@@ -232,8 +235,10 @@ class Trainer(BaseTrainer, ABC):
         with torch.no_grad():
             for batch in dataloader:
                 batch.to(self.config.device)
-                logits = self.model(batch)
-                logits_list.append(logits.detach().cpu())
+
+                with torch.autocast(device_type=self.config.device_str, dtype=torch.bfloat16):
+                    logits = self.model(batch)
+                logits_list.append(logits.to(torch.float).detach().cpu())
 
         logits = torch.cat(logits_list, dim=0).numpy()
 

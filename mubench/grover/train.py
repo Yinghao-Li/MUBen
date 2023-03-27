@@ -121,9 +121,10 @@ class Trainer(BaseTrainer, ABC):
         with torch.no_grad():
             for batch in dataloader:
                 batch.to(self.config.device)
-                atom_logits, bond_logits = self.model(batch)
-                atom_logits_list.append(atom_logits.detach().cpu())
-                bond_logits_list.append(bond_logits.detach().cpu())
+                with torch.autocast(device_type=self.config.device_str, dtype=torch.bfloat16):
+                    atom_logits, bond_logits = self.model(batch)
+                atom_logits_list.append(atom_logits.to(torch.float).detach().cpu())
+                bond_logits_list.append(bond_logits.to(torch.float).detach().cpu())
 
         atom_logits = torch.cat(atom_logits_list, dim=0).numpy()
         bond_logits = torch.cat(bond_logits_list, dim=0).numpy()

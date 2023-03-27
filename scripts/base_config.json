@@ -5,5 +5,6 @@
   "ignore_preprocessed_dataset": false,
   "n_epochs": 5,
   "binary_classification_with_softmax": false,
-  "regression_with_variance": true
+  "regression_with_variance": true,
+  "feature_type": "rdkit"
 }

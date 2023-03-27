@@ -54,6 +54,10 @@ class Trainer(BaseTrainer, ABC):
         logger.info(model_loading_info)
         return self
 
+    # def initialize_optimizer(self):
+    #     params = list(filter(lambda p: p.requires_grad, self.model.parameters()))
+    #     return None
+
     def normalize_logits(self, logits: np.ndarray) -> np.ndarray:
 
         # TODO: should keep preds of all conformations during result saving

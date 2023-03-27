@@ -142,9 +142,9 @@ class Arguments:
         self.data_dir = os.path.join(self.data_dir, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
-        if self.model_name == 'DNN' and self.feature_type == 'none':
-            raise ValueError(f"Must assign a value to `feature_type` while using DNN model. "
-                             f"Options are {[t for t in FINGERPRINT_FEATURE_TYPES if t != 'none']}")
+        # if self.model_name == 'DNN' and self.feature_type == 'none':
+        #     raise ValueError(f"Must assign a value to `feature_type` while using DNN model. "
+        #                      f"Options are {[t for t in FINGERPRINT_FEATURE_TYPES if t != 'none']}")
 
     # The following three functions are copied from transformers.training_args
     @cached_property
@@ -155,6 +155,15 @@ class Arguments:
         else:
             device = torch.device("cuda")
             self._n_gpu = 1
+
+        return device
+
+    @cached_property
+    def device_str(self) -> str:
+        if self.no_cuda or not torch.cuda.is_available():
+            device = "cpu"
+        else:
+            device = "cuda"
 
         return device
 
