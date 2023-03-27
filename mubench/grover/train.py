@@ -6,7 +6,7 @@ import numpy as np
 import torch.nn.functional as F
 from torch.optim import Adam
 from scipy.special import softmax, expit
-from typing import Optional
+from typing import Optional, Tuple
 
 from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator
@@ -130,7 +130,7 @@ class Trainer(BaseTrainer, ABC):
 
         return atom_logits, bond_logits
 
-    def normalize_logits(self, logits):
+    def normalize_logits(self, logits: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
 
         atom_logits, bond_logits = logits
 

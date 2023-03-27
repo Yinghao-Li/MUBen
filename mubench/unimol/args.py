@@ -294,10 +294,6 @@ class Arguments(BaseArguments):
         default=False, metadata={'help': ''}
     )
 
-    conf_size: Optional[int] = field(
-        default=11, metadata={'help': ''}
-    )
-
     remove_hydrogen: Optional[bool] = field(
         default=True, metadata={'help': ''}
     )
@@ -428,4 +424,4 @@ class Arguments(BaseArguments):
 
 class Config(Arguments, BaseConfig):
 
-    pretrained_model_name_or_path = "DeepChem/ChemBERTa-77M-MLM"
+    n_conformation = 11

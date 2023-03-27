@@ -2,6 +2,7 @@ from abc import ABC
 
 import logging
 import torch
+import numpy as np
 
 from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator, Dictionary
@@ -52,6 +53,18 @@ class Trainer(BaseTrainer, ABC):
         model_loading_info = self._model.load_state_dict(state['model'], strict=False)
         logger.info(model_loading_info)
         return self
+
+    def normalize_logits(self, logits: np.ndarray) -> np.ndarray:
+
+        # TODO: should keep preds of all conformations during result saving
+
+        preds = super().normalize_logits(logits)
+        pred_instance_shape = preds.shape[1:]
+
+        preds = preds.reshape((-1, self.config.n_conformation, *pred_instance_shape))
+        preds = preds.mean(axis=1)
+
+        return preds
 
 
 def load_checkpoint_to_cpu(path, arg_overrides=None):

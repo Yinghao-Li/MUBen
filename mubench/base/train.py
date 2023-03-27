@@ -239,6 +239,17 @@ class Trainer(BaseTrainer, ABC):
 
         return logits
 
+    def normalize_logits(self, logits: np.ndarray) -> np.ndarray:
+
+        if self.config.task_type == 'classification':
+            if len(logits.shape) > 1 and logits.shape[-1] >= 2:
+                preds = softmax(logits, axis=-1)
+            else:
+                preds = expit(logits)  # sigmoid function
+        else:
+            preds = logits if logits.shape[-1] == 1 or len(logits.shape) == 1 else logits[..., 0]
+        return preds
+
     def evaluate(self, dataset, n_run: Optional[int] = 1, return_preds: Optional[bool] = False):
 
         if n_run == 1:
@@ -255,17 +266,6 @@ class Trainer(BaseTrainer, ABC):
             metrics = self.get_metrics(dataset.lbs, preds.mean(axis=0), dataset.masks)
 
         return metrics if not return_preds else (metrics, preds)
-
-    def normalize_logits(self, logits):
-
-        if self.config.task_type == 'classification':
-            if len(logits.shape) > 1 and logits.shape[-1] >= 2:
-                preds = softmax(logits, axis=-1)
-            else:
-                preds = expit(logits)  # sigmoid function
-        else:
-            preds = logits if logits.shape[-1] == 1 or len(logits.shape) == 1 else logits[..., 0]
-        return preds
 
     def eval_and_save(self,
                       step_idx: Optional[int] = None,
