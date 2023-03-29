@@ -40,6 +40,7 @@ class Arguments(BaseArguments):
         super().__post_init__()
 
 
+@dataclass
 class Config(Arguments, BaseConfig):
 
     pretrained_model_name_or_path = "DeepChem/ChemBERTa-77M-MLM"

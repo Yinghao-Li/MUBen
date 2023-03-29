@@ -200,6 +200,7 @@ class Arguments:
         return self._n_gpu
 
 
+@dataclass
 class Config(Arguments, BaseConfig):
 
     d_feature = None

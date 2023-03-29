@@ -145,6 +145,7 @@ class Arguments(BaseArguments):
         self.pooler_dropout = self.dropout
 
 
+@dataclass
 class Config(Arguments, BaseConfig):
 
     n_conformation = 11
