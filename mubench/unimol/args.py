@@ -46,56 +46,12 @@ class Arguments(BaseArguments):
     )
 
     # --- Arguments from Uni-Mol original implementation ---
-    ema_decay: Optional[float] = field(
-        default=-1.0, metadata={'help': ''}
-    )
-
-    validate_with_ema: Optional[bool] = field(
-        default=False, metadata={'help': ''}
-    )
-
     batch_size: Optional[int] = field(
         default=32, metadata={'help': ''}
     )
 
-    data_buffer_size: Optional[int] = field(
-        default=10, metadata={'help': ''}
-    )
-
-    train_subset: Optional[str] = field(
-        default='train', metadata={'help': ''}
-    )
-
-    valid_subset: Optional[str] = field(
-        default='test', metadata={'help': ''}
-    )
-
-    validate_interval: Optional[int] = field(
-        default=1, metadata={'help': ''}
-    )
-
-    validate_interval_updates: Optional[int] = field(
-        default=0, metadata={'help': ''}
-    )
-
-    validate_after_updates: Optional[int] = field(
-        default=0, metadata={'help': ''}
-    )
-
-    fixed_validation_seed: Optional[int] = field(
-        default=None, metadata={'help': ''}
-    )
-
-    disable_validation: Optional[bool] = field(
-        default=False, metadata={'help': ''}
-    )
-
     batch_size_valid: Optional[int] = field(
         default=32, metadata={'help': ''}
-    )
-
-    max_valid_steps: Optional[int] = field(
-        default=None, metadata={'help': ''}
     )
 
     remove_hydrogen: Optional[bool] = field(
