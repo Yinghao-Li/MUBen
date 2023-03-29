@@ -1,12 +1,13 @@
 {
   "disable_wandb": true,
-  "dataset_name": "BBBP",
+  "dataset_name": "ESOL",
   "data_dir": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 10,
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "checkpoint_path": "models/unimol_base.pt",
-  "batch_size": 4,
-  "retrain_model": true
+  "batch_size": 32,
+  "retrain_model": true,
+  "n_feature_generating_threads": 64
 }
