@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 class UniMol(nn.Module):
     def __init__(self, config, dictionary):
         super().__init__()
-        base_architecture(config)
         self.config = config
         self.padding_idx = dictionary.pad()
         self.embed_tokens = nn.Embedding(
@@ -97,31 +96,3 @@ class UniMol(nn.Module):
 
     def get_num_updates(self):
         return self._num_updates
-
-
-def base_architecture(config):
-
-    # Model architecture, should not be changed
-    config.encoder_layers = 15
-    config.encoder_embed_dim = 512
-    config.encoder_ffn_embed_dim = 2048
-    config.encoder_attention_heads = 64
-
-    # Fix the dropout ratio to the original implementation
-    config.dropout = 0.1
-    config.emb_dropout = 0.1
-    config.attention_dropout = 0.1
-    config.activation_dropout = 0.0
-    config.pooler_dropout = getattr(config, "pooler_dropout", 0.0)
-
-    config.max_seq_len = getattr(config, "max_seq_len", 512)
-
-    config.activation_fn = getattr(config, "activation_fn", "gelu")
-    config.pooler_activation_fn = getattr(config, "pooler_activation_fn", "tanh")
-
-    config.post_ln = getattr(config, "post_ln", False)
-    config.masked_token_loss = getattr(config, "masked_token_loss", -1.0)
-    config.masked_coord_loss = getattr(config, "masked_coord_loss", -1.0)
-    config.masked_dist_loss = getattr(config, "masked_dist_loss", -1.0)
-    config.x_norm_loss = getattr(config, "x_norm_loss", -1.0)
-    config.delta_pair_repr_norm_loss = getattr(config, "delta_pair_repr_norm_loss", -1.0)

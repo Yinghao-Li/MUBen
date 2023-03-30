@@ -77,6 +77,42 @@ class Arguments(BaseArguments):
 
         self.pooler_dropout = self.dropout
 
+        if self.only_polar > 0:
+            self.remove_polar_hydrogen = True
+        elif self.only_polar < 0:
+            self.remove_polar_hydrogen = False
+        else:
+            self.remove_hydrogen = True
+
+        self._assign_default_model_args()
+
+    def _assign_default_model_args(self):
+
+        # Model architecture, should not be changed
+        self.encoder_layers = 15
+        self.encoder_embed_dim = 512
+        self.encoder_ffn_embed_dim = 2048
+        self.encoder_attention_heads = 64
+
+        # Fix the dropout ratio to the original implementation
+        self.dropout = 0.1
+        self.emb_dropout = 0.1
+        self.attention_dropout = 0.1
+        self.activation_dropout = 0.0
+        self.pooler_dropout = getattr(self, "pooler_dropout", 0.0)
+
+        self.max_seq_len = getattr(self, "max_seq_len", 512)
+
+        self.activation_fn = getattr(self, "activation_fn", "gelu")
+        self.pooler_activation_fn = getattr(self, "pooler_activation_fn", "tanh")
+
+        self.post_ln = getattr(self, "post_ln", False)
+        self.masked_token_loss = getattr(self, "masked_token_loss", -1.0)
+        self.masked_coord_loss = getattr(self, "masked_coord_loss", -1.0)
+        self.masked_dist_loss = getattr(self, "masked_dist_loss", -1.0)
+        self.x_norm_loss = getattr(self, "x_norm_loss", -1.0)
+        self.delta_pair_repr_norm_loss = getattr(self, "delta_pair_repr_norm_loss", -1.0)
+
 
 @dataclass
 class Config(Arguments, BaseConfig):

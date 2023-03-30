@@ -40,13 +40,6 @@ class Trainer(BaseTrainer, ABC):
             collate_fn=collate_fn
         )
 
-        if self.config.only_polar > 0:
-            self.config.remove_polar_hydrogen = True
-        elif self.config.only_polar < 0:
-            self.config.remove_polar_hydrogen = False
-        else:
-            self.config.remove_hydrogen = True
-
     def initialize_model(self):
         self._model = UniMol(self.config, self.dictionary)
 
