@@ -20,7 +20,7 @@ class Arguments(BaseArguments):
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
         default='Uni-Mol', metadata={
-            'help': "Name of the model",
+            'help': "The name of the model to be used.",
             "choices": MODEL_NAMES
         }
     )
@@ -47,52 +47,29 @@ class Arguments(BaseArguments):
 
     # --- Arguments from Uni-Mol original implementation ---
     batch_size: Optional[int] = field(
-        default=32, metadata={'help': ''}
+        default=32, metadata={'help': 'Batch size'}
     )
 
-    batch_size_valid: Optional[int] = field(
-        default=32, metadata={'help': ''}
-    )
-
-    remove_hydrogen: Optional[bool] = field(
-        default=True, metadata={'help': ''}
-    )
-
-    remove_polar_hydrogen: Optional[bool] = field(
-        default=False, metadata={'help': ''}
+    batch_size_inference: Optional[int] = field(
+        default=32, metadata={'help': 'Validation Batch size, should be a smaller value than `batch_size` since '
+                                      'we append the conformation dimension (11) to batch size during inference.'}
     )
 
     max_atoms: Optional[int] = field(
-        default=256, metadata={'help': ''}
+        default=256, metadata={'help': 'the maximum number of atoms in the input molecules.'}
     )
 
-    dict_name: Optional[str] = field(
-        default='dict.txt', metadata={'help': ''}
+    max_seq_len: Optional[int] = field(
+        default=512, metadata={'help': 'Maximum length of the atom tokens.'}
     )
 
     only_polar: Optional[int] = field(
-        default=0, metadata={'help': ''}
-    )
-
-    weight_decay: Optional[float] = field(
-        default=0.0, metadata={'help': ''}
-    )
-
-    force_anneal: Optional[int] = field(
-        default=None, metadata={'help': ''}
-    )
-
-    no_seed_provided: Optional[bool] = field(
-        default=False, metadata={'help': ''}
+        default=0, metadata={'help': "1: only reserve polar hydrogen; 0: no hydrogen; -1: all hydrogen "}
     )
 
     dropout: Optional[float] = field(
         default=0.1, metadata={'help': 'The `pooler dropout` argument in the original implementation. '
                                        'Controls the dropout ratio of the classification layers.'}
-    )
-
-    max_seq_len: Optional[int] = field(
-        default=512, metadata={'help': ''}
     )
 
     def __post_init__(self):

@@ -70,12 +70,6 @@ class Arguments:
             "choices": MODEL_NAMES
         }
     )
-    uncertainty_method: Optional[str] = field(
-        default='none', metadata={
-            "help": "Uncertainty estimation method",
-            "choices": UNCERTAINTY_METHODS
-        }
-    )
     dropout: Optional[float] = field(
         default=0.1, metadata={'help': "Dropout ratio."}
     )
@@ -84,6 +78,14 @@ class Arguments:
     )
     regression_with_variance: Optional[bool] = field(
         default=False, metadata={'help': "Use two regression output heads, one for mean and the other for variance."}
+    )
+
+    # --- Uncertainty Arguments ---
+    uncertainty_method: Optional[str] = field(
+        default='none', metadata={
+            "help": "Uncertainty estimation method",
+            "choices": UNCERTAINTY_METHODS
+        }
     )
 
     # -- Feature Arguments ---
