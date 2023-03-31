@@ -77,6 +77,11 @@ class Arguments(BaseArguments):
 
         self.pooler_dropout = self.dropout
 
+        # Set flags to indicate whether remove hydrogen or polar hydrogen
+        # according to the `only_polar` value
+        self.remove_hydrogen = False
+        self.remove_polar_hydrogen = False
+
         if self.only_polar > 0:
             self.remove_polar_hydrogen = True
         elif self.only_polar < 0:
