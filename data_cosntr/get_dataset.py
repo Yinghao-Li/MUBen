@@ -18,7 +18,7 @@ from dgllife.utils import (
 )
 from transformers import HfArgumentParser
 
-from seqlbtoolkit.io import set_logging, logging_args, init_dir, save_json
+from mubench.utils.io import set_logging, logging_args, init_dir, save_json
 from mubench.utils.macro import DATASET_NAMES, SPLITTING
 
 logger = logging.getLogger(__name__)
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     if not getattr(arguments, "log_path", None):
         arguments.log_path = os.path.join('./logs', f'{_current_file_name}', f'{_time}.log')
 
-    set_logging(log_dir=arguments.log_path)
+    set_logging(log_path=arguments.log_path)
     logging_args(arguments)
 
     main(args=arguments)

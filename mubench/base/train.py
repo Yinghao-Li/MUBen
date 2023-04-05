@@ -1,23 +1,27 @@
-from abc import ABC
+"""
+Yinghao Li @ Georgia Tech
+
+Base trainer function.
+"""
 
 import os
-
-import numpy as np
 import torch
 import wandb
 import logging
+import numpy as np
 import torch.nn as nn
+
 from tqdm.auto import tqdm
-from torch.optim import AdamW
 from typing import Optional
 from functools import cached_property
+
 from scipy.special import softmax, expit
 from transformers import get_scheduler
-
-from seqlbtoolkit.training.train import BaseTrainer
-from seqlbtoolkit.training.status import Status
+from torch.optim import AdamW
+from torch.utils.data import DataLoader
 
 from ..utils.macro import EVAL_METRICS
+from ..utils.container import ModelContainer, UpdateCriteria
 from .metric import (
     GaussianNLL,
     calculate_classification_metrics,
@@ -30,7 +34,7 @@ from .args import Config
 logger = logging.getLogger(__name__)
 
 
-class Trainer(BaseTrainer, ABC):
+class Trainer:
     def __init__(self,
                  config: Config,
                  training_dataset=None,
@@ -38,21 +42,32 @@ class Trainer(BaseTrainer, ABC):
                  test_dataset=None,
                  collate_fn=None):
 
-        if not collate_fn:
-            collate_fn = Collator(config)
+        self._config = config
+        self._training_dataset = training_dataset
+        self._valid_dataset = valid_dataset
+        self._test_dataset = test_dataset
+        self._collate_fn = collate_fn if collate_fn is not None else Collator(config)
+        self._device = getattr(config, "device", "cpu")
 
-        super().__init__(
-            config=config,
-            training_dataset=training_dataset,
-            valid_dataset=valid_dataset,
-            test_dataset=test_dataset,
-            collate_fn=collate_fn
-        )
+        self._model = None
+        self._optimizer = None
+        self._scheduler = None
+        self._loss_fn = None
 
-        self.initialize()
-
+        # Validation variables and flags
         self._valid_metric = EVAL_METRICS[config.dataset_name].lower().replace('-', '_')
-        self._status = Status(metric_smaller_is_better=True if config.task_type == 'regression' else False)
+        if config.valid_epoch_interval == 0:
+            update_criteria = UpdateCriteria.always
+        elif config.task_type == 'classification':
+            update_criteria = UpdateCriteria.metric_larger
+        else:
+            update_criteria = UpdateCriteria.metric_smaller
+        self._model_container = ModelContainer(update_criteria)
+        self._eval_step = 0  # will increase by 1 each time you call `eval_and_save`
+
+        self._best_model_name = 'model_best.ckpt'
+
+        # Test variables and flags
         self._result_dir = os.path.join(
             self.config.result_dir,
             self.config.dataset_name,
@@ -60,8 +75,26 @@ class Trainer(BaseTrainer, ABC):
             self.config.uncertainty_method,
         )
 
-        # constants
-        self._best_model_name = 'model_best.bin'
+        self.initialize()
+
+    @property
+    def config(self):
+        return self._config
+
+    @config.setter
+    def config(self, x):
+        self._config = x
+
+    @property
+    def model(self):
+        return self._model
+
+    def initialize(self):
+        self.initialize_model()
+        self.initialize_optimizer()
+        self.initialize_scheduler()
+        self.initialize_loss()
+        return self
 
     def initialize_model(self):
         self._model = DNN(
@@ -173,7 +206,7 @@ class Trainer(BaseTrainer, ABC):
                 wandb.log(data={'train/loss': training_loss}, step=epoch_idx+1)
 
                 if self.config.valid_epoch_interval and (epoch_idx + 1) % self.config.valid_epoch_interval == 0:
-                    self.eval_and_save(step_idx=epoch_idx+1, metric_name=self._valid_metric)
+                    self.eval_and_save()
 
         return None
 
@@ -286,38 +319,30 @@ class Trainer(BaseTrainer, ABC):
 
         return metrics if not return_preds else (metrics, preds)
 
-    def eval_and_save(self,
-                      step_idx: Optional[int] = None,
-                      metric_name: Optional[str] = 'f1'):
+    def eval_and_save(self):
         """
         Evaluate the model and save it if its performance exceeds the previous highest
         """
+        self._eval_step += 1
 
         valid_results = self.evaluate(self.valid_dataset)
 
-        step_idx = self._status.eval_step + 1 if step_idx is None else step_idx
-
         result_dict = {f"valid/{k}": v for k, v in valid_results.items()}
-        wandb.log(data=result_dict, step=step_idx)
+        wandb.log(data=result_dict, step=self._eval_step)
 
-        logger.debug(f"[Valid step {step_idx}] results:")
+        logger.debug(f"[Valid step {self._eval_step}] results:")
         self.log_results(valid_results, logging_func=logger.debug)
 
         # ----- check model performance and update buffer -----
-        if self._status.model_buffer.check_and_update(getattr(valid_results, metric_name), self.model):
+        if self._model_container.check_and_update(getattr(valid_results, self._valid_metric), self.model):
             logger.debug("Model buffer is updated!")
-
-        self._status.eval_step = step_idx
 
         return None
 
     def test(self):
 
-        assert self._status.model_buffer.size == 1, \
-            NotImplementedError("Function for multi-checkpoint caching & evaluation is not implemented!")
-
-        if self._status.model_buffer.model_state_dicts:
-            self._model.load_state_dict(self._status.model_buffer.model_state_dicts[0])
+        if self._model_container.state_dict:
+            self._model.load_state_dict(self._model_container.state_dict)
         metrics, preds = self.evaluate(self._test_dataset, n_run=self.config.n_test, return_preds=True)
 
         # save preds
@@ -372,13 +397,128 @@ class Trainer(BaseTrainer, ABC):
         os.makedirs(output_dir, exist_ok=True)
 
         output_dir = output_dir if output_dir is not None else getattr(self._config, 'output_dir', 'output')
-        self._status.model_buffer.save(os.path.join(output_dir, self._best_model_name))
+        self._model_container.save(os.path.join(output_dir, self._best_model_name))
 
         return self
 
     def load_best_model(self, model_dir):
-        self._status.model_buffer.load(os.path.join(model_dir, self._best_model_name))
+        self._model_container.load(os.path.join(model_dir, self._best_model_name))
 
+        return self
+
+    def get_dataloader(self,
+                       dataset,
+                       shuffle: Optional[bool] = False,
+                       batch_size: Optional[int] = 0):
+        try:
+            dataloader = DataLoader(
+                dataset=dataset,
+                collate_fn=self._collate_fn,
+                batch_size=batch_size if batch_size else self._config.batch_size,
+                num_workers=getattr(self._config, "num_workers", 0),
+                pin_memory=getattr(self._config, "pin_memory", False),
+                shuffle=shuffle,
+                drop_last=False
+            )
+        except Exception as e:
+            logger.exception(e)
+            raise e
+
+        return dataloader
+
+    def save(self,
+             output_dir: Optional[str] = None,
+             save_optimizer: Optional[bool] = False,
+             save_scheduler: Optional[bool] = False,
+             model_name: Optional[str] = 'model.ckpt',
+             optimizer_name: Optional[str] = 'optimizer.ckpt',
+             scheduler_name: Optional[str] = 'scheduler.ckpt'):
+        """
+        Save model parameters as well as trainer parameters
+
+        Parameters
+        ----------
+        output_dir: model directory
+        save_optimizer: whether to save optimizer
+        save_scheduler: whether to save scheduler
+        model_name: model name (suffix free)
+        optimizer_name: optimizer name (suffix free)
+        scheduler_name: scheduler name (suffix free)
+
+        Returns
+        -------
+        None
+        """
+        output_dir = output_dir if output_dir is not None else self._result_dir
+
+        model_state_dict = self._model.state_dict()
+        torch.save(model_state_dict, os.path.join(output_dir, model_name))
+
+        self._config.save(output_dir)
+
+        if save_optimizer:
+            torch.save(self._optimizer.state_dict(), os.path.join(output_dir, optimizer_name))
+        if save_scheduler and self._scheduler is not None:
+            torch.save(self._scheduler.state_dict(), os.path.join(output_dir, scheduler_name))
+
+        return None
+
+    def load(self,
+             input_dir: Optional[str] = None,
+             load_optimizer: Optional[bool] = False,
+             load_scheduler: Optional[bool] = False,
+             model_name: Optional[str] = 'model.ckpt',
+             optimizer_name: Optional[str] = 'optimizer.ckpt',
+             scheduler_name: Optional[str] = 'scheduler.ckpt'):
+        """
+        Load model parameters.
+
+        Parameters
+        ----------
+        input_dir: model directory
+        load_optimizer: whether load other trainer parameters
+        load_scheduler: whether load scheduler
+        model_name: model name (suffix free)
+        optimizer_name: optimizer name (suffix free)
+        scheduler_name: scheduler name
+
+        Returns
+        -------
+        self
+        """
+        input_dir = input_dir if input_dir is not None else self._result_dir
+
+        logger.info(f"Loading model from {input_dir}")
+
+        self.initialize_model()
+        self._model.load_state_dict(torch.load(os.path.join(input_dir, model_name)))
+        self._model.to(self._device)
+
+        if load_optimizer:
+            logger.info("Loading optimizer")
+
+            if self._optimizer is None:
+                self.initialize_optimizer()
+
+            if os.path.isfile(os.path.join(input_dir, optimizer_name)):
+                self._optimizer.load_state_dict(
+                    torch.load(os.path.join(input_dir, optimizer_name), map_location=self._device)
+                )
+            else:
+                logger.warning("Optimizer file does not exist!")
+
+        if load_scheduler:
+            logger.info("Loading scheduler")
+
+            if self._scheduler is None:
+                self.initialize_scheduler()
+
+            if os.path.isfile(os.path.join(input_dir, scheduler_name)):
+                self._optimizer.load_state_dict(
+                    torch.load(os.path.join(input_dir, scheduler_name), map_location=self._device)
+                )
+            else:
+                logger.warning("Scheduler file does not exist!")
         return self
 
     @staticmethod

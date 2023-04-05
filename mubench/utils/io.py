@@ -1,5 +1,4 @@
 import os
-import sys
 import re
 import json
 import shutil
@@ -158,7 +157,8 @@ def prettify_json(text, indent=2, collapse_level=4):
 
 def convert_arguments_from_argparse(args):
     """
-    Convert argparse Namespace to transformers style arguments
+    Convert argparse Namespace to transformers style arguments parser strings.
+    Used to transfer code style.
 
     Parameters
     ----------

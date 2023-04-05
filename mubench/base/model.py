@@ -1,3 +1,9 @@
+"""
+Yinghao Li @ Georgia Tech
+
+A simple deep neural network with customizable activation function.
+"""
+
 import torch
 import torch.nn as nn
 from typing import Optional

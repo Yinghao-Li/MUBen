@@ -139,7 +139,8 @@ class Arguments:
 
     # --- Evaluation Arguments ---
     valid_epoch_interval: Optional[int] = field(
-        default=1, metadata={'help': 'Run validation every how many epochs. Set to 0 to disable validation.'}
+        default=1, metadata={'help': 'How many training epochs within each validation step. '
+                                     'Set to 0 to disable validation.'}
     )
     n_test: Optional[int] = field(
         default=1, metadata={'help': "How many test loops to run in one training process"}
