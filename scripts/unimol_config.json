@@ -1,5 +1,7 @@
 {
-  "disable_wandb": true,
+  "wandb_project": "uncertainty benchmark test",
+  "wandb_name": "Uni-Mol.none",
+  "disable_wandb": false,
   "dataset_name": "ESOL",
   "data_dir": "./data/files",
   "ignore_preprocessed_dataset": false,
