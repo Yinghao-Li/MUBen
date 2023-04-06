@@ -1,5 +1,5 @@
 """
-Run the basic model and training process
+Train and test Uni-Mol
 """
 
 import os

@@ -3,12 +3,15 @@ The scaler for the regression task.
 This implementation is adapted from
 https://github.com/chemprop/chemprop/blob/master/chemprop/data/scaler.py
 """
-from typing import Any, List, Union
+from typing import Any
 import numpy as np
+
+__all__ = ['StandardScaler']
 
 
 class StandardScaler:
-    """A StandardScaler normalizes a dataset.
+    """
+    A StandardScaler normalizes a dataset.
 
     When fit on a dataset, the StandardScaler learns the mean and standard deviation across the 0th axis.
     When transforming a dataset, the StandardScaler subtracts the means and divides by the standard deviations.
@@ -28,7 +31,7 @@ class StandardScaler:
         self.stds = stds
         self.replace_nan_token = replace_nan_token
 
-    def fit(self, x: Union[List[List[float]], np.ndarray]) -> 'StandardScaler':
+    def fit(self, x: np.ndarray) -> 'StandardScaler':
         """
         Learns means and standard deviations across the 0th axis.
 
@@ -49,7 +52,7 @@ class StandardScaler:
 
         return self
 
-    def transform(self, x: Union[List[List[float]], np.ndarray]):
+    def transform(self, x: np.ndarray):
         """
         Transforms the data by subtracting the means and dividing by the standard deviations.
 
@@ -67,7 +70,7 @@ class StandardScaler:
 
         return transformed_with_none
 
-    def inverse_transform(self, x: Union[List[List[float]], np.ndarray]):
+    def inverse_transform(self, x:  np.ndarray):
         """
         Performs the inverse transformation by multiplying by the standard deviations and adding the means.
 
@@ -82,8 +85,9 @@ class StandardScaler:
         if isinstance(x, np.ndarray) or isinstance(x, list):
             x = np.array(x).astype(float)
             transformed_with_nan = x * self.stds + self.means
-            transformed_with_none = np.where(np.isnan(transformed_with_nan),
-                                             self.replace_nan_token, transformed_with_nan)
+            transformed_with_none = np.where(
+                np.isnan(transformed_with_nan), self.replace_nan_token, transformed_with_nan
+            )
             return transformed_with_none
         else:
             return None

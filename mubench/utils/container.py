@@ -2,10 +2,13 @@ import copy
 import regex
 import torch
 import logging
+import numpy as np
 from enum import Enum
 from typing import Optional, Union
 
 logger = logging.getLogger(__name__)
+
+__all__ = ['UpdateCriteria', 'ModelContainer']
 
 
 class UpdateCriteria(str, Enum):
@@ -29,12 +32,12 @@ class ModelContainer:
         ----------
         update_criteria: decides whether the metrics are in descend order
         """
-        self._state_dict = None
-        self._metric = None
-
         assert update_criteria in UpdateCriteria.get_options(), \
             ValueError(f"Invalid criteria! Options are {UpdateCriteria.get_options()}")
         self._criteria = update_criteria
+
+        self._state_dict = None
+        self._metric = np.inf if self._criteria == UpdateCriteria.metric_smaller else -np.inf
 
     @property
     def state_dict(self):
@@ -44,7 +47,7 @@ class ModelContainer:
     def metric(self):
         return self._metric
 
-    def check_and_update(self, metric: Union[int, float], model) -> bool:
+    def check_and_update(self, model, metric: Optional[Union[int, float]] = None) -> bool:
         """
         Check whether the new model performs better than the buffered models.
         If so, replace the worst model in the buffer by the new model
@@ -63,6 +66,7 @@ class ModelContainer:
                       (self._criteria == UpdateCriteria.metric_larger and metric >= self.metric)
 
         if update_flag:
+            self._metric = metric
             model_cp = copy.deepcopy(model)
             model_cp.to('cpu')
 

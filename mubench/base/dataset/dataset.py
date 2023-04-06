@@ -26,27 +26,35 @@ class Dataset(BaseDataset):
 
         self._features = None
         self._smiles: Union[List[str], None] = None
-        self._lbs: Union[List[List[Union[int, float]]], None] = None
-        self._masks: Union[List[List[int]], None] = None
+        self._lbs: Union[np.ndarray, None] = None
+        self._masks: Union[np.ndarray, None] = None
     
     @property
     def features(self):
         return self._features
 
     @property
-    def smiles(self):
+    def smiles(self) -> List[str]:
         return self._smiles
     
     @property
-    def lbs(self):
+    def lbs(self) -> np.ndarray:
         return self._lbs
 
     @cached_property
-    def masks(self):
+    def masks(self) -> np.ndarray:
         return self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
 
     def __len__(self):
         return len(self._smiles)
+
+    def update_lbs(self, lbs):
+        """
+        Update dataset labels and instance list accordingly
+        """
+        self._lbs = lbs
+        self.data_instances = self.get_instances()
+        return self
 
     def prepare(self, config, partition, **kwargs):
         """

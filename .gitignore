@@ -133,6 +133,7 @@ dmypy.json
 .vscode/
 *.csv
 *.bin
+*.ckpt
 *.pt
 *.zip
 *.tar.gz

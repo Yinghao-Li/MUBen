@@ -5,6 +5,7 @@ Base trainer function.
 """
 
 import os
+import copy
 import torch
 import wandb
 import logging
@@ -22,6 +23,7 @@ from torch.utils.data import DataLoader
 
 from ..utils.macro import EVAL_METRICS
 from ..utils.container import ModelContainer, UpdateCriteria
+from ..utils.scaler import StandardScaler
 from .metric import (
     GaussianNLL,
     calculate_classification_metrics,
@@ -40,13 +42,15 @@ class Trainer:
                  training_dataset=None,
                  valid_dataset=None,
                  test_dataset=None,
-                 collate_fn=None):
+                 collate_fn=None,
+                 scalar=None):
 
         self._config = config
         self._training_dataset = training_dataset
         self._valid_dataset = valid_dataset
         self._test_dataset = test_dataset
         self._collate_fn = collate_fn if collate_fn is not None else Collator(config)
+        self._scalar = scalar
         self._device = getattr(config, "device", "cpu")
 
         self._model = None
@@ -75,6 +79,10 @@ class Trainer:
             self.config.uncertainty_method,
         )
 
+        # normalize training dataset labels for regression task
+        self.check_and_update_training_dataset()
+
+        # initialize training modules
         self.initialize()
 
     @property
@@ -161,6 +169,22 @@ class Trainer:
     @property
     def test_dataset(self):
         return self._test_dataset
+
+    def check_and_update_training_dataset(self):
+        if self.config.task_type == 'classification':
+            return self
+        if self._training_dataset is None and self._scalar is None:
+            logger.warning("Encounter regression task with no training dataset specified and label scaling disabled! "
+                           "This may create inconsistency between training and inference label scales.")
+            return self
+
+        lbs = copy.deepcopy(self._training_dataset.lbs)
+        lbs[~self._training_dataset.masks.astype(bool)] = np.nan
+        self._scalar = StandardScaler(replace_nan_token=0).fit(lbs)
+
+        self._training_dataset.update_lbs(self._scalar.transform(self._training_dataset.lbs))
+
+        return self
 
     @cached_property
     def n_training_steps(self):
@@ -299,21 +323,29 @@ class Trainer:
             else:
                 preds = expit(logits)  # sigmoid function
         else:
+            # get the mean of the preds
             preds = logits if logits.shape[-1] == 1 or len(logits.shape) == 1 else logits[..., 0]
+
+        return preds
+
+    def scale_back_lbs(self, preds: np.ndarray) -> np.ndarray:
+        if self._scalar is None:
+            return preds
+        preds = self._scalar.inverse_transform(preds)
         return preds
 
     def evaluate(self, dataset, n_run: Optional[int] = 1, return_preds: Optional[bool] = False):
 
         if n_run == 1:
 
-            preds = self.normalize_logits(self.inference(dataset))
+            preds = self.scale_back_lbs(self.normalize_logits(self.inference(dataset)))
             metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
 
         else:
             preds = list()
             for i_run in (tqdm_run := tqdm(range(n_run))):
                 tqdm_run.set_description(f'[Test {i_run}]')
-                preds.append(self.normalize_logits(self.inference(dataset)))
+                preds.append(self.scale_back_lbs(self.normalize_logits(self.inference(dataset))))
             preds = np.stack(preds)
             metrics = self.get_metrics(dataset.lbs, preds.mean(axis=0), dataset.masks)
 
@@ -334,7 +366,7 @@ class Trainer:
         self.log_results(valid_results, logging_func=logger.debug)
 
         # ----- check model performance and update buffer -----
-        if self._model_container.check_and_update(getattr(valid_results, self._valid_metric), self.model):
+        if self._model_container.check_and_update(self.model, getattr(valid_results, self._valid_metric)):
             logger.debug("Model buffer is updated!")
 
         return None
