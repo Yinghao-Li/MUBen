@@ -9,7 +9,7 @@ from seqlbtoolkit.training.config import BaseConfig
 from ..utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
-    UNCERTAINTY_METHODS,
+    UncertaintyMethods,
     FINGERPRINT_FEATURE_TYPES
 )
 
@@ -84,7 +84,7 @@ class Arguments:
     uncertainty_method: Optional[str] = field(
         default='none', metadata={
             "help": "Uncertainty estimation method",
-            "choices": UNCERTAINTY_METHODS
+            "choices": UncertaintyMethods.get_options()
         }
     )
 

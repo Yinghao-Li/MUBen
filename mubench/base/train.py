@@ -21,7 +21,7 @@ from transformers import get_scheduler
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
-from ..utils.macro import EVAL_METRICS
+from ..utils.macro import EVAL_METRICS, UncertaintyMethods
 from ..utils.container import ModelContainer, UpdateCriteria
 from ..utils.scaler import StandardScaler
 from .metric import (
@@ -193,19 +193,35 @@ class Trainer:
 
     def run(self):
 
-        # TODO: more appropriate continue training setup
-        if os.path.exists(os.path.join(self._result_dir, self._best_model_name)) and not self.config.retrain_model:
-            logger.info("Find existing model, will skip training.")
-            self.load_best_model(model_dir=self._result_dir)
-        else:
-            logger.info("Training model")
-            self.train()
+        if self.config.uncertainty_method == UncertaintyMethods.none:
 
-        test_metrics = self.test()
-        logger.info("Test results:")
-        self.log_results(test_metrics)
+            if os.path.exists(os.path.join(self._result_dir, self._best_model_name)) and not self.config.retrain_model:
+                logger.info("Find existing model, will skip training.")
+                self.load_best_model(model_dir=self._result_dir)
+            else:
+                logger.info("Training model")
+                self.train()
 
-        self.save_best_model(output_dir=self._result_dir)
+            test_metrics = self.test()
+            logger.info("Test results:")
+            self.log_results(test_metrics)
+
+            self.save_best_model(output_dir=self._result_dir)
+
+        elif self.config.uncertainty_method == UncertaintyMethods.ensembles:
+
+            if os.path.exists(os.path.join(self._result_dir, self._best_model_name)) and not self.config.retrain_model:
+                logger.info("Find existing model, will skip training.")
+                self.load_best_model(model_dir=self._result_dir)
+            else:
+                logger.info("Training model")
+                self.train()
+
+            test_metrics = self.test()
+            logger.info("Test results:")
+            self.log_results(test_metrics)
+
+            self.save_best_model(output_dir=self._result_dir)
 
         wandb.finish()
 
