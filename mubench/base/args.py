@@ -148,7 +148,8 @@ class Arguments:
                                      'Set to 0 to disable validation.'}
     )
     n_test: Optional[int] = field(
-        default=1, metadata={'help': "How many test loops to run in one training process"}
+        default=1, metadata={'help': "How many test loops to run in one training process. "
+                                     "The default value for some Bayesian methods such as MC Dropout is 20."}
     )
 
     # --- Device Arguments ---
@@ -163,9 +164,8 @@ class Arguments:
         self.data_dir = os.path.join(self.data_dir, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
-        # if self.model_name == 'DNN' and self.feature_type == 'none':
-        #     raise ValueError(f"Must assign a value to `feature_type` while using DNN model. "
-        #                      f"Options are {[t for t in FINGERPRINT_FEATURE_TYPES if t != 'none']}")
+        if self.uncertainty_method in [UncertaintyMethods.mc_dropout]:
+            self.n_test = self.n_test if self.n_test > 1 else 20
 
     # The following three functions are copied from transformers.training_args
     @cached_property

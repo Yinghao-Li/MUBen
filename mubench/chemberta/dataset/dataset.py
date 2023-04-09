@@ -1,4 +1,3 @@
-import os
 import logging
 
 from transformers import AutoTokenizer
@@ -6,7 +5,7 @@ from seqlbtoolkit.training.dataset import (
     DataInstance,
     feature_lists_to_instance_list,
 )
-from ..base.dataset import Dataset as BaseDataset
+from mubench.base.dataset import Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
 

@@ -3,10 +3,7 @@ import logging
 import numpy as np
 from transformers import AutoTokenizer
 
-from seqlbtoolkit.training.dataset import (
-    Batch,
-    instance_list_to_feature_lists
-)
+from mubench.utils.data import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +31,7 @@ class Collator:
         -------
         a Batch of instances
         """
-        atom_ids, lbs, masks = instance_list_to_feature_lists(instance_list)
+        atom_ids, lbs, masks = unpack_instances(instance_list)
 
         atom_lengths = [len(inst) for inst in atom_ids]
         max_atom_length = max(atom_lengths)

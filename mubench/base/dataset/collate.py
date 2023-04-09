@@ -2,10 +2,7 @@ import torch
 import logging
 import numpy as np
 
-from seqlbtoolkit.training.dataset import (
-    Batch,
-    instance_list_to_feature_lists
-)
+from mubench.utils.data import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +27,7 @@ class Collator:
         -------
         a Batch of instances
         """
-        features, lbs, masks = instance_list_to_feature_lists(instance_list)
+        features, lbs, masks = unpack_instances(instance_list)
 
         feature_batch = torch.from_numpy(np.stack(features)).to(torch.float)
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)

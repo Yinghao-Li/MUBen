@@ -1,4 +1,6 @@
 import os
+import regex
+import torch
 import logging
 import pandas as pd
 import numpy as np
@@ -7,11 +9,9 @@ from typing import List, Union
 from ast import literal_eval
 from tqdm.auto import tqdm
 from functools import cached_property
-from seqlbtoolkit.training.dataset import (
-    BaseDataset,
-    DataInstance,
-    feature_lists_to_instance_list,
-)
+from torch.utils.data import Dataset as TorchDataset
+
+from mubench.utils.data import pack_instances
 from .features import (
     rdkit_2d_features_normalized_generator,
     morgan_binary_features_generator
@@ -20,7 +20,7 @@ from .features import (
 logger = logging.getLogger(__name__)
 
 
-class Dataset(BaseDataset):
+class Dataset(TorchDataset):
     def __init__(self):
         super().__init__()
 
@@ -28,6 +28,8 @@ class Dataset(BaseDataset):
         self._smiles: Union[List[str], None] = None
         self._lbs: Union[np.ndarray, None] = None
         self._masks: Union[np.ndarray, None] = None
+
+        self.data_instances = None
     
     @property
     def features(self):
@@ -47,6 +49,9 @@ class Dataset(BaseDataset):
 
     def __len__(self):
         return len(self._smiles)
+
+    def __getitem__(self, idx):
+        return self.data_instances[idx]
 
     def update_lbs(self, lbs):
         """
@@ -124,12 +129,51 @@ class Dataset(BaseDataset):
 
     def get_instances(self):
 
-        data_instances = feature_lists_to_instance_list(
-            DataInstance,
+        data_instances = pack_instances(
             features=self._features, lbs=self.lbs, masks=self.masks
         )
 
         return data_instances
+
+    def save(self, file_path: str):
+        """
+        Save the entire dataset for future usage
+        Parameters
+        ----------
+        file_path: path to the saved file
+        Returns
+        -------
+        self
+        """
+        attr_dict = dict()
+        for attr, value in self.__dict__.items():
+            if regex.match(f"^_[a-z]", attr):
+                attr_dict[attr] = value
+
+        os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
+        torch.save(attr_dict, file_path)
+
+        return self
+
+    def load(self, file_path: str):
+        """
+        Load the entire dataset from disk
+        Parameters
+        ----------
+        file_path: path to the saved file
+        Returns
+        -------
+        self
+        """
+        attr_dict = torch.load(file_path)
+
+        for attr, value in attr_dict.items():
+            if attr not in self.__dict__:
+                logger.warning(f"Attribute {attr} is not natively defined in dataset!")
+
+            setattr(self, attr, value)
+
+        return self
 
     def read_csv(self, file_path: str):
         """

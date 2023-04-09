@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from seqlbtoolkit.training.dataset import (
     Batch,
 )
-from mubench.utils.data import unzip_list_of_dicts
+from mubench.utils.data import unpack_instances
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class Collator:
         -------
         a Batch of instances
         """
-        atoms, coordinates, distances, edge_types, lbs, masks = unzip_list_of_dicts(instances)
+        atoms, coordinates, distances, edge_types, lbs, masks = unpack_instances(instances)
 
         lengths = [tk.shape[1] for tk in atoms]
         max_length = max(lengths)

@@ -113,7 +113,7 @@ class Trainer(BaseTrainer, ABC):
             batch_size=batch_size if batch_size else self.config.batch_size,
             shuffle=False
         )
-        self._model.eval()
+        self.eval_mode()
 
         atom_logits_list = list()
         bond_logits_list = list()

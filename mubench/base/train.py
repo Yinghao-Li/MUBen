@@ -83,7 +83,7 @@ class Trainer:
         self._result_dir_ = self._result_dir
 
         # normalize training dataset labels for regression task
-        self.check_and_update_training_dataset()
+        self.normalize_training_lbs()
 
         # initialize training modules
         self.initialize()
@@ -173,7 +173,13 @@ class Trainer:
     def test_dataset(self):
         return self._test_dataset
 
-    def check_and_update_training_dataset(self):
+    def normalize_training_lbs(self):
+        """
+        Convert the label distribution in the training dataset to standard Gaussian.
+        Notice that this function only works for regression tasks
+
+        TODO: check whether this function behaves properly on multi-task regression
+        """
         if self.config.task_type == 'classification':
             return self
         if self._training_dataset is None and self._scalar is None:
@@ -194,9 +200,32 @@ class Trainer:
         num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
         return num_update_steps_per_epoch * self.config.n_epochs
 
+    def train_mode(self):
+        """
+        Set the PyTorch model to train mode
+        """
+        self._model.train()
+        return self
+
+    def eval_mode(self):
+        """
+        Set the PyTorch model to evaluation mode
+        """
+
+        self._model.eval()
+
+        if self.config.uncertainty_method == UncertaintyMethods.mc_dropout:
+            # activate the dropout layers during evaluation for MC Dropout
+            for m in self._model.modules():
+                if m.__class__.__name__.startswith('Dropout'):
+                    m.train()
+
+        return self
+
     def run(self):
 
-        if self.config.uncertainty_method == UncertaintyMethods.none:
+        # not using deep ensembles
+        if self.config.uncertainty_method != UncertaintyMethods.ensembles:
             set_seed(self.config.seed)
             if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and not self.config.retrain_model:
                 logger.info("Find existing model, will skip training.")
@@ -211,7 +240,8 @@ class Trainer:
 
             self.save_best_model()
 
-        elif self.config.uncertainty_method == UncertaintyMethods.ensembles:
+        # other uncertainty estimation methods
+        else:
             for ensemble_idx in range(self.config.n_ensembles):
                 # update random seed and re-initialize training status
                 individual_seed = self.config.seed + ensemble_idx
@@ -266,6 +296,8 @@ class Trainer:
         return None
 
     def training_epoch(self, data_loader, pbar):
+
+        self.train_mode()
 
         avg_loss = 0.
         num_items = 0
@@ -330,7 +362,7 @@ class Trainer:
             batch_size=batch_size if batch_size else self.config.batch_size,
             shuffle=False
         )
-        self._model.eval()
+        self.eval_mode()
 
         logits_list = list()
 
@@ -359,7 +391,7 @@ class Trainer:
 
         return preds
 
-    def scale_back_lbs(self, preds: np.ndarray) -> np.ndarray:
+    def denormalize_lbs(self, preds: np.ndarray) -> np.ndarray:
         if self._scalar is None:
             return preds
         preds = self._scalar.inverse_transform(preds)
@@ -369,14 +401,19 @@ class Trainer:
 
         if n_run == 1:
 
-            preds = self.scale_back_lbs(self.normalize_logits(self.inference(dataset)))
+            preds = self.denormalize_lbs(self.normalize_logits(self.inference(dataset)))
             metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
 
         else:
             preds = list()
-            for i_run in (tqdm_run := tqdm(range(n_run))):
-                tqdm_run.set_description(f'[Test {i_run}]')
-                preds.append(self.scale_back_lbs(self.normalize_logits(self.inference(dataset))))
+            for test_run_idx in (tqdm_run := tqdm(range(n_run))):
+                tqdm_run.set_description(f'[Test {test_run_idx}]')
+
+                individual_seed = self.config.seed + test_run_idx
+                set_seed(individual_seed)
+
+                preds.append(self.denormalize_lbs(self.normalize_logits(self.inference(dataset))))
+
             preds = np.stack(preds)
             metrics = self.get_metrics(dataset.lbs, preds.mean(axis=0), dataset.masks)
 
@@ -445,6 +482,9 @@ class Trainer:
 
     @staticmethod
     def log_results(metrics, logging_func=logger.info):
+        """
+        Print evaluation metrics to the logging destination
+        """
 
         if isinstance(metrics, dict):
             for key, val in metrics.items():
@@ -454,6 +494,7 @@ class Trainer:
         else:
             for k, v in metrics.items():
                 logging_func(f"  {k}: {v:.4f}.")
+        return None
 
     def save_best_model(self):
 
