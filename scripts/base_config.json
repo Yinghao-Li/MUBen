@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "FreeSolv",
+  "dataset_name": "BBBP",
   "data_dir": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,

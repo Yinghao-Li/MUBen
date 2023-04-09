@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader
 from ..utils.macro import EVAL_METRICS, UncertaintyMethods
 from ..utils.container import ModelContainer, UpdateCriteria
 from ..utils.scaler import StandardScaler
+from ..utils.data import set_seed
 from .metric import (
     GaussianNLL,
     calculate_classification_metrics,
@@ -69,7 +70,8 @@ class Trainer:
         self._model_container = ModelContainer(update_criteria)
         self._eval_step = 0  # will increase by 1 each time you call `eval_and_save`
 
-        self._best_model_name = 'model_best.ckpt'
+        self._model_name = 'model_best.ckpt'
+        self._model_name_ = self._model_name  # mutable model name for ensemble
 
         # Test variables and flags
         self._result_dir = os.path.join(
@@ -78,6 +80,7 @@ class Trainer:
             self.config.model_name,
             self.config.uncertainty_method,
         )
+        self._result_dir_ = self._result_dir
 
         # normalize training dataset labels for regression task
         self.check_and_update_training_dataset()
@@ -194,10 +197,10 @@ class Trainer:
     def run(self):
 
         if self.config.uncertainty_method == UncertaintyMethods.none:
-
-            if os.path.exists(os.path.join(self._result_dir, self._best_model_name)) and not self.config.retrain_model:
+            set_seed(self.config.seed)
+            if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and not self.config.retrain_model:
                 logger.info("Find existing model, will skip training.")
-                self.load_best_model(model_dir=self._result_dir)
+                self.load_best_model()
             else:
                 logger.info("Training model")
                 self.train()
@@ -206,22 +209,34 @@ class Trainer:
             logger.info("Test results:")
             self.log_results(test_metrics)
 
-            self.save_best_model(output_dir=self._result_dir)
+            self.save_best_model()
 
         elif self.config.uncertainty_method == UncertaintyMethods.ensembles:
+            for ensemble_idx in range(self.config.n_ensembles):
+                # update random seed and re-initialize training status
+                individual_seed = self.config.seed + ensemble_idx
+                set_seed(individual_seed)
+                self.initialize()
+                logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
 
-            if os.path.exists(os.path.join(self._result_dir, self._best_model_name)) and not self.config.retrain_model:
-                logger.info("Find existing model, will skip training.")
-                self.load_best_model(model_dir=self._result_dir)
-            else:
-                logger.info("Training model")
-                self.train()
+                # update the name of the best model
+                self._model_name_ = f"{'.'.join(self._model_name.split('.')[:-1])}-{ensemble_idx}" \
+                                    f".{self._model_name.split('.')[-1]}"
+                self._result_dir_ = os.path.join(self._result_dir, str(ensemble_idx))
 
-            test_metrics = self.test()
-            logger.info("Test results:")
-            self.log_results(test_metrics)
+                if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and \
+                        not self.config.retrain_model:
+                    logger.info("Find existing model, will skip training.")
+                    self.load_best_model()
+                else:
+                    logger.info("Training model")
+                    self.train()
 
-            self.save_best_model(output_dir=self._result_dir)
+                test_metrics = self.test()
+                logger.info("Test results:")
+                self.log_results(test_metrics)
+
+                self.save_best_model()
 
         wandb.finish()
 
@@ -398,7 +413,7 @@ class Trainer:
             preds = [preds]
 
         for idx, pred in enumerate(preds):
-            file_path = os.path.join(self._result_dir, "preds", f"{idx}.pt")
+            file_path = os.path.join(self._result_dir_, "preds", f"{idx}.pt")
             self.save_preds_to_pt(
                 lbs=self._test_dataset.lbs, preds=preds, masks=self.test_dataset.masks, file_path=file_path
             )
@@ -440,17 +455,15 @@ class Trainer:
             for k, v in metrics.items():
                 logging_func(f"  {k}: {v:.4f}.")
 
-    def save_best_model(self, output_dir: Optional[str] = None):
+    def save_best_model(self):
 
-        os.makedirs(output_dir, exist_ok=True)
-
-        output_dir = output_dir if output_dir is not None else getattr(self._config, 'output_dir', 'output')
-        self._model_container.save(os.path.join(output_dir, self._best_model_name))
+        os.makedirs(self._result_dir_, exist_ok=True)
+        self._model_container.save(os.path.join(self._result_dir_, self._model_name_))
 
         return self
 
-    def load_best_model(self, model_dir):
-        self._model_container.load(os.path.join(model_dir, self._best_model_name))
+    def load_best_model(self):
+        self._model_container.load(os.path.join(self._result_dir_, self._model_name_))
 
         return self
 
@@ -497,7 +510,7 @@ class Trainer:
         -------
         None
         """
-        output_dir = output_dir if output_dir is not None else self._result_dir
+        output_dir = output_dir if output_dir is not None else self._result_dir_
 
         model_state_dict = self._model.state_dict()
         torch.save(model_state_dict, os.path.join(output_dir, model_name))
@@ -534,7 +547,7 @@ class Trainer:
         -------
         self
         """
-        input_dir = input_dir if input_dir is not None else self._result_dir
+        input_dir = input_dir if input_dir is not None else self._result_dir_
 
         logger.info(f"Loading model from {input_dir}")
 

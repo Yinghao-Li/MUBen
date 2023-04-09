@@ -82,7 +82,7 @@ class Arguments:
 
     # --- Uncertainty Arguments ---
     uncertainty_method: Optional[str] = field(
-        default='none', metadata={
+        default=UncertaintyMethods.none, metadata={
             "help": "Uncertainty estimation method",
             "choices": UncertaintyMethods.get_options()
         }
@@ -135,6 +135,11 @@ class Arguments:
     )
     debug: Optional[bool] = field(
         default=False, metadata={"help": "Debugging mode with fewer training data"}
+    )
+
+    # --- Ensemble Arguments ---
+    n_ensembles: Optional[int] = field(
+        default=5, metadata={"help": "The number of ensemble models in the deep ensembles method."}
     )
 
     # --- Evaluation Arguments ---

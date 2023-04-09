@@ -8,12 +8,10 @@ import wandb
 import logging
 from datetime import datetime
 
-from transformers import (
-    HfArgumentParser,
-    set_seed,
-)
+from transformers import HfArgumentParser
 
 from mubench.utils.io import set_logging, logging_args
+from mubench.utils.data import set_seed
 from mubench.base.dataset import Dataset
 from mubench.base.args import Arguments, Config
 from mubench.base.train import Trainer
