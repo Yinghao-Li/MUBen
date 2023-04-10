@@ -52,8 +52,8 @@ class Trainer(BaseTrainer, ABC):
         # Original implementation seems set weight decay to 0, which is weird.
         # We'll keep it as default here
         self._optimizer = AdamW(
-            self.model.parameters(),
-            lr=self.config.lr, betas=(0.9, 0.99), eps=1E-6
+            self._model.parameters(),
+            lr=self._lr_, betas=(0.9, 0.99), eps=1E-6
         )
         return None
 

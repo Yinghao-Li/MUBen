@@ -17,7 +17,7 @@ class UpdateCriteria(str, Enum):
     always = 'always'
 
     @classmethod
-    def get_options(cls):
+    def options(cls):
         options = list()
         for k, v in cls.__dict__.items():
             if not k.startswith('_') and k != 'get_options':
@@ -32,8 +32,8 @@ class ModelContainer:
         ----------
         update_criteria: decides whether the metrics are in descend order
         """
-        assert update_criteria in UpdateCriteria.get_options(), \
-            ValueError(f"Invalid criteria! Options are {UpdateCriteria.get_options()}")
+        assert update_criteria in UpdateCriteria.options(), \
+            ValueError(f"Invalid criteria! Options are {UpdateCriteria.options()}")
         self._criteria = update_criteria
 
         self._state_dict = None

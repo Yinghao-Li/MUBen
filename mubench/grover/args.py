@@ -157,10 +157,6 @@ class Arguments(BaseArguments):
                           'init_lr to max_lr. Afterwards, learning rate decreases exponentially'
                           'from max_lr to final_lr.'}
     )
-    init_lr: Optional[float] = field(
-        default=1e-4,
-        metadata={'help': 'Initial learning rate'}
-    )
     max_lr: Optional[float] = field(
         default=1e-3,
         metadata={'help': 'Maximum learning rate'}

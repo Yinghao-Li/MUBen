@@ -4,8 +4,8 @@ import torch
 import logging
 from typing import Optional
 from dataclasses import dataclass, field, asdict
-
 from functools import cached_property
+
 from ..utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
@@ -84,7 +84,7 @@ class Arguments:
     uncertainty_method: Optional[str] = field(
         default=UncertaintyMethods.none, metadata={
             "help": "Uncertainty estimation method",
-            "choices": UncertaintyMethods.get_options()
+            "choices": UncertaintyMethods.options()
         }
     )
 
@@ -142,6 +142,18 @@ class Arguments:
         default=5, metadata={"help": "The number of ensemble models in the deep ensembles method."}
     )
 
+    # --- SWAG Arguments ---
+    lr_decay: Optional[float] = field(
+        default=0.1, metadata={"help": "The learning rate decay coefficient during SWA training."}
+    )
+    n_swa_epochs: Optional[int] = field(
+        default=30, metadata={"help": "The number of SWA training epochs."}
+    )
+    k_swa_checkpoints: Optional[int] = field(
+        default=30, metadata={"help": "The number of SWA checkpoints for Gaussian covariance matrix. "
+                                      "This number should not exceed `n_swa_epochs`."}
+    )
+
     # --- Evaluation Arguments ---
     valid_epoch_interval: Optional[int] = field(
         default=1, metadata={'help': 'How many training epochs within each validation step. '
@@ -166,6 +178,9 @@ class Arguments:
 
         if self.uncertainty_method in [UncertaintyMethods.mc_dropout]:
             self.n_test = self.n_test if self.n_test > 1 else 20
+
+        if self.k_swa_checkpoints > self.n_swa_epochs:
+            self.k_swa_checkpoints = self.n_swa_epochs
 
     # The following three functions are copied from transformers.training_args
     @cached_property
@@ -260,7 +275,8 @@ class Config(Arguments):
             else:
                 invalid_keys.append(k)
 
-        logger.warning(f"The following attributes in the meta file are not defined in config: {invalid_keys}")
+        if invalid_keys:
+            logger.warning(f"The following attributes in the meta file are not defined in config: {invalid_keys}")
 
         return self
 

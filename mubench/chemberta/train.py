@@ -36,6 +36,3 @@ class Trainer(BaseTrainer, ABC):
             n_lbs=self.config.n_lbs,
             n_tasks=self.config.n_tasks,
         )
-
-    def initialize_optimizer(self):
-        self._optimizer = Adam(self._model.parameters(), lr=self.config.lr)

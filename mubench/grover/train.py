@@ -4,7 +4,7 @@ import torch
 import logging
 import numpy as np
 import torch.nn.functional as F
-from torch.optim import Adam
+from torch.optim import AdamW
 from scipy.special import softmax, expit
 from typing import Optional, Tuple
 
@@ -52,23 +52,26 @@ class Trainer(BaseTrainer, ABC):
             for param in base_params:
                 param.requires_grad = False
 
-        self._optimizer = Adam([
+        self._optimizer = AdamW([
             {'params': base_params, 'lr': self.config.init_lr * self.config.fine_tune_coff},
             {'params': ffn_params, 'lr': self.config.init_lr}
-        ], lr=self.config.init_lr, weight_decay=self.config.weight_decay)
+        ], lr=self._lr_, weight_decay=self.config.weight_decay)
 
         return self
 
-    def initialize_scheduler(self):
+    def initialize_scheduler(self, use_default=False):
         """
         Initialize learning rate scheduler
         """
+        if use_default:
+            return super().initialize_scheduler()
+
         self._scheduler = NoamLR(
             optimizer=self._optimizer,
             warmup_epochs=self.config.warmup_epochs,
             total_epochs=self.config.epochs,
             steps_per_epoch=int(np.ceil(len(self.training_dataset) / self.config.batch_size)),
-            init_lr=self.config.init_lr,
+            init_lr=self.config.lr,
             max_lr=self.config.max_lr,
             final_lr=self.config.final_lr,
             fine_tune_coff=self.config.fine_tune_coff

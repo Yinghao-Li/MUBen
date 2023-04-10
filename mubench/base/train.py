@@ -14,7 +14,6 @@ import torch.nn as nn
 
 from tqdm.auto import tqdm
 from typing import Optional
-from functools import cached_property
 
 from scipy.special import softmax, expit
 from transformers import get_scheduler
@@ -33,6 +32,7 @@ from .metric import (
 from .dataset import Collator
 from .model import DNN
 from .args import Config
+from .uncertainty.swag import SWAModel, update_bn
 
 logger = logging.getLogger(__name__)
 
@@ -68,10 +68,8 @@ class Trainer:
         else:
             update_criteria = UpdateCriteria.metric_smaller
         self._model_container = ModelContainer(update_criteria)
-        self._eval_step_ = 0  # will increase by 1 each time you call `eval_and_save`
 
         self._model_name = 'model_best.ckpt'
-        self._model_name_ = self._model_name  # mutable model name for ensemble
 
         # Test variables and flags
         self._result_dir = os.path.join(
@@ -80,7 +78,19 @@ class Trainer:
             self.config.model_name,
             self.config.uncertainty_method,
         )
+
+        # mutable class attributes
+        self._train_log_idx_ = 0  # will increase by 1 each time you call `train_epoch`
+        self._eval_log_idx_ = 0  # will increase by 1 each time you call `eval_and_save`
+        self._lr_ = self.config.lr
+        self._lr_scheduler_type_ = self.config.lr_scheduler_type
+        self._n_epochs_ = self.config.n_epochs
+        self._valid_epoch_interval_ = self.config.valid_epoch_interval
+        self._model_name_ = self._model_name  # mutable model name for ensemble
         self._result_dir_ = self._result_dir
+
+        # uncertainty-specific variables
+        self._swa_model = None
 
         # normalize training dataset labels for regression task
         self.normalize_training_lbs()
@@ -91,10 +101,6 @@ class Trainer:
     @property
     def config(self):
         return self._config
-
-    @config.setter
-    def config(self, x):
-        self._config = x
 
     @property
     def model(self):
@@ -107,7 +113,7 @@ class Trainer:
         self.initialize_loss()
         return self
 
-    def initialize_model(self):
+    def initialize_model(self, *args, **kwargs):
         self._model = DNN(
             d_feature=self.config.d_feature,
             n_lbs=self.config.n_lbs,
@@ -117,14 +123,14 @@ class Trainer:
             p_dropout=self.config.dropout,
         )
 
-    def initialize_optimizer(self):
+    def initialize_optimizer(self, *args, **kwargs):
         """
         Initialize model optimizer
         """
-        self._optimizer = AdamW(self._model.parameters(), lr=self.config.lr)
+        self._optimizer = AdamW(self._model.parameters(), lr=self._lr_)
         return self
 
-    def initialize_scheduler(self):
+    def initialize_scheduler(self, *args, **kwargs):
         """
         Initialize learning rate scheduler
         """
@@ -132,12 +138,12 @@ class Trainer:
             len(self._training_dataset) / self.config.batch_size
         ))
         num_warmup_steps = int(np.ceil(
-            num_update_steps_per_epoch * self.config.warmup_ratio * self.config.n_epochs
+            num_update_steps_per_epoch * self.config.warmup_ratio * self._n_epochs_
         ))
-        num_training_steps = int(np.ceil(num_update_steps_per_epoch * self.config.n_epochs))
+        num_training_steps = int(np.ceil(num_update_steps_per_epoch * self._n_epochs_))
 
         self._scheduler = get_scheduler(
-            self.config.lr_scheduler_type,
+            self._lr_scheduler_type_,
             self._optimizer,
             num_warmup_steps=num_warmup_steps,
             num_training_steps=num_training_steps,
@@ -195,10 +201,10 @@ class Trainer:
 
         return self
 
-    @cached_property
+    @property
     def n_training_steps(self):
         num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
-        return num_update_steps_per_epoch * self.config.n_epochs
+        return num_update_steps_per_epoch * self._n_epochs_
 
     def train_mode(self):
         """
@@ -224,10 +230,52 @@ class Trainer:
 
     def run(self):
 
-        # not using deep ensembles
-        if self.config.uncertainty_method != UncertaintyMethods.ensembles:
-            set_seed(self.config.seed)
-            if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and not self.config.retrain_model:
+        # using deep ensembles
+        if self.config.uncertainty_method == UncertaintyMethods.ensembles:
+            self.run_ensembles()
+        elif self.config.uncertainty_method == UncertaintyMethods.swag:
+            self.run_swag()
+        # default single-shot training and evaluation process
+        else:
+            self.run_single_shot()
+        wandb.finish()
+
+        logger.info('Done.')
+
+    def run_single_shot(self):
+
+        set_seed(self.config.seed)
+        if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and not self.config.retrain_model:
+            logger.info("Find existing model, will skip training.")
+            self.load_best_model()
+        else:
+            logger.info("Training model")
+            self.train()
+
+        test_metrics = self.test()
+        logger.info("Test results:")
+        self.log_results(test_metrics)
+
+        self.save_best_model()
+
+        return self
+
+    def run_ensembles(self):
+
+        for ensemble_idx in range(self.config.n_ensembles):
+            # update random seed and re-initialize training status
+            individual_seed = self.config.seed + ensemble_idx
+            set_seed(individual_seed)
+            self.initialize()
+            logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
+
+            # update the name of the best model
+            self._model_name_ = f"{'.'.join(self._model_name.split('.')[:-1])}-{ensemble_idx}" \
+                                f".{self._model_name.split('.')[-1]}"
+            self._result_dir_ = os.path.join(self._result_dir, str(ensemble_idx))
+
+            if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and \
+                    not self.config.retrain_model:
                 logger.info("Find existing model, will skip training.")
                 self.load_best_model()
             else:
@@ -240,41 +288,42 @@ class Trainer:
 
             self.save_best_model()
 
-        # other uncertainty estimation methods
-        else:
-            for ensemble_idx in range(self.config.n_ensembles):
-                # update random seed and re-initialize training status
-                individual_seed = self.config.seed + ensemble_idx
-                set_seed(individual_seed)
-                self.initialize()
-                logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
+        return self
 
-                # update the name of the best model
-                self._model_name_ = f"{'.'.join(self._model_name.split('.')[:-1])}-{ensemble_idx}" \
-                                    f".{self._model_name.split('.')[-1]}"
-                self._result_dir_ = os.path.join(self._result_dir, str(ensemble_idx))
+    def run_swag(self):
+        # Train the model first. Do not need to load state dict as it is done during test
+        self.run_single_shot()
 
-                if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and \
-                        not self.config.retrain_model:
-                    logger.info("Find existing model, will skip training.")
-                    self.load_best_model()
-                else:
-                    logger.info("Training model")
-                    self.train()
+        logger.info("SWA session start")
 
-                test_metrics = self.test()
-                logger.info("Test results:")
-                self.log_results(test_metrics)
+        # update hyper parameters
+        self._lr_ *= self.config.lr_decay
+        self._lr_scheduler_type_ = 'constant'
+        self._n_epochs_ = self.config.n_swa_epochs
+        self._valid_epoch_interval_ = 0  # Can also set this to None
 
-                self.save_best_model()
+        self.initialize_optimizer()
+        self.initialize_scheduler(use_default=True)  # the argument is for GROVER compatibility
 
-        wandb.finish()
+        self._model.to(self._device)
+        self._swa_model = SWAModel(
+            model=self.model,
+            k_models=self.config.k_swa_checkpoints,
+            device=self._device
+        )
 
-        logger.info('Done.')
+        logger.info("Training model")
+        self.train()
+
+        test_metrics = self.test(load_best_model=False)
+        logger.info("Test results:")
+        self.log_results(test_metrics)
+
+        return self
 
     def train(self):
 
-        self._model.to(self.config.device)
+        self._model.to(self._device)
         data_loader = self.get_dataloader(
             self.training_dataset,
             shuffle=True,
@@ -283,14 +332,20 @@ class Trainer:
 
         with tqdm(total=self.n_training_steps) as pbar:
             pbar.set_description(f'[Epoch 0] Loss: {np.inf:.4f}')
-            for epoch_idx in range(self.config.n_epochs):
+
+            for epoch_idx in range(self._n_epochs_):
+
                 training_loss = self.training_epoch(data_loader, pbar)
+
                 # Print the averaged training loss so far.
-                pbar.set_description(f'[Epoch {epoch_idx+1}] Loss: {training_loss:.4f}')
+                pbar.set_description(f'[Epoch {self._train_log_idx_+1}] Loss: {training_loss:.4f}')
+                wandb.log(data={'train/loss': training_loss}, step=self._train_log_idx_+1)
 
-                wandb.log(data={'train/loss': training_loss}, step=epoch_idx+1)
+                # Compatibility with SWAG
+                if self._swa_model:
+                    self._swa_model.update_parameters(self._model)
 
-                if self.config.valid_epoch_interval and (epoch_idx + 1) % self.config.valid_epoch_interval == 0:
+                if self._valid_epoch_interval_ and (epoch_idx + 1) % self._valid_epoch_interval_ == 0:
                     self.eval_and_save()
 
         return None
@@ -324,6 +379,8 @@ class Trainer:
 
             pbar.update()
 
+        self._train_log_idx_ += 1
+
         return avg_loss / num_items
 
     def get_loss(self, logits, batch) -> torch.Tensor:
@@ -355,13 +412,9 @@ class Trainer:
         loss = torch.sum(loss * masks) / masks.sum()
         return loss
 
-    def inference(self, dataset, batch_size: Optional[int] = None):
+    def inference(self, dataset, batch_size: Optional[int] = 0):
 
-        dataloader = self.get_dataloader(
-            dataset,
-            batch_size=batch_size if batch_size else self.config.batch_size,
-            shuffle=False
-        )
+        dataloader = self.get_dataloader(dataset, batch_size=batch_size, shuffle=False)
         self.eval_mode()
 
         logits_list = list()
@@ -412,6 +465,14 @@ class Trainer:
                 individual_seed = self.config.seed + test_run_idx
                 set_seed(individual_seed)
 
+                if self._swa_model:
+                    self._model = self._swa_model.sample_parameters()
+                    update_bn(
+                        model=self._model,
+                        training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
+                        device=self.config.device_str
+                    )
+
                 preds.append(self.denormalize_lbs(self.normalize_logits(self.inference(dataset))))
 
             preds = np.stack(preds)
@@ -423,14 +484,14 @@ class Trainer:
         """
         Evaluate the model and save it if its performance exceeds the previous highest
         """
-        self._eval_step_ += 1
+        self._eval_log_idx_ += 1
 
         valid_results = self.evaluate(self.valid_dataset)
 
         result_dict = {f"valid/{k}": v for k, v in valid_results.items()}
-        wandb.log(data=result_dict, step=self._eval_step_)
+        wandb.log(data=result_dict, step=self._eval_log_idx_)
 
-        logger.debug(f"[Valid step {self._eval_step_}] results:")
+        logger.debug(f"[Valid step {self._eval_log_idx_}] results:")
         self.log_results(valid_results, logging_func=logger.debug)
 
         # ----- check model performance and update buffer -----
@@ -439,10 +500,11 @@ class Trainer:
 
         return None
 
-    def test(self):
+    def test(self, load_best_model=True):
 
-        if self._model_container.state_dict:
+        if load_best_model and self._model_container.state_dict:
             self._model.load_state_dict(self._model_container.state_dict)
+
         metrics, preds = self.evaluate(self._test_dataset, n_run=self.config.n_test, return_preds=True)
 
         # save preds
