@@ -9,7 +9,6 @@ from sklearn.metrics import (
     precision_recall_curve,
     auc,
 )
-from seqlbtoolkit.training.eval import Metric
 from typing import Optional, Union, List
 from ..utils.math import logit_to_var
 
@@ -25,21 +24,10 @@ class GaussianNLL(GaussianNLLLoss):
         return super().forward(input=mean, target=target, var=var)
 
 
-#  We might just replace this by a dict
-class ValidMetric(Metric):
-    def __init__(self, **kwargs):
-        super().__init__()
-
-        self.remove_attrs()
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-
 def calculate_classification_metrics(lbs: np.ndarray,
                                      logits: np.ndarray,
                                      metrics: Union[str, List[str]],
-                                     normalized: Optional[bool] = False):
+                                     normalized: Optional[bool] = False) -> dict:
     """
     Calculate the classification metrics
 
@@ -86,10 +74,10 @@ def calculate_classification_metrics(lbs: np.ndarray,
 
         results[metric] = val
 
-    return ValidMetric(**results)
+    return results
 
 
-def calculate_regression_metrics(lbs: np.ndarray, preds: np.ndarray, metrics: Union[str, List[str]]):
+def calculate_regression_metrics(lbs: np.ndarray, preds: np.ndarray, metrics: Union[str, List[str]]) -> dict:
     """
     Calculate the regression metrics
 
@@ -115,4 +103,4 @@ def calculate_regression_metrics(lbs: np.ndarray, preds: np.ndarray, metrics: Un
 
         results[metric] = val
 
-    return ValidMetric(**results)
+    return results

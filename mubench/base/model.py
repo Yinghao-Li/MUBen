@@ -8,8 +8,6 @@ import torch
 import torch.nn as nn
 from typing import Optional
 
-from seqlbtoolkit.training.dataset import Batch
-
 
 class DNN(nn.Module):
 
@@ -56,7 +54,7 @@ class DNN(nn.Module):
         self.apply(init_weights)
         return self
 
-    def forward(self, batch: Batch, **kwargs):
+    def forward(self, batch, **kwargs):
         features = batch.features
 
         x = self.input_layer(features)

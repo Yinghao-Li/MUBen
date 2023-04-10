@@ -1,11 +1,11 @@
 import os
+import json
 import torch
 import logging
 from typing import Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 
 from functools import cached_property
-from seqlbtoolkit.training.config import BaseConfig
 from ..utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
@@ -209,7 +209,7 @@ class Arguments:
 
 
 @dataclass
-class Config(Arguments, BaseConfig):
+class Config(Arguments):
 
     d_feature = None
     classes = None
@@ -236,3 +236,114 @@ class Config(Arguments, BaseConfig):
             return 1024
         else:
             return 0
+
+    def get_meta(self,
+                 meta_dir: Optional[str] = None,
+                 meta_file_name: Optional[str] = 'meta.json'):
+
+        if meta_dir is not None:
+            meta_dir = meta_dir
+        elif 'data_dir' in dir(self):
+            meta_dir = getattr(self, 'data_dir')
+        else:
+            raise ValueError("To automatically load meta file, please either specify "
+                             "the `meta_dir` argument or define a `data_dir` class attribute.")
+
+        meta_dir = os.path.join(meta_dir, meta_file_name)
+        with open(meta_dir, 'r', encoding='utf-8') as f:
+            meta_dict = json.load(f)
+
+        invalid_keys = list()
+        for k, v in meta_dict.items():
+            if k in dir(self):
+                setattr(self, k, v)
+            else:
+                invalid_keys.append(k)
+
+        logger.warning(f"The following attributes in the meta file are not defined in config: {invalid_keys}")
+
+        return self
+
+    def from_args(self, args):
+        """
+        Initialize configuration from arguments
+
+        Parameters
+        ----------
+        args: arguments (parent class)
+
+        Returns
+        -------
+        self (type: BertConfig)
+        """
+        logger.info(f'Setting {type(self)} from {type(args)}.')
+        arg_elements = {attr: getattr(args, attr) for attr in dir(args) if not callable(getattr(args, attr))
+                        and not attr.startswith("__") and not attr.startswith("_")}
+        logger.info(f'The following attributes will be changed: {arg_elements.keys()}')
+        for attr, value in arg_elements.items():
+            try:
+                setattr(self, attr, value)
+            except AttributeError:
+                pass
+        return self
+
+    def save(self, file_dir: str, file_name: Optional[str] = 'config'):
+        """
+        Save configuration to file
+
+        Parameters
+        ----------
+        file_dir: file directory
+        file_name: file name (suffix free)
+
+        Returns
+        -------
+        self
+        """
+        if os.path.isdir(file_dir):
+            file_path = os.path.join(file_dir, f'{file_name}.json')
+        elif os.path.isdir(os.path.split(file_dir)[0]):
+            file_path = file_dir
+        else:
+            raise FileNotFoundError(f"{file_dir} does not exist!")
+
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(asdict(self), f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.exception(f"Cannot save config file to {file_path}; "
+                             f"encountered Error {e}")
+            raise e
+        return self
+
+    def load(self, file_dir: str, file_name: Optional[str] = 'config'):
+        """
+        Load configuration from stored file
+
+        Parameters
+        ----------
+        file_dir: file directory
+        file_name: file name (suffix free)
+
+        Returns
+        -------
+        self
+        """
+        if os.path.isdir(file_dir):
+            file_path = os.path.join(file_dir, f'{file_name}.json')
+            assert os.path.isfile(file_path), FileNotFoundError(f"{file_path} does not exist!")
+        elif os.path.isfile(file_dir):
+            file_path = file_dir
+        else:
+            raise FileNotFoundError(f"{file_dir} does not exist!")
+
+        logger.info(f'Setting {type(self)} parameters from {file_path}.')
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        for attr, value in config.items():
+            try:
+                setattr(self, attr, value)
+            except AttributeError:
+                pass
+        return self

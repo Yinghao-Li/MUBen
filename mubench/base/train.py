@@ -68,7 +68,7 @@ class Trainer:
         else:
             update_criteria = UpdateCriteria.metric_smaller
         self._model_container = ModelContainer(update_criteria)
-        self._eval_step = 0  # will increase by 1 each time you call `eval_and_save`
+        self._eval_step_ = 0  # will increase by 1 each time you call `eval_and_save`
 
         self._model_name = 'model_best.ckpt'
         self._model_name_ = self._model_name  # mutable model name for ensemble
@@ -423,14 +423,14 @@ class Trainer:
         """
         Evaluate the model and save it if its performance exceeds the previous highest
         """
-        self._eval_step += 1
+        self._eval_step_ += 1
 
         valid_results = self.evaluate(self.valid_dataset)
 
         result_dict = {f"valid/{k}": v for k, v in valid_results.items()}
-        wandb.log(data=result_dict, step=self._eval_step)
+        wandb.log(data=result_dict, step=self._eval_step_)
 
-        logger.debug(f"[Valid step {self._eval_step}] results:")
+        logger.debug(f"[Valid step {self._eval_step_}] results:")
         self.log_results(valid_results, logging_func=logger.debug)
 
         # ----- check model performance and update buffer -----
@@ -485,15 +485,8 @@ class Trainer:
         """
         Print evaluation metrics to the logging destination
         """
-
-        if isinstance(metrics, dict):
-            for key, val in metrics.items():
-                logging_func(f"[{key}]")
-                for k, v in val.items():
-                    logging_func(f"  {k}: {v:.4f}.")
-        else:
-            for k, v in metrics.items():
-                logging_func(f"  {k}: {v:.4f}.")
+        for k, v in metrics.items():
+            logging_func(f"  {k}: {v:.4f}.")
         return None
 
     def save_best_model(self):
