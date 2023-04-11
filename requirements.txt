@@ -1,4 +1,4 @@
-python~=3.9.7
+python~=3.9.12
 descriptastorus==2.6.0
 dgllife==0.3.2
 numpy==1.23.3

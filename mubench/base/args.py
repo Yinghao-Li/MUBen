@@ -143,7 +143,7 @@ class Arguments:
     )
 
     # --- SWAG Arguments ---
-    lr_decay: Optional[float] = field(
+    swa_lr_decay: Optional[float] = field(
         default=0.1, metadata={"help": "The learning rate decay coefficient during SWA training."}
     )
     n_swa_epochs: Optional[int] = field(
@@ -152,6 +152,14 @@ class Arguments:
     k_swa_checkpoints: Optional[int] = field(
         default=30, metadata={"help": "The number of SWA checkpoints for Gaussian covariance matrix. "
                                       "This number should not exceed `n_swa_epochs`."}
+    )
+
+    # --- Temperature Scaling Arguments ---
+    ts_lr: Optional[float] = field(
+        default=0.01, metadata={"help": "The learning rate to train temperature scaling parameters."}
+    )
+    n_ts_epochs: Optional[int] = field(
+        default=10, metadata={"help": "The number of Temperature Scaling training epochs."}
     )
 
     # --- Evaluation Arguments ---

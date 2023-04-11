@@ -3,12 +3,13 @@
   "dataset_name": "BBBP",
   "data_dir": "./data/files",
   "ignore_preprocessed_dataset": false,
-  "retrain_model": true,
+  "retrain_model": false,
   "n_epochs": 5,
   "n_swa_epochs": 3,
   "k_swa_checkpoints": 3,
+  "n_ts_epochs": 3,
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "feature_type": "rdkit",
-  "uncertainty_method": "SWAG"
+  "uncertainty_method": "Temperature-Scaling"
 }

@@ -97,7 +97,7 @@ class SWAModel(Module):
                 mean = mean * self.n_averaged / (self.n_averaged + 1.0) + params.data.cpu() / (self.n_averaged + 1.0)
                 # second moment
                 sq_mean = sq_mean * self.n_averaged / (self.n_averaged + 1.0) + \
-                          params.data.square().cpu() / (self.n_averaged + 1.0)
+                    params.data.square().cpu() / (self.n_averaged + 1.0)
                 # block covariance matrices, store deviation from current mean
                 dev = (params.data.cpu() - mean).view(-1, 1)
                 cov_mat_sqrt = torch.cat((cov_mat_sqrt, dev.view(-1, 1).T), dim=0)

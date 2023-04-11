@@ -33,6 +33,7 @@ from .dataset import Collator
 from .model import DNN
 from .args import Config
 from .uncertainty.swag import SWAModel, update_bn
+from .uncertainty.temperature_scaling import TSModel
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,11 @@ class Trainer:
         self._result_dir_ = self._result_dir
 
         # uncertainty-specific variables
-        self._swa_model = None
+        self._swa_model = None  # SWAG
+        self._ts_model = None  # Temperature Scaling
+
+        # flags
+        self._model_frozen = False
 
         # normalize training dataset labels for regression task
         self.normalize_training_lbs()
@@ -104,6 +109,8 @@ class Trainer:
 
     @property
     def model(self):
+        if self._ts_model:
+            return self._ts_model
         return self._model
 
     def initialize(self):
@@ -127,7 +134,7 @@ class Trainer:
         """
         Initialize model optimizer
         """
-        self._optimizer = AdamW(self._model.parameters(), lr=self._lr_)
+        self._optimizer = AdamW(self.model.parameters(), lr=self._lr_)
         return self
 
     def initialize_scheduler(self, *args, **kwargs):
@@ -206,11 +213,16 @@ class Trainer:
         num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
         return num_update_steps_per_epoch * self._n_epochs_
 
+    @property
+    def n_valid_steps(self):
+        num_update_steps_per_epoch = int(np.ceil(len(self._valid_dataset) / self.config.batch_size))
+        return num_update_steps_per_epoch * self._n_epochs_
+
     def train_mode(self):
         """
         Set the PyTorch model to train mode
         """
-        self._model.train()
+        self.model.train()
         return self
 
     def eval_mode(self):
@@ -218,14 +230,22 @@ class Trainer:
         Set the PyTorch model to evaluation mode
         """
 
-        self._model.eval()
+        self.model.eval()
 
         if self.config.uncertainty_method == UncertaintyMethods.mc_dropout:
             # activate the dropout layers during evaluation for MC Dropout
-            for m in self._model.modules():
+            for m in self.model.modules():
                 if m.__class__.__name__.startswith('Dropout'):
                     m.train()
 
+        return self
+
+    def set_mode(self, mode: str):
+        assert mode in ('train', 'eval'), ValueError(f"Argument `mode` should be 'train' or 'eval'.")
+        if mode == 'train':
+            self.train_mode()
+        else:
+            self.eval_mode()
         return self
 
     def run(self):
@@ -235,6 +255,8 @@ class Trainer:
             self.run_ensembles()
         elif self.config.uncertainty_method == UncertaintyMethods.swag:
             self.run_swag()
+        elif self.config.uncertainty_method == UncertaintyMethods.temperature:
+            self.run_temperature_scaling()
         # default single-shot training and evaluation process
         else:
             self.run_single_shot()
@@ -296,7 +318,7 @@ class Trainer:
         logger.info("SWA session start")
 
         # update hyper parameters
-        self._lr_ *= self.config.lr_decay
+        self._lr_ *= self.config.swa_lr_decay
         self._lr_scheduler_type_ = 'constant'
         self._n_epochs_ = self.config.n_swa_epochs
         self._valid_epoch_interval_ = 0  # Can also set this to None
@@ -320,16 +342,46 @@ class Trainer:
 
         return self
 
-    def train(self):
+    def run_temperature_scaling(self):
+        # Train the model first. Do not need to load state dict as it is done during test
+        self.run_single_shot(apply_test=False)
 
-        self._model.to(self._device)
+        logger.info("Temperature Scaling session start.")
+
+        # update hyper parameters
+        self._lr_ = self.config.ts_lr
+        self._lr_scheduler_type_ = 'constant'
+        self._n_epochs_ = self.config.n_ts_epochs
+        self._valid_epoch_interval_ = 0  # Can also set this to None
+
+        self.model.to(self._device)
+        self.freeze()
+        self._ts_model = TSModel(self._model)
+
+        self.initialize_optimizer()
+        self.initialize_scheduler(use_default=True)  # the argument is for GROVER compatibility
+
+        logger.info("Training model on validation")
+        self.train(use_valid_dataset=True)
+
+        test_metrics = self.test(load_best_model=False)
+        logger.info("Test results:")
+        self.log_results(test_metrics)
+
+        self.unfreeze()
+
+        return self
+
+    def train(self, use_valid_dataset=False):
+
+        self.model.to(self._device)
         data_loader = self.get_dataloader(
-            self.training_dataset,
+            self.training_dataset if not use_valid_dataset else self.valid_dataset,
             shuffle=True,
             batch_size=self.config.batch_size
         )
 
-        with tqdm(total=self.n_training_steps) as pbar:
+        with tqdm(total=self.n_training_steps if not use_valid_dataset else self.n_valid_steps) as pbar:
             pbar.set_description(f'[Epoch 0] Loss: {np.inf:.4f}')
 
             for epoch_idx in range(self._n_epochs_):
@@ -342,7 +394,7 @@ class Trainer:
 
                 # Compatibility with SWAG
                 if self._swa_model:
-                    self._swa_model.update_parameters(self._model)
+                    self._swa_model.update_parameters(self.model)
 
                 if self._valid_epoch_interval_ and (epoch_idx + 1) % self._valid_epoch_interval_ == 0:
                     self.eval_and_save()
@@ -352,6 +404,9 @@ class Trainer:
     def training_epoch(self, data_loader, pbar):
 
         self.train_mode()
+        # Set the base model to evaluation mode for Temperature Scaling training
+        if self._ts_model:
+            self._model.eval()
 
         avg_loss = 0.
         num_items = 0
@@ -368,7 +423,7 @@ class Trainer:
             loss.backward()
 
             if self.config.grad_norm > 0:
-                nn.utils.clip_grad_norm_(self._model.parameters(), self.config.grad_norm)
+                nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_norm)
 
             self._optimizer.step()
             self._scheduler.step()
@@ -467,7 +522,7 @@ class Trainer:
                 if self._swa_model:
                     self._model = self._swa_model.sample_parameters()
                     update_bn(
-                        model=self._model,
+                        model=self.model,
                         training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
                         device=self.config.device_str
                     )
@@ -550,6 +605,20 @@ class Trainer:
             logging_func(f"  {k}: {v:.4f}.")
         return None
 
+    def freeze(self):
+        for parameter in self.model.parameters():
+            parameter.requires_grad = False
+
+        self._model_frozen = True
+        return self
+
+    def unfreeze(self):
+        for parameter in self.model.parameters():
+            parameter.requires_grad = True
+
+        self._model_frozen = False
+        return self
+
     def save_best_model(self):
 
         os.makedirs(self._result_dir_, exist_ok=True)
@@ -559,6 +628,7 @@ class Trainer:
 
     def load_best_model(self):
         self._model_container.load(os.path.join(self._result_dir_, self._model_name_))
+        self._model.load_state_dict(self._model_container.state_dict)
 
         return self
 
