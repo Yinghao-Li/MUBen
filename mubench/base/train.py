@@ -242,7 +242,7 @@ class Trainer:
 
         logger.info('Done.')
 
-    def run_single_shot(self):
+    def run_single_shot(self, apply_test=True):
 
         set_seed(self.config.seed)
         if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and not self.config.retrain_model:
@@ -252,9 +252,10 @@ class Trainer:
             logger.info("Training model")
             self.train()
 
-        test_metrics = self.test()
-        logger.info("Test results:")
-        self.log_results(test_metrics)
+        if apply_test:
+            test_metrics = self.test()
+            logger.info("Test results:")
+            self.log_results(test_metrics)
 
         self.save_best_model()
 
@@ -270,8 +271,6 @@ class Trainer:
             logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
 
             # update the name of the best model
-            self._model_name_ = f"{'.'.join(self._model_name.split('.')[:-1])}-{ensemble_idx}" \
-                                f".{self._model_name.split('.')[-1]}"
             self._result_dir_ = os.path.join(self._result_dir, str(ensemble_idx))
 
             if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and \
@@ -292,7 +291,7 @@ class Trainer:
 
     def run_swag(self):
         # Train the model first. Do not need to load state dict as it is done during test
-        self.run_single_shot()
+        self.run_single_shot(apply_test=False)
 
         logger.info("SWA session start")
 
@@ -495,7 +494,7 @@ class Trainer:
         self.log_results(valid_results, logging_func=logger.debug)
 
         # ----- check model performance and update buffer -----
-        if self._model_container.check_and_update(self.model, getattr(valid_results, self._valid_metric)):
+        if self._model_container.check_and_update(self.model, valid_results[self._valid_metric]):
             logger.debug("Model buffer is updated!")
 
         return None

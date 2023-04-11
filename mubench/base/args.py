@@ -176,7 +176,7 @@ class Arguments:
         self.data_dir = os.path.join(self.data_dir, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
-        if self.uncertainty_method in [UncertaintyMethods.mc_dropout]:
+        if self.uncertainty_method in ["MC-Dropout", "SWAG"]:
             self.n_test = self.n_test if self.n_test > 1 else 20
 
         if self.k_swa_checkpoints > self.n_swa_epochs:

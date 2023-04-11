@@ -6,23 +6,17 @@ import numpy as np
 from enum import Enum
 from typing import Optional, Union
 
+from .macro import StrEnum
+
 logger = logging.getLogger(__name__)
 
 __all__ = ['UpdateCriteria', 'ModelContainer']
 
 
-class UpdateCriteria(str, Enum):
+class UpdateCriteria(StrEnum):
     metric_smaller = 'metric-smaller'
     metric_larger = 'metric-larger'
     always = 'always'
-
-    @classmethod
-    def options(cls):
-        options = list()
-        for k, v in cls.__dict__.items():
-            if not k.startswith('_') and k != 'get_options':
-                options.append(v.value)
-        return options
 
 
 class ModelContainer:

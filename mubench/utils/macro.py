@@ -4,17 +4,18 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 __all__ = ['DATASET_NAMES', 'SPLITTING', 'EVAL_METRICS',
-           'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES']
+           'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES',
+           'StrEnum']
 
 
 class StrEnum(str, Enum):
     @classmethod
     def options(cls):
-        options = list()
+        opts = list()
         for k, v in cls.__dict__.items():
             if not k.startswith('_') and k != 'options':
-                options.append(v.value)
-        return options
+                opts.append(v.value)
+        return opts
 
 
 DATASET_NAMES = [
