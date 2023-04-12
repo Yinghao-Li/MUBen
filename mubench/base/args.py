@@ -162,6 +162,11 @@ class Arguments:
         default=10, metadata={"help": "The number of Temperature Scaling training epochs."}
     )
 
+    # --- Focal Loss Arguments ---
+    apply_temperature_scaling_after_focal_loss: Optional[bool] = field(
+        default=False, metadata={"help": "Whether apply temperature scaling after training model with focal loss."}
+    )
+
     # --- Evaluation Arguments ---
     valid_epoch_interval: Optional[int] = field(
         default=1, metadata={'help': 'How many training epochs within each validation step. '
@@ -183,12 +188,6 @@ class Arguments:
     def __post_init__(self):
         self.data_dir = os.path.join(self.data_dir, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
-
-        if self.uncertainty_method in ["MC-Dropout", "SWAG"]:
-            self.n_test = self.n_test if self.n_test > 1 else 20
-
-        if self.k_swa_checkpoints > self.n_swa_epochs:
-            self.k_swa_checkpoints = self.n_swa_epochs
 
     # The following three functions are copied from transformers.training_args
     @cached_property
@@ -300,15 +299,38 @@ class Config(Arguments):
         -------
         self (type: BertConfig)
         """
-        logger.info(f'Setting {type(self)} from {type(args)}.')
         arg_elements = {attr: getattr(args, attr) for attr in dir(args) if not callable(getattr(args, attr))
                         and not attr.startswith("__") and not attr.startswith("_")}
-        logger.info(f'The following attributes will be changed: {arg_elements.keys()}')
         for attr, value in arg_elements.items():
             try:
                 setattr(self, attr, value)
             except AttributeError:
                 pass
+        return self
+
+    def validate(self):
+        """
+        Check and solve argument conflicts and throws warning if encountered any
+
+        Returns
+        -------
+
+        """
+        if self.uncertainty_method in ["MC-Dropout", "SWAG"] and self.n_test == 1:
+            logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
+                           f"multiple test runs! Setting `n_test` to the default value 20.")
+            self.n_test = 20
+
+        if self.k_swa_checkpoints > self.n_swa_epochs:
+            logger.warning("The number of SWA checkpoints should not exceeds that of SWA training epochs! "
+                           "Setting `k_swa_checkpoints` = `n_swa_epochs`.")
+            self.k_swa_checkpoints = self.n_swa_epochs
+
+        if self.uncertainty_method == "Focal-Loss" and not self.binary_classification_with_softmax:
+            logger.warning("Focal Loss requires model with Softmax output! "
+                           "Setting `binary_classification_with_softmax` to True.")
+            self.binary_classification_with_softmax = True
+
         return self
 
     def save(self, file_dir: str, file_name: Optional[str] = 'config'):

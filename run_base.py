@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(args: Arguments):
-    config = Config().from_args(args).get_meta()
+    config = Config().from_args(args).get_meta().validate()
 
     if args.apply_wandb and args.wandb_api_key:
         wandb.login(key=args.wandb_api_key)

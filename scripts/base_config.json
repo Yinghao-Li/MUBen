@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "BBBP",
+  "dataset_name": "ClinTox",
   "data_dir": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": false,
@@ -11,5 +11,6 @@
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "feature_type": "rdkit",
-  "uncertainty_method": "Temperature-Scaling"
+  "uncertainty_method": "Focal-Loss",
+  "apply_temperature_scaling_after_focal_loss": true
 }

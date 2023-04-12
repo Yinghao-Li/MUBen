@@ -34,6 +34,7 @@ from .model import DNN
 from .args import Config
 from .uncertainty.swag import SWAModel, update_bn
 from .uncertainty.temperature_scaling import TSModel
+from .uncertainty.focal_loss import FocalLoss
 
 logger = logging.getLogger(__name__)
 
@@ -74,19 +75,16 @@ class Trainer:
 
         # Test variables and flags
         self._result_dir = os.path.join(
-            self.config.result_dir,
-            self.config.dataset_name,
-            self.config.model_name,
-            self.config.uncertainty_method,
+            config.result_dir, config.dataset_name, config.model_name, config.uncertainty_method
         )
 
         # mutable class attributes
         self._train_log_idx_ = 0  # will increase by 1 each time you call `train_epoch`
         self._eval_log_idx_ = 0  # will increase by 1 each time you call `eval_and_save`
-        self._lr_ = self.config.lr
-        self._lr_scheduler_type_ = self.config.lr_scheduler_type
-        self._n_epochs_ = self.config.n_epochs
-        self._valid_epoch_interval_ = self.config.valid_epoch_interval
+        self._lr_ = config.lr
+        self._lr_scheduler_type_ = config.lr_scheduler_type
+        self._n_epochs_ = config.n_epochs
+        self._valid_epoch_interval_ = config.valid_epoch_interval
         self._model_name_ = self._model_name  # mutable model name for ensemble
         self._result_dir_ = self._result_dir
 
@@ -157,12 +155,15 @@ class Trainer:
         )
         return self
 
-    def initialize_loss(self):
+    def initialize_loss(self, ignore_focal_loss=False):
 
         # Notice that the reduction should always be 'none' here to facilitate
         # the following masking operation
         if self.config.task_type == 'classification':
-            if self.config.binary_classification_with_softmax:
+            # for compatibility with focal loss
+            if self.config.uncertainty_method == UncertaintyMethods.focal and not ignore_focal_loss:
+                self._loss_fn = FocalLoss()
+            elif self.config.binary_classification_with_softmax:
                 self._loss_fn = nn.CrossEntropyLoss(reduction='none')
             else:
                 self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
@@ -250,16 +251,22 @@ class Trainer:
 
     def run(self):
 
-        # using deep ensembles
+        # deep ensembles
         if self.config.uncertainty_method == UncertaintyMethods.ensembles:
             self.run_ensembles()
+        # swag
         elif self.config.uncertainty_method == UncertaintyMethods.swag:
             self.run_swag()
+        # temperature scaling
         elif self.config.uncertainty_method == UncertaintyMethods.temperature:
             self.run_temperature_scaling()
-        # default single-shot training and evaluation process
+        # focal loss
+        elif self.config.uncertainty_method == UncertaintyMethods.focal:
+            self.run_focal_loss()
+        # none & MC Dropout
         else:
             self.run_single_shot()
+
         wandb.finish()
 
         logger.info('Done.')
@@ -372,6 +379,38 @@ class Trainer:
 
         return self
 
+    def run_focal_loss(self):
+        # Train the model first. Do not need to load state dict as it is done during test
+        self.run_single_shot()
+
+        if self.config.apply_temperature_scaling_after_focal_loss:
+            logger.info("[Focal Loss] Temperature Scaling session start.")
+
+            # update hyper parameters
+            self._lr_ = self.config.ts_lr
+            self._lr_scheduler_type_ = 'constant'
+            self._n_epochs_ = self.config.n_ts_epochs
+            self._valid_epoch_interval_ = 0  # Can also set this to None
+
+            self.model.to(self._device)
+            self.freeze()
+            self._ts_model = TSModel(self._model)
+
+            self.initialize_optimizer()
+            self.initialize_scheduler(use_default=True)  # the argument is for GROVER compatibility
+            self.initialize_loss(ignore_focal_loss=True)  # re-initialize the loss to CE as described in the paper
+
+            logger.info("Training model on validation")
+            self.train(use_valid_dataset=True)
+
+            test_metrics = self.test(load_best_model=False)
+            logger.info("Test results:")
+            self.log_results(test_metrics)
+
+            self.unfreeze()
+
+        return self
+
     def train(self, use_valid_dataset=False):
 
         self.model.to(self._device)
@@ -389,8 +428,8 @@ class Trainer:
                 training_loss = self.training_epoch(data_loader, pbar)
 
                 # Print the averaged training loss so far.
-                pbar.set_description(f'[Epoch {self._train_log_idx_+1}] Loss: {training_loss:.4f}')
-                wandb.log(data={'train/loss': training_loss}, step=self._train_log_idx_+1)
+                pbar.set_description(f'[Epoch {self._train_log_idx_ + 1}] Loss: {training_loss:.4f}')
+                wandb.log(data={'train/loss': training_loss}, step=self._train_log_idx_ + 1)
 
                 # Compatibility with SWAG
                 if self._swa_model:
@@ -494,6 +533,7 @@ class Trainer:
                 preds = expit(logits)  # sigmoid function
         else:
             # get the mean of the preds
+            # TODO: notice this should be updated if we want to save the variance of the model
             preds = logits if logits.shape[-1] == 1 or len(logits.shape) == 1 else logits[..., 0]
 
         return preds
@@ -513,8 +553,8 @@ class Trainer:
 
         else:
             preds = list()
-            for test_run_idx in (tqdm_run := tqdm(range(n_run))):
-                tqdm_run.set_description(f'[Test {test_run_idx}]')
+            for test_run_idx in (pbar := tqdm(range(n_run))):
+                pbar.set_description(f'[Test {test_run_idx}]')
 
                 individual_seed = self.config.seed + test_run_idx
                 set_seed(individual_seed)
