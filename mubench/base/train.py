@@ -13,7 +13,7 @@ import numpy as np
 import torch.nn as nn
 
 from tqdm.auto import tqdm
-from typing import Optional
+from typing import Optional, Union, Tuple
 
 from scipy.special import softmax, expit
 from transformers import get_scheduler
@@ -96,7 +96,7 @@ class Trainer:
         self._model_frozen = False
 
         # normalize training dataset labels for regression task
-        self.normalize_training_lbs()
+        self.standardize_training_lbs()
 
         # initialize training modules
         self.initialize()
@@ -187,7 +187,7 @@ class Trainer:
     def test_dataset(self):
         return self._test_dataset
 
-    def normalize_training_lbs(self):
+    def standardize_training_lbs(self):
         """
         Convert the label distribution in the training dataset to standard Gaussian.
         Notice that this function only works for regression tasks
@@ -524,7 +524,7 @@ class Trainer:
 
         return logits
 
-    def normalize_logits(self, logits: np.ndarray) -> np.ndarray:
+    def normalize_logits(self, logits: np.ndarray) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
 
         if self.config.task_type == 'classification':
             if len(logits.shape) > 1 and logits.shape[-1] >= 2:
@@ -533,46 +533,73 @@ class Trainer:
                 preds = expit(logits)  # sigmoid function
         else:
             # get the mean of the preds
-            # TODO: notice this should be updated if we want to save the variance of the model
-            preds = logits if logits.shape[-1] == 1 or len(logits.shape) == 1 else logits[..., 0]
+            if self.config.regression_with_variance:
+                mean = logits[..., 0]
+                var = logits[..., 1]
+                return mean, var
+            else:
+                preds = logits
 
         return preds
 
-    def denormalize_lbs(self, preds: np.ndarray) -> np.ndarray:
+    def inverse_standardize_preds(
+            self, preds: Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
+    ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         if self._scalar is None:
             return preds
-        preds = self._scalar.inverse_transform(preds)
-        return preds
+        if isinstance(preds, np.ndarray):
+            return self._scalar.inverse_transform(preds)
+        elif isinstance(preds, tuple):
+            mean, var = self._scalar.inverse_transform(*preds)
+            return mean, var
+        else:
+            raise TypeError(f"Unsupported prediction type: {type(preds)}!")
 
     def evaluate(self, dataset, n_run: Optional[int] = 1, return_preds: Optional[bool] = False):
 
         if n_run == 1:
+            preds = self.inverse_standardize_preds(self.normalize_logits(self.inference(dataset)))
+            if isinstance(preds, np.ndarray):
+                metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
+            else:  # isinstance(preds, tuple)
+                metrics = self.get_metrics(dataset.lbs, preds[0], dataset.masks)
 
-            preds = self.denormalize_lbs(self.normalize_logits(self.inference(dataset)))
-            metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
+            return metrics if not return_preds else (metrics, preds)
 
+        # Multiple test runs
+        preds_list = list()
+        vars_list = list()
+        for test_run_idx in (pbar := tqdm(range(n_run))):
+            pbar.set_description(f'[Test {test_run_idx}]')
+
+            individual_seed = self.config.seed + test_run_idx
+            set_seed(individual_seed)
+
+            if self._swa_model:
+                self._model = self._swa_model.sample_parameters()
+                update_bn(
+                    model=self.model,
+                    training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
+                    device=self.config.device_str
+                )
+
+            preds = self.inverse_standardize_preds(self.normalize_logits(self.inference(dataset)))
+            if isinstance(preds, np.ndarray):
+                preds_list.append(preds)
+            else:
+                preds_list.append(preds[0])
+                vars_list.append(preds[1])
+
+        preds_array = np.stack(preds_list)
+        vars_array = None if not vars_list else np.stack(vars_list)
+        metrics = self.get_metrics(dataset.lbs, preds_array.mean(axis=0), dataset.masks)
+
+        if not return_preds:
+            return metrics
+        elif not vars_array:
+            return metrics, preds_array
         else:
-            preds = list()
-            for test_run_idx in (pbar := tqdm(range(n_run))):
-                pbar.set_description(f'[Test {test_run_idx}]')
-
-                individual_seed = self.config.seed + test_run_idx
-                set_seed(individual_seed)
-
-                if self._swa_model:
-                    self._model = self._swa_model.sample_parameters()
-                    update_bn(
-                        model=self.model,
-                        training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
-                        device=self.config.device_str
-                    )
-
-                preds.append(self.denormalize_lbs(self.normalize_logits(self.inference(dataset))))
-
-            preds = np.stack(preds)
-            metrics = self.get_metrics(dataset.lbs, preds.mean(axis=0), dataset.masks)
-
-        return metrics if not return_preds else (metrics, preds)
+            return metrics, (preds_array, vars_array)
 
     def eval_and_save(self):
         """
@@ -603,7 +630,10 @@ class Trainer:
 
         # save preds
         if self.config.n_test == 1:
-            preds = [preds]
+            if isinstance(preds, np.ndarray):
+                preds = preds.reshape(1, *preds.shape)
+            else:
+                preds = tuple([p.reshape(1, *p.shape) for p in preds])
 
         for idx, pred in enumerate(preds):
             file_path = os.path.join(self._result_dir_, "preds", f"{idx}.pt")

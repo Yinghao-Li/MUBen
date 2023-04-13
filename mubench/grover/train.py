@@ -134,7 +134,7 @@ class Trainer(BaseTrainer, ABC):
 
         return atom_logits, bond_logits
 
-    def normalize_logits(self, logits: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+    def normalize_logits(self, logits: Tuple[np.ndarray, np.ndarray]):
 
         atom_logits, bond_logits = logits
 
@@ -149,7 +149,13 @@ class Trainer(BaseTrainer, ABC):
             preds = (atom_preds + bond_preds) / 2
 
         else:
-            preds = (atom_logits + bond_logits) / 2
-            preds = preds if preds.shape[-1] == 1 or len(preds.shape) == 1 else preds[..., 0]
+            logits = (atom_logits + bond_logits) / 2
+
+            if self.config.regression_with_variance:
+                mean = logits[..., 0]
+                var = logits[..., 1]
+                return mean, var
+            else:
+                preds = logits
 
         return preds

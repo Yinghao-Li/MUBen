@@ -1,6 +1,7 @@
 from abc import ABC
 
 import logging
+
 import torch
 import numpy as np
 from torch.optim import AdamW
@@ -57,15 +58,27 @@ class Trainer(BaseTrainer, ABC):
         )
         return None
 
-    def normalize_logits(self, logits: np.ndarray) -> np.ndarray:
+    def normalize_logits(self, logits: np.ndarray):
 
         # TODO: should keep preds of all conformations during result saving
-
         preds = super().normalize_logits(logits)
-        pred_instance_shape = preds.shape[1:]
 
-        preds = preds.reshape((-1, self.config.n_conformation, *pred_instance_shape))
-        preds = preds.mean(axis=1)
+        if isinstance(preds, np.ndarray):
+            pred_instance_shape = preds.shape[1:]
+
+            preds = preds.reshape((-1, self.config.n_conformation, *pred_instance_shape))
+            preds = preds.mean(axis=1)
+
+        elif isinstance(preds, tuple):
+            pred_instance_shape = preds[0].shape[1:]
+
+            # this could be improved for deep ensembles
+            preds = tuple([p.reshape(
+                (-1, self.config.n_conformation, *pred_instance_shape)
+            ).mean(axis=1) for p in preds])
+
+        else:
+            raise TypeError(f"Unsupported prediction type {type(preds)}")
 
         return preds
 

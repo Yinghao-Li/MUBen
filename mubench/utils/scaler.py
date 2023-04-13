@@ -3,7 +3,7 @@ The scaler for the regression task.
 This implementation is adapted from
 https://github.com/chemprop/chemprop/blob/master/chemprop/data/scaler.py
 """
-from typing import Any
+from typing import Any, Optional
 import numpy as np
 
 __all__ = ['StandardScaler']
@@ -70,24 +70,34 @@ class StandardScaler:
 
         return transformed_with_none
 
-    def inverse_transform(self, x:  np.ndarray):
+    def inverse_transform(self, x:  np.ndarray, var: Optional[np.ndarray] = None):
         """
         Performs the inverse transformation by multiplying by the standard deviations and adding the means.
 
         Parameters
         ----------
-        x: A list of lists of floats.
+        x: model-predicted labels
+        var: optional, model-predicted label Gaussian variances
 
         Returns
         -------
         The inverse transformed data.
         """
-        if isinstance(x, np.ndarray) or isinstance(x, list):
-            x = np.array(x).astype(float)
-            transformed_with_nan = x * self.stds + self.means
-            transformed_with_none = np.where(
-                np.isnan(transformed_with_nan), self.replace_nan_token, transformed_with_nan
-            )
-            return transformed_with_none
-        else:
-            return None
+        assert isinstance(x, np.ndarray), TypeError("x is required to be numpy array!")
+        if var is not None:
+            assert isinstance(x, np.ndarray), TypeError("x is required to be numpy array!")
+
+        transformed_x = x * self.stds + self.means
+        transformed_x = np.where(
+            np.isnan(transformed_x), self.replace_nan_token, transformed_x
+        )
+        if var is None:
+            return transformed_x
+
+        # TODO: should double check if this is correct
+        transformed_var = var * self.stds ** 2
+        transformed_var = np.where(
+            np.isnan(transformed_var), self.replace_nan_token, transformed_var
+        )
+
+        return transformed_x, transformed_var

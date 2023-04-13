@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "ClinTox",
+  "dataset_name": "ESOL",
   "data_dir": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": false,
@@ -11,6 +11,6 @@
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "feature_type": "rdkit",
-  "uncertainty_method": "Focal-Loss",
+  "uncertainty_method": "none",
   "apply_temperature_scaling_after_focal_loss": true
 }
