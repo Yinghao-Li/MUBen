@@ -116,6 +116,8 @@ class Trainer:
         self.initialize_optimizer()
         self.initialize_scheduler()
         self.initialize_loss()
+        self._train_log_idx_ = 0  # will increase by 1 each time you call `train_epoch`
+        self._eval_log_idx_ = 0  # will increase by 1 each time you call `eval_and_save`
         return self
 
     def initialize_model(self, *args, **kwargs):
