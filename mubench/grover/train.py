@@ -134,7 +134,7 @@ class Trainer(BaseTrainer, ABC):
 
         return atom_logits, bond_logits
 
-    def normalize_logits(self, logits: Tuple[np.ndarray, np.ndarray]):
+    def process_logits(self, logits: Tuple[np.ndarray, np.ndarray]):
 
         atom_logits, bond_logits = logits
 

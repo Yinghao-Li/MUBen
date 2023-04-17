@@ -58,10 +58,10 @@ class Trainer(BaseTrainer, ABC):
         )
         return None
 
-    def normalize_logits(self, logits: np.ndarray):
+    def process_logits(self, logits: np.ndarray):
 
         # TODO: should keep preds of all conformations during result saving
-        preds = super().normalize_logits(logits)
+        preds = super().process_logits(logits)
 
         if isinstance(preds, np.ndarray):
             pred_instance_shape = preds.shape[1:]

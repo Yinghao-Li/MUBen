@@ -107,11 +107,15 @@ class Trainer:
 
     @property
     def model(self):
+        # return the scaled model if it exits
         if self._ts_model:
             return self._ts_model
         return self._model
 
     def initialize(self):
+        """
+        Initialize trainer status
+        """
         self.initialize_model()
         self.initialize_optimizer()
         self.initialize_scheduler()
@@ -213,11 +217,17 @@ class Trainer:
 
     @property
     def n_training_steps(self):
+        """
+        The number of total training steps
+        """
         num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
         return num_update_steps_per_epoch * self._n_epochs_
 
     @property
     def n_valid_steps(self):
+        """
+        The number of total validation steps
+        """
         num_update_steps_per_epoch = int(np.ceil(len(self._valid_dataset) / self.config.batch_size))
         return num_update_steps_per_epoch * self._n_epochs_
 
@@ -244,6 +254,13 @@ class Trainer:
         return self
 
     def set_mode(self, mode: str):
+        """
+        Specify training mode using string. Currently not used.
+
+        Parameters
+        ----------
+        mode: train or valid
+        """
         assert mode in ('train', 'eval'), ValueError(f"Argument `mode` should be 'train' or 'eval'.")
         if mode == 'train':
             self.train_mode()
@@ -252,6 +269,13 @@ class Trainer:
         return self
 
     def run(self):
+        """
+        Run the training and evaluation process. This is the main/entry function of the Trainer class.
+
+        Returns
+        -------
+        None
+        """
 
         # deep ensembles
         if self.config.uncertainty_method == UncertaintyMethods.ensembles:
@@ -273,7 +297,20 @@ class Trainer:
 
         logger.info('Done.')
 
+        return None
+
     def run_single_shot(self, apply_test=True):
+        """
+        Run the training and evaluation pipeline once. No pre- or post-processing is applied.
+
+        Parameters
+        ----------
+        apply_test: whether run the test function in the process.
+
+        Returns
+        -------
+        self
+        """
 
         set_seed(self.config.seed)
         if os.path.exists(os.path.join(self._result_dir_, self._model_name_)) and not self.config.retrain_model:
@@ -293,6 +330,9 @@ class Trainer:
         return self
 
     def run_ensembles(self):
+        """
+        Run an ensemble of models. Used as the implementation of the Model Ensembles for uncertainty estimation.
+        """
 
         for ensemble_idx in range(self.config.n_ensembles):
             # update random seed and re-initialize training status
@@ -321,6 +361,10 @@ class Trainer:
         return self
 
     def run_swag(self):
+        """
+        Run the training and evaluation pipeline with SWAG uncertainty estimation method.
+        """
+
         # Train the model first. Do not need to load state dict as it is done during test
         self.run_single_shot(apply_test=False)
 
@@ -352,6 +396,10 @@ class Trainer:
         return self
 
     def run_temperature_scaling(self):
+        """
+        Run the training and evaluation pipeline with temperature scaling.
+        """
+
         # Train the model first. Do not need to load state dict as it is done during test
         self.run_single_shot(apply_test=False)
 
@@ -382,6 +430,9 @@ class Trainer:
         return self
 
     def run_focal_loss(self):
+        """
+        Run the training and evaluation pipeline with focal loss.
+        """
         # Train the model first. Do not need to load state dict as it is done during test
         self.run_single_shot()
 
@@ -414,6 +465,18 @@ class Trainer:
         return self
 
     def train(self, use_valid_dataset=False):
+        """
+        Run the training process
+
+        Parameters
+        ----------
+        use_valid_dataset: whether to use the validation dataset to train the model.
+            This argument could be true during temperature scaling.
+
+        Returns
+        -------
+        None
+        """
 
         self.model.to(self._device)
         data_loader = self.get_dataloader(
@@ -443,6 +506,18 @@ class Trainer:
         return None
 
     def training_epoch(self, data_loader, pbar):
+        """
+        Train the model for one epoch
+
+        Parameters
+        ----------
+        data_loader: data loader
+        pbar: progress bar
+
+        Returns
+        -------
+        averaged training loss
+        """
 
         self.train_mode()
         # Set the base model to evaluation mode for Temperature Scaling training
@@ -508,6 +583,18 @@ class Trainer:
         return loss
 
     def inference(self, dataset, batch_size: Optional[int] = 0):
+        """
+        Run the forward inference for an entire dataset.
+
+        Parameters
+        ----------
+        dataset: dataset
+        batch_size: batch size
+
+        Returns
+        -------
+        model outputs (logits or tuple of logits)
+        """
 
         dataloader = self.get_dataloader(dataset, batch_size=batch_size, shuffle=False)
         self.eval_mode()
@@ -526,7 +613,18 @@ class Trainer:
 
         return logits
 
-    def normalize_logits(self, logits: np.ndarray) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    def process_logits(self, logits: np.ndarray) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        """
+        Post-process the output logits according to the training tasks or variants.
+
+        Parameters
+        ----------
+        logits
+
+        Returns
+        -------
+        processed model output logits
+        """
 
         if self.config.task_type == 'classification':
             if len(logits.shape) > 1 and logits.shape[-1] >= 2:
@@ -560,7 +658,7 @@ class Trainer:
     def evaluate(self, dataset, n_run: Optional[int] = 1, return_preds: Optional[bool] = False):
 
         if n_run == 1:
-            preds = self.inverse_standardize_preds(self.normalize_logits(self.inference(dataset)))
+            preds = self.inverse_standardize_preds(self.process_logits(self.inference(dataset)))
             if isinstance(preds, np.ndarray):
                 metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
             else:  # isinstance(preds, tuple)
@@ -585,7 +683,7 @@ class Trainer:
                     device=self.config.device_str
                 )
 
-            preds = self.inverse_standardize_preds(self.normalize_logits(self.inference(dataset)))
+            preds = self.inverse_standardize_preds(self.process_logits(self.inference(dataset)))
             if isinstance(preds, np.ndarray):
                 preds_list.append(preds)
             else:
