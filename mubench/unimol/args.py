@@ -109,7 +109,7 @@ class Arguments(BaseArguments):
         self.max_seq_len = getattr(self, "max_seq_len", 512)
 
         self.activation_fn = getattr(self, "activation_fn", "gelu")
-        self.pooler_activation_fn = getattr(self, "pooler_activation_fn", "tanh")
+        self.pooler_activation_fn = getattr(self, "pooler_activation_fn", "Tanh")
 
         self.post_ln = getattr(self, "post_ln", False)
         self.masked_token_loss = getattr(self, "masked_token_loss", -1.0)

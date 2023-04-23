@@ -7,11 +7,12 @@ import torch.nn as nn
 from .layers import init_bert_params
 from .encoder import TransformerEncoderWithPair
 from .module import (
-    ClassificationHead,
     NonLinearHead,
     DistanceHead,
     GaussianLayer
 )
+from mubench.base.model import OutputLayer
+from mubench.utils.macro import UncertaintyMethods
 
 
 logger = logging.getLogger(__name__)
@@ -55,16 +56,19 @@ class UniMol(nn.Module):
             self.dist_head = DistanceHead(
                 config.encoder_attention_heads, config.activation_fn
             )
-        self.classification_heads = nn.ModuleDict()
 
         self.apply(init_bert_params)
 
-        self.output_layer = ClassificationHead(
-            input_dim=self.config.encoder_embed_dim,
-            inner_dim=self.config.encoder_embed_dim,
-            num_classes=self.config.n_lbs * self.config.n_tasks,
-            activation_fn=self.config.pooler_activation_fn,
-            pooler_dropout=self.config.pooler_dropout,
+        self.hidden_layer = nn.Sequential(
+            nn.Dropout(config.pooler_dropout),
+            nn.Linear(config.encoder_embed_dim, config.encoder_embed_dim),
+            getattr(nn, config.pooler_activation_fn)(),
+            nn.Dropout(config.pooler_dropout)
+        )
+        self.output_layer = OutputLayer(
+            config.encoder_embed_dim,
+            config.n_lbs * config.n_tasks,
+            config.uncertainty_method == UncertaintyMethods.bbp
         )
 
     def forward(self, batch, **kwargs):
@@ -87,7 +91,8 @@ class UniMol(nn.Module):
         graph_attn_bias = get_dist_features(src_distance, src_edge_type)
         encoder_rep, _, _, _, _ = self.encoder(x, padding_mask=padding_mask, attn_mask=graph_attn_bias)
 
-        logits = self.output_layer(encoder_rep)
+        hidden_state = self.hidden_layer(encoder_rep[:, 0, :])  # take <s> token (equiv. to [CLS])
+        logits = self.output_layer(hidden_state)
         return logits
 
     def set_num_updates(self, num_updates):

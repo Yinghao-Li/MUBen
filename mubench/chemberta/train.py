@@ -1,8 +1,8 @@
 from abc import ABC
 
 import logging
-from torch.optim import Adam
 
+from mubench.utils.macro import UncertaintyMethods
 from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator
 from .model import ChemBERTa
@@ -35,4 +35,5 @@ class Trainer(BaseTrainer, ABC):
             bert_model_name_or_path=self.config.pretrained_model_name_or_path,
             n_lbs=self.config.n_lbs,
             n_tasks=self.config.n_tasks,
+            apply_bbp=self.config.uncertainty_method == UncertaintyMethods.bbp
         )

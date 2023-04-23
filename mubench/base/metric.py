@@ -2,6 +2,7 @@
 import numpy as np
 from torch import Tensor
 from torch.nn import GaussianNLLLoss
+from torch.nn import functional as F
 from scipy.special import softmax, expit
 from sklearn.metrics import (
     roc_auc_score,
@@ -10,7 +11,6 @@ from sklearn.metrics import (
     auc,
 )
 from typing import Optional, Union, List
-from ..utils.math import logit_to_var
 
 
 # noinspection PyShadowingBuiltins
@@ -20,7 +20,7 @@ class GaussianNLL(GaussianNLLLoss):
 
     def forward(self, input: Tensor, target: Tensor, *args, **kwargs):
         mean = input[..., 0]
-        var = logit_to_var(input[..., 1])
+        var = F.softplus(input[..., 1]) + 1e-6
         return super().forward(input=mean, target=target, var=var)
 
 

@@ -76,7 +76,7 @@ class UncertaintyMethods(StrEnum):
     mc_dropout = 'MC-Dropout'
     temperature = 'Temperature-Scaling'
     swag = 'SWAG'
-    bayesian = 'BBB'
+    bbp = 'BBP'
     sgld = 'SGLD'
     laplace = 'Laplace-Approximation'
     ensembles = 'Deep-Ensembles'

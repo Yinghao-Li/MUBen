@@ -132,6 +132,7 @@ class Trainer:
             n_hidden_layers=self.config.n_dnn_hidden_layers,
             d_hidden=self.config.d_dnn_hidden,
             p_dropout=self.config.dropout,
+            apply_bbp=self.config.uncertainty_method == UncertaintyMethods.bbp
         )
 
     def initialize_optimizer(self, *args, **kwargs):
@@ -220,16 +221,16 @@ class Trainer:
         """
         The number of total training steps
         """
-        num_update_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
-        return num_update_steps_per_epoch * self._n_epochs_
+        n_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
+        return n_steps_per_epoch * self._n_epochs_
 
     @property
     def n_valid_steps(self):
         """
         The number of total validation steps
         """
-        num_update_steps_per_epoch = int(np.ceil(len(self._valid_dataset) / self.config.batch_size))
-        return num_update_steps_per_epoch * self._n_epochs_
+        n_steps_per_epoch = int(np.ceil(len(self._valid_dataset) / self.config.batch_size))
+        return n_steps_per_epoch * self._n_epochs_
 
     def train_mode(self):
         """
@@ -289,7 +290,7 @@ class Trainer:
         # focal loss
         elif self.config.uncertainty_method == UncertaintyMethods.focal:
             self.run_focal_loss()
-        # none & MC Dropout
+        # none & MC Dropout & BBP
         else:
             self.run_single_shot()
 
@@ -534,7 +535,7 @@ class Trainer:
             # mixed-precision training
             with torch.autocast(device_type=self.config.device_str, dtype=torch.bfloat16):
                 logits = self.model(batch)
-                loss = self.get_loss(logits, batch)
+                loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
 
             loss.backward()
 
@@ -553,7 +554,7 @@ class Trainer:
 
         return avg_loss / num_items
 
-    def get_loss(self, logits, batch) -> torch.Tensor:
+    def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
         """
         Children trainers can directly reload this function instead of
         reloading `training epoch`, which could be more complicated
@@ -562,6 +563,7 @@ class Trainer:
         ----------
         logits: logits predicted by the model
         batch: batched training data
+        n_steps_per_epoch: how many batches in a training epoch; only used for BBP.
 
         Returns
         -------
@@ -580,6 +582,10 @@ class Trainer:
 
         loss = self._loss_fn(logits, lbs)
         loss = torch.sum(loss * masks) / masks.sum()
+
+        # for compatability with bbp
+        if self.config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
+            loss += self.model.output_layer.kld / n_steps_per_epoch
         return loss
 
     def inference(self, dataset, batch_size: Optional[int] = 0):

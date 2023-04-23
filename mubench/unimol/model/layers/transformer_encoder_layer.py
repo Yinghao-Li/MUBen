@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Dict, Optional
+from typing import Optional
 
 import torch
 import torch.nn.functional as F
@@ -27,7 +27,7 @@ class TransformerEncoderLayer(nn.Module):
         attention_dropout: float = 0.1,
         activation_dropout: float = 0.0,
         activation_fn: str = "gelu",
-        post_ln = False,
+        post_ln=False,
     ) -> None:
         super().__init__()
 
@@ -52,14 +52,13 @@ class TransformerEncoderLayer(nn.Module):
         self.final_layer_norm = LayerNorm(self.embed_dim)
         self.post_ln = post_ln
 
-
     def forward(
         self,
         x: torch.Tensor,
         attn_bias: Optional[torch.Tensor] = None,
         padding_mask: Optional[torch.Tensor] = None,
-        return_attn: bool=False,
-    ) -> torch.Tensor:
+        return_attn: bool = False,
+    ):
         """
         LayerNorm is applied either before or after the self-attention/ffn
         modules similar to the original Transformer implementation.
@@ -74,6 +73,7 @@ class TransformerEncoderLayer(nn.Module):
             attn_bias=attn_bias,
             return_attn=return_attn,
         )
+        attn_weights = attn_probs = None
         if return_attn:
             x, attn_weights, attn_probs = x
         x = F.dropout(x, p=self.dropout, training=self.training)
@@ -96,4 +96,3 @@ class TransformerEncoderLayer(nn.Module):
             return x
         else:
             return x, attn_weights, attn_probs
-                

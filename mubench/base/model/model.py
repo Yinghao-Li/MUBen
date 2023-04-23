@@ -7,6 +7,7 @@ A simple deep neural network with customizable activation function.
 import torch
 import torch.nn as nn
 from typing import Optional
+from .layers import OutputLayer
 
 
 class DNN(nn.Module):
@@ -20,6 +21,7 @@ class DNN(nn.Module):
                  p_dropout: Optional[float] = 0.1,
                  hidden_dims: Optional[list] = None,
                  activation: Optional[str] = 'ReLU',
+                 apply_bbp: Optional[bool] = False,
                  **kwargs):
 
         super().__init__()
@@ -40,18 +42,20 @@ class DNN(nn.Module):
             getattr(nn, activation)(),
             nn.Dropout(p_dropout)
         ) for i in range(n_hidden_layers)]
-
         self.hidden_layers = nn.Sequential(*hidden_layers)
 
-        self.output_layer = nn.Linear(hidden_dims[-1], n_lbs*n_tasks)
+        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, apply_bbp)
 
-    def reset_parameters(self):
+        self.initialize()
+
+    def initialize(self):
         def init_weights(m):
             if isinstance(m, nn.Linear):
                 torch.nn.init.xavier_uniform(m.weight)
                 m.bias.data.fill_(0.01)
 
         self.apply(init_weights)
+        self.output_layer.initialize()
         return self
 
     def forward(self, batch, **kwargs):

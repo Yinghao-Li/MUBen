@@ -10,7 +10,7 @@ import torch
 from torch import nn as nn
 from torch.nn import LayerNorm, functional as F
 
-from .utils_nn import get_activation_function, select_neighbor_and_aggregate
+from .utils import get_activation_function, select_neighbor_and_aggregate
 
 
 class SelfAttention(nn.Module):
@@ -63,10 +63,10 @@ class Readout(nn.Module):
                  rtype: str = "none",
                  hidden_size: int = 0,
                  attn_hidden: int = None,
-                 attn_out: int = None,
-                 ):
+                 attn_out: int = None):
         """
         The readout function.
+
         :param rtype: readout type, can be "mean" and "self_attention".
         :param hidden_size: input hidden size
         :param attn_hidden: only valid if rtype == "self_attention". The attention hidden size.

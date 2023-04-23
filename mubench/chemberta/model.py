@@ -1,7 +1,8 @@
 import torch.nn as nn
 from transformers import AutoModel
 
-from seqlbtoolkit.training.dataset import Batch
+from mubench.utils.data import Batch
+from mubench.base.model import OutputLayer
 
 
 class ChemBERTa(nn.Module):
@@ -10,6 +11,7 @@ class ChemBERTa(nn.Module):
                  bert_model_name_or_path: str,
                  n_lbs: int,
                  n_tasks: int,
+                 apply_bbp: bool = False,
                  **kwargs):
 
         super().__init__()
@@ -17,7 +19,7 @@ class ChemBERTa(nn.Module):
         self.bert_model = AutoModel.from_pretrained(bert_model_name_or_path)
         dim_bert_last_hidden = list(self.bert_model.parameters())[-1].shape[-1]
 
-        self.output_layer = nn.Linear(dim_bert_last_hidden, n_lbs*n_tasks)
+        self.output_layer = OutputLayer(dim_bert_last_hidden, n_lbs * n_tasks, apply_bbp).initialize()
 
     def forward(self, batch: Batch, **kwargs):
         bert_hidden = self.bert_model(input_ids=batch.atom_ids, attention_mask=batch.attn_masks)

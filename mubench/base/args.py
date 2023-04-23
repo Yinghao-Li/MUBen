@@ -316,7 +316,7 @@ class Config(Arguments):
         -------
 
         """
-        if self.uncertainty_method in ["MC-Dropout", "SWAG"] and self.n_test == 1:
+        if self.uncertainty_method in ["MC-Dropout", "SWAG", "BBP"] and self.n_test == 1:
             logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
                            f"multiple test runs! Setting `n_test` to the default value 20.")
             self.n_test = 20

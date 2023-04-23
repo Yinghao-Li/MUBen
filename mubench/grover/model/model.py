@@ -6,8 +6,10 @@ from torch import nn as nn
 from typing import List, Dict
 
 from .layers import Readout, GTransEncoder
-from .utils_nn import get_activation_function
+from .utils import get_activation_function
 from ..dataset.molgraph import get_atom_fdim, get_bond_fdim
+from mubench.base.model import OutputLayer
+from mubench.utils.macro import UncertaintyMethods
 
 
 class GROVEREmbedding(nn.Module):
@@ -63,35 +65,29 @@ def create_ffn(config):
     :param config: Arguments.
     """
     # Note: args.features_dim is set according the real loaded features data
-    if config.self_attention:
-        first_linear_dim = config.hidden_size * config.attn_out
-    else:
-        first_linear_dim = config.hidden_size
+    first_linear_dim = config.hidden_size
 
-    dropout = nn.Dropout(config.dropout)
     activation = get_activation_function(config.activation)
     # TODO: ffn_hidden_size
     # Create FFN layers
     if config.ffn_num_layers == 1:
         ffn = [
-            dropout,
-            nn.Linear(first_linear_dim, config.n_lbs*config.n_tasks)
+            nn.Dropout(config.dropout),
         ]
     else:
         ffn = [
-            dropout,
+            nn.Dropout(config.dropout),
             nn.Linear(first_linear_dim, config.ffn_hidden_size)
         ]
         for _ in range(config.ffn_num_layers - 2):
             ffn.extend([
                 activation,
-                dropout,
+                nn.Dropout(config.dropout),
                 nn.Linear(config.ffn_hidden_size, config.ffn_hidden_size),
             ])
         ffn.extend([
             activation,
-            dropout,
-            nn.Linear(config.ffn_hidden_size, config.n_lbs*config.n_tasks),
+            nn.Dropout(config.dropout),
         ])
 
     # Create FFN model
@@ -108,43 +104,21 @@ class GROVERFinetuneModel(nn.Module):
         self.hidden_size = config.hidden_size
 
         self.grover = GROVEREmbedding(config)
-
-        if config.self_attention:
-            self.readout = Readout(rtype="self_attention", hidden_size=self.hidden_size,
-                                   attn_hidden=config.attn_hidden,
-                                   attn_out=config.attn_out)
-        else:
-            self.readout = Readout(rtype="mean", hidden_size=self.hidden_size)
+        self.readout = Readout(rtype="mean", hidden_size=self.hidden_size)
 
         self.mol_atom_from_atom_ffn = create_ffn(config)
         self.mol_atom_from_bond_ffn = create_ffn(config)
 
-    @staticmethod
-    def get_loss_func(args):
-        def loss_func(preds, targets,
-                      dt=args.dataset_type,
-                      dist_coff=args.dist_coff):
-
-            if dt == 'classification':
-                pred_loss = nn.BCEWithLogitsLoss(reduction='none')
-            elif dt == 'regression':
-                pred_loss = nn.MSELoss(reduction='none')
-            else:
-                raise ValueError(f'Dataset type "{args.dataset_type}" not supported.')
-
-            if type(preds) is not tuple:
-                # in eval mode.
-                return pred_loss(preds, targets)
-
-            # in train mode.
-            dist_loss = nn.MSELoss(reduction='none')
-
-            dist = dist_loss(preds[0], preds[1])
-            pred_loss1 = pred_loss(preds[0], targets)
-            pred_loss2 = pred_loss(preds[1], targets)
-            return pred_loss1 + pred_loss2 + dist_coff * dist
-
-        return loss_func
+        self.atom_output_layer = OutputLayer(
+            config.ffn_hidden_size,
+            config.n_lbs*config.n_tasks,
+            config.uncertainty_method == UncertaintyMethods.bbp
+        )
+        self.bond_output_layer = OutputLayer(
+            config.ffn_hidden_size,
+            config.n_lbs*config.n_tasks,
+            config.uncertainty_method == UncertaintyMethods.bbp
+        )
 
     def forward(self, batch, **kwargs):
         molecule_components = batch.molecule_graphs.components
@@ -157,4 +131,8 @@ class GROVERFinetuneModel(nn.Module):
 
         atom_ffn_output = self.mol_atom_from_atom_ffn(mol_atom_from_atom_output)
         bond_ffn_output = self.mol_atom_from_bond_ffn(mol_atom_from_bond_output)
+
+        atom_ffn_output = self.atom_output_layer(atom_ffn_output)
+        bond_ffn_output = self.bond_output_layer(bond_ffn_output)
+
         return atom_ffn_output, bond_ffn_output

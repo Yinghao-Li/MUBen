@@ -12,6 +12,7 @@ from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator
 from .args import Config
 from .model import NoamLR, load_checkpoint
+from mubench.utils.macro import UncertaintyMethods
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ class Trainer(BaseTrainer, ABC):
         )
         return self
 
-    def get_loss(self, logits, batch) -> torch.Tensor:
+    def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
 
         assert isinstance(logits, tuple) and len(logits) == 2, \
             ValueError("GROVER should have 2 return values for training!")
@@ -90,6 +91,11 @@ class Trainer(BaseTrainer, ABC):
         dist = self.get_distance_loss(atom_logits, bond_logits, batch)
 
         loss = atom_loss + bond_loss + self.config.dist_coff * dist
+
+        # for compatability with bbp
+        if self.config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
+            kld = (self.model.atom_output_layer.kld + self.model.bond_output_layer.kld) / n_steps_per_epoch
+            loss += kld
         return loss
 
     def get_distance_loss(self, atom_logits, bond_logits, batch):
