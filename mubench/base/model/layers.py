@@ -5,7 +5,7 @@ Contains Linear and Bayesian output Layer
 """
 
 import torch.nn as nn
-from ..uncertainty.bnn import BBPOutputLayer
+from ..uncertainty.bbp import BBPOutputLayer
 
 
 class OutputLayer(nn.Module):
@@ -38,7 +38,7 @@ class OutputLayer(nn.Module):
 
     def initialize(self):
         if not self._apply_bbp:
-            nn.init.xavier_uniform(self.output_layer.weight)
+            nn.init.xavier_uniform_(self.output_layer.weight)
             self.output_layer.bias.data.fill_(0.01)
         else:
             self.output_layer.initialize()

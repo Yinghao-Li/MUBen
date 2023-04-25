@@ -70,7 +70,7 @@ def logging_args(args):
     """
     arg_elements = {attr: getattr(args, attr) for attr in dir(args) if not callable(getattr(args, attr))
                     and not attr.startswith("__") and not attr.startswith("_")}
-    logger.info(f"Parameters: ({type(args)})")
+    logger.info(f"Configurations: ({type(args)})")
     for arg_element, value in arg_elements.items():
         logger.info(f"  {arg_element}: {value}")
 

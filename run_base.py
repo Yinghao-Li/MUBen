@@ -10,7 +10,7 @@ from datetime import datetime
 
 from transformers import HfArgumentParser
 
-from mubench.utils.io import set_logging, logging_args
+from mubench.utils.io import set_logging
 from mubench.utils.data import set_seed
 from mubench.base.dataset import Dataset
 from mubench.base.args import Arguments, Config
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(args: Arguments):
-    config = Config().from_args(args).get_meta().validate()
+    config = Config().from_args(args).get_meta().validate().log()
 
     if args.apply_wandb and args.wandb_api_key:
         wandb.login(key=args.wandb_api_key)
@@ -80,7 +80,6 @@ if __name__ == '__main__':
         arguments.log_path = os.path.join('logs', f'{_current_file_name}', f'{_time}.log')
 
     set_logging(log_path=arguments.log_path)
-    logging_args(arguments)
 
     set_seed(arguments.seed)
 

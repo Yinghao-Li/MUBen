@@ -5,6 +5,12 @@ from typing import Optional, List
 from functools import cache
 
 
+class Status:
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
 class Batch:
     def __init__(self, **kwargs):
         super().__init__()

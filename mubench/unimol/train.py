@@ -10,6 +10,8 @@ from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator, Dictionary
 from .model import UniMol
 from .args import Config
+from mubench.utils.macro import UncertaintyMethods
+from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +44,9 @@ class Trainer(BaseTrainer, ABC):
         )
 
     def initialize_model(self):
-        self._model = UniMol(self.config, self.dictionary)
+        self._model = UniMol(self._config, self.dictionary)
 
-        state = load_checkpoint_to_cpu(self.config.checkpoint_path)
+        state = load_checkpoint_to_cpu(self._config.checkpoint_path)
         model_loading_info = self._model.load_state_dict(state['model'], strict=False)
         logger.info(model_loading_info)
         return self
@@ -52,10 +54,18 @@ class Trainer(BaseTrainer, ABC):
     def initialize_optimizer(self):
         # Original implementation seems set weight decay to 0, which is weird.
         # We'll keep it as default here
-        self._optimizer = AdamW(
-            self._model.parameters(),
-            lr=self._lr_, betas=(0.9, 0.99), eps=1E-6
-        )
+        self._optimizer = AdamW(self._model.parameters(), lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
+
+        # for sgld compatibility
+        if self._config.uncertainty_method == UncertaintyMethods.sgld:
+            output_param_ids = [id(x) for x in self._model.state_dict() if "output_layer" in x]
+            base_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
+            output_params = filter(lambda p: id(p) in output_param_ids, self._model.parameters())
+
+            self._optimizer = AdamW(base_params, lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
+            sgld_optimizer = PSGLDOptimizer if self._config.apply_preconditioned_sgld else SGLDOptimizer
+            self._sgld_optimizer = sgld_optimizer(output_params, lr=self._status.lr, norm_sigma=self._config.sgld_prior_sigma)
+
         return None
 
     def process_logits(self, logits: np.ndarray):
@@ -66,7 +76,7 @@ class Trainer(BaseTrainer, ABC):
         if isinstance(preds, np.ndarray):
             pred_instance_shape = preds.shape[1:]
 
-            preds = preds.reshape((-1, self.config.n_conformation, *pred_instance_shape))
+            preds = preds.reshape((-1, self._config.n_conformation, *pred_instance_shape))
             preds = preds.mean(axis=1)
 
         elif isinstance(preds, tuple):
@@ -74,7 +84,7 @@ class Trainer(BaseTrainer, ABC):
 
             # this could be improved for deep ensembles
             preds = tuple([p.reshape(
-                (-1, self.config.n_conformation, *pred_instance_shape)
+                (-1, self._config.n_conformation, *pred_instance_shape)
             ).mean(axis=1) for p in preds])
 
         else:

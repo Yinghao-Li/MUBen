@@ -50,8 +50,8 @@ class Arguments:
             "help": "The random seed used during dataset construction. Leave default (0) if not randomly split."
         }
     )
-    data_dir: Optional[str] = field(
-        default='', metadata={'help': 'Directory to datasets'}
+    data_folder: Optional[str] = field(
+        default='', metadata={'help': 'The folder containing all datasets.'}
     )
     result_dir: Optional[str] = field(
         default='./output', metadata={'help': "where to save model outputs."}
@@ -164,7 +164,21 @@ class Arguments:
 
     # --- Focal Loss Arguments ---
     apply_temperature_scaling_after_focal_loss: Optional[bool] = field(
-        default=False, metadata={"help": "Whether apply temperature scaling after training model with focal loss."}
+        default=False, metadata={"help": "Whether to apply temperature scaling after training model with focal loss."}
+    )
+
+    # --- SGLD Arguments ---
+    apply_preconditioned_sgld: Optional[bool] = field(
+        default=False, metadata={"help": "Whether to apply pre-conditioned SGLD instead of the vanilla one."}
+    )
+    sgld_prior_sigma: Optional[float] = field(
+        default=0.1, metadata={"help": "Variance of the SGLD Gaussian prior."}
+    )
+    n_langevin_samples: Optional[int] = field(
+        default=30, metadata={"help": "The number of model checkpoints sampled from the Langevin Dynamics."}
+    )
+    sgld_sampling_interval: Optional[int] = field(
+        default=2, metadata={"help": "The number of epochs per sampling operation."}
     )
 
     # --- Evaluation Arguments ---
@@ -182,11 +196,11 @@ class Arguments:
         default=False, metadata={"help": "Disable CUDA even when it is available."}
     )
     num_workers: Optional[int] = field(
-        default=0, metadata={"help": 'The number of threads to process dataset.'}
+        default=0, metadata={"help": 'The number of threads to process the dataset.'}
     )
 
     def __post_init__(self):
-        self.data_dir = os.path.join(self.data_dir, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
+        self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
     # The following three functions are copied from transformers.training_args
@@ -316,7 +330,8 @@ class Config(Arguments):
         -------
 
         """
-        if self.uncertainty_method in ["MC-Dropout", "SWAG", "BBP"] and self.n_test == 1:
+        if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag, UncertaintyMethods.bbp] \
+                and self.n_test == 1:
             logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
                            f"multiple test runs! Setting `n_test` to the default value 20.")
             self.n_test = 20
@@ -326,10 +341,23 @@ class Config(Arguments):
                            "Setting `k_swa_checkpoints` = `n_swa_epochs`.")
             self.k_swa_checkpoints = self.n_swa_epochs
 
-        if self.uncertainty_method == "Focal-Loss" and not self.binary_classification_with_softmax:
+        if self.uncertainty_method == UncertaintyMethods.focal and not self.binary_classification_with_softmax:
             logger.warning("Focal Loss requires model with Softmax output! "
                            "Setting `binary_classification_with_softmax` to True.")
             self.binary_classification_with_softmax = True
+
+        if self.uncertainty_method == UncertaintyMethods.sgld and not self.lr_scheduler_type == "constant":
+            logger.warning("SGLD currently only works with constant lr scheduler. The argument will be modified")
+            self.lr_scheduler_type = "constant"
+
+        return self
+
+    def log(self):
+        elements = {attr: getattr(self, attr) for attr in dir(self) if not callable(getattr(self, attr))
+                    and not attr.startswith("__") and not attr.startswith("_")}
+        logger.info(f"Configurations: ({type(self)})")
+        for arg_element, value in elements.items():
+            logger.info(f"  {arg_element}: {value}")
 
         return self
 

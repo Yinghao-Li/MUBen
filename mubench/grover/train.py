@@ -13,6 +13,7 @@ from .dataset import Collator
 from .args import Config
 from .model import NoamLR, load_checkpoint
 from mubench.utils.macro import UncertaintyMethods
+from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +38,8 @@ class Trainer(BaseTrainer, ABC):
         )
 
     def initialize_model(self):
-        logger.info(f"Loading GROVER checkpoint from {self.config.checkpoint_path}")
-        self._model = load_checkpoint(self.config)
+        logger.info(f"Loading GROVER checkpoint from {self._config.checkpoint_path}")
+        self._model = load_checkpoint(self._config)
 
     def initialize_optimizer(self):
         """
@@ -46,17 +47,24 @@ class Trainer(BaseTrainer, ABC):
         """
 
         # Only adjust the learning rate for the GroverFinetuneTask.
-        ffn_params = [id(x) for x in self._model.state_dict() if "grover" not in x and "ffn" in x]
-        base_params = filter(lambda p: id(p) not in ffn_params, self._model.parameters())
-        ffn_params = filter(lambda p: id(p) in ffn_params, self._model.parameters())
-        if self.config.fine_tune_coff == 0:
+        ffn_param_ids = [id(x[1]) for x in self._model.named_parameters()
+                         if "grover" not in x[0] and ("ffn" in x or "output_layer" in x[0])]
+        base_params = filter(lambda p: id(p) not in ffn_param_ids, self._model.parameters())
+        output_params = filter(lambda p: id(p) in ffn_param_ids, self._model.parameters())
+        if self._config.fine_tune_coff == 0:
             for param in base_params:
                 param.requires_grad = False
 
-        self._optimizer = AdamW([
-            {'params': base_params, 'lr': self.config.init_lr * self.config.fine_tune_coff},
-            {'params': ffn_params, 'lr': self.config.init_lr}
-        ], lr=self._lr_, weight_decay=self.config.weight_decay)
+        # for sgld compatibility
+        if self._config.uncertainty_method != UncertaintyMethods.sgld:
+            self._optimizer = AdamW([
+                {'params': base_params, 'lr': self._config.init_lr * self._config.fine_tune_coff},
+                {'params': output_params, 'lr': self._config.init_lr}
+            ], lr=self._status.lr, weight_decay=self._config.weight_decay)
+        else:
+            self._optimizer = AdamW(base_params, lr=self._status.lr, weight_decay=self._config.weight_decay)
+            sgld_optimizer = PSGLDOptimizer if self._config.apply_preconditioned_sgld else SGLDOptimizer
+            self._sgld_optimizer = sgld_optimizer(output_params, lr=self._status.lr, norm_sigma=self._config.sgld_prior_sigma)
 
         return self
 
@@ -69,13 +77,13 @@ class Trainer(BaseTrainer, ABC):
 
         self._scheduler = NoamLR(
             optimizer=self._optimizer,
-            warmup_epochs=self.config.warmup_epochs,
-            total_epochs=self.config.epochs,
-            steps_per_epoch=int(np.ceil(len(self.training_dataset) / self.config.batch_size)),
-            init_lr=self.config.lr,
-            max_lr=self.config.max_lr,
-            final_lr=self.config.final_lr,
-            fine_tune_coff=self.config.fine_tune_coff
+            warmup_epochs=self._config.warmup_epochs,
+            total_epochs=self._config.epochs,
+            steps_per_epoch=int(np.ceil(len(self.training_dataset) / self._config.batch_size)),
+            init_lr=self._config.lr,
+            max_lr=self._config.max_lr,
+            final_lr=self._config.final_lr,
+            fine_tune_coff=self._config.fine_tune_coff
         )
         return self
 
@@ -90,10 +98,10 @@ class Trainer(BaseTrainer, ABC):
         bond_loss = super().get_loss(bond_logits, batch)
         dist = self.get_distance_loss(atom_logits, bond_logits, batch)
 
-        loss = atom_loss + bond_loss + self.config.dist_coff * dist
+        loss = atom_loss + bond_loss + self._config.dist_coff * dist
 
         # for compatability with bbp
-        if self.config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
+        if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
             kld = (self.model.atom_output_layer.kld + self.model.bond_output_layer.kld) / n_steps_per_epoch
             loss += kld
         return loss
@@ -102,14 +110,14 @@ class Trainer(BaseTrainer, ABC):
 
         # modify data shapes to accommodate different tasks
         masks = batch.masks  # so that we don't mess up batch instances
-        if self.config.task_type == 'classification' and self.config.binary_classification_with_softmax:
+        if self._config.task_type == 'classification' and self._config.binary_classification_with_softmax:
             # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
-            atom_logits = atom_logits.view(-1, self.config.n_lbs)
-            bond_logits = bond_logits.view(-1, self.config.n_lbs)
+            atom_logits = atom_logits.view(-1, self._config.n_lbs)
+            bond_logits = bond_logits.view(-1, self._config.n_lbs)
             masks = masks.view(-1)
-        if self.config.task_type == 'regression' and self.config.regression_with_variance:
-            atom_logits = atom_logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
-            bond_logits = bond_logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
+        if self._config.task_type == 'regression' and self._config.regression_with_variance:
+            atom_logits = atom_logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
+            bond_logits = bond_logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
 
         loss = F.mse_loss(atom_logits, bond_logits)
         loss = torch.sum(loss * masks) / masks.sum()
@@ -119,7 +127,7 @@ class Trainer(BaseTrainer, ABC):
 
         dataloader = self.get_dataloader(
             dataset,
-            batch_size=batch_size if batch_size else self.config.batch_size,
+            batch_size=batch_size if batch_size else self._config.batch_size,
             shuffle=False
         )
         self.eval_mode()
@@ -129,8 +137,8 @@ class Trainer(BaseTrainer, ABC):
 
         with torch.no_grad():
             for batch in dataloader:
-                batch.to(self.config.device)
-                with torch.autocast(device_type=self.config.device_str, dtype=torch.bfloat16):
+                batch.to(self._config.device)
+                with torch.autocast(device_type=self._config.device_str, dtype=torch.bfloat16):
                     atom_logits, bond_logits = self.model(batch)
                 atom_logits_list.append(atom_logits.to(torch.float).detach().cpu())
                 bond_logits_list.append(bond_logits.to(torch.float).detach().cpu())
@@ -144,7 +152,7 @@ class Trainer(BaseTrainer, ABC):
 
         atom_logits, bond_logits = logits
 
-        if self.config.task_type == 'classification':
+        if self._config.task_type == 'classification':
 
             if len(atom_logits.shape) > 1 and atom_logits.shape[-1] >= 2:
                 atom_preds = softmax(atom_logits, axis=-1)
@@ -157,7 +165,7 @@ class Trainer(BaseTrainer, ABC):
         else:
             logits = (atom_logits + bond_logits) / 2
 
-            if self.config.regression_with_variance:
+            if self._config.regression_with_variance:
                 mean = logits[..., 0]
                 var = logits[..., 1]
                 return mean, var
