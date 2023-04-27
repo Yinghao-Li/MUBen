@@ -14,7 +14,7 @@ from transformers import (
     set_seed,
 )
 
-from mubench.utils.io import set_logging
+from mubench.utils.io import set_logging, set_log_path
 
 from mubench.grover.dataset import Dataset
 from mubench.grover.args import Arguments, Config
@@ -65,9 +65,6 @@ def main(args: Arguments):
 if __name__ == '__main__':
 
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
-    _current_file_name = os.path.basename(__file__)
-    if _current_file_name.endswith('.py'):
-        _current_file_name = _current_file_name[:-3]
 
     # --- set up arguments ---
     parser = HfArgumentParser(Arguments)
@@ -81,7 +78,7 @@ if __name__ == '__main__':
         arguments, = parser.parse_args_into_dataclasses()
 
     if not getattr(arguments, "log_path", None):
-        arguments.log_path = os.path.join('logs', f'{_current_file_name}', f'{_time}.log')
+        arguments.log_path = set_log_path(arguments, _time)
 
     set_logging(log_path=arguments.log_path)
 

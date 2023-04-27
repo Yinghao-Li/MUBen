@@ -9,6 +9,11 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def set_log_path(args, time):
+    log_path = os.path.join('logs', args.dataset_name, args.model_name, args.uncertainty_method, f'{time}.log')
+    return log_path
+
+
 def set_logging(log_path: Optional[str] = None):
     """
     setup logging
