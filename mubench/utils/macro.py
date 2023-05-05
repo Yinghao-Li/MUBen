@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ['DATASET_NAMES', 'SPLITTING', 'EVAL_METRICS',
            'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES',
-           'StrEnum']
+           'StrEnum', 'QM9_PROPERTIES']
 
 
 class StrEnum(str, Enum):
@@ -31,6 +31,7 @@ DATASET_NAMES = [
     "ToxCast",
     "SIDER",
     "ClinTox",
+    "QM9"
 ]
 
 SPLITTING = {
@@ -46,6 +47,7 @@ SPLITTING = {
     "ToxCast": "random",
     "SIDER": "random",
     "ClinTox": "random",
+    "QM9": "random"
 }
 
 EVAL_METRICS = {
@@ -61,6 +63,7 @@ EVAL_METRICS = {
     "ToxCast": "ROC-AUC",
     "SIDER": "ROC-AUC",
     "ClinTox": "ROC-AUC",
+    "QM9": "MAE"
 }
 
 MODEL_NAMES = [
@@ -88,4 +91,31 @@ FINGERPRINT_FEATURE_TYPES = [
     "none",
     "rdkit",
     "morgan"
+]
+
+QM9_PROPERTIES = [
+    # |Dipole moment|
+    'mu',
+    # |Isotropic polarizability|
+    'alpha',
+    # |Energy of Highest occupied molecular orbital (HOMO)|
+    'homo',
+    # |Energy of Lowest unoccupied molecular orbital (LUMO)|
+    'lumo',
+    # |Gap, difference between LUMO and HOMO|
+    'gap',
+    # |Electronic spatial extent|
+    'r2',
+    # |Zero point vibrational energy|
+    'zpve',
+    # |Internal energy at 0 K|
+    'u0',
+    # |Internal energy at 298.15 K|
+    'u298',
+    # |Enthalpy at 298.15 K|
+    'h298',
+    # |Free energy at 298.15 K|
+    'g298',
+    # |Heat capacity at 298.15 K|
+    'cv'
 ]
