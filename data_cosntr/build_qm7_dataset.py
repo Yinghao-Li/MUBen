@@ -1,5 +1,12 @@
 """
-Construct dataset from raw data files
+Construct qm7 dataset
+
+For qm7, we directly use the pre-processed csv file with SMILES shared in the deepchem repo:
+https://github.com/deepchem/deepchem/blob/b1ef4e590d9cdc41a3d6d547ad338c052a75c6e4/deepchem/molnet/load_function/qm7_datasets.py
+This file, also used in Uni-Mol, contains 6,838 compounds instead of 7,160, as explained here:
+https://deepchem.readthedocs.io/en/latest/api_reference/moleculenet.html#qm7-datasets
+
+The qm7.csv file is available here: https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm7.csv
 """
 import os
 import sys
@@ -11,15 +18,16 @@ from typing import Optional, List
 from datetime import datetime
 from dataclasses import dataclass, field
 
-import dgllife
 from dgllife.utils import (
     ScaffoldSplitter,
-    RandomSplitter
+    SingleTaskStratifiedSplitter
 )
+from dgllife.data import MoleculeCSVDataset
+
 from transformers import HfArgumentParser
 
 from mubench.utils.io import set_logging, logging_args, init_dir, save_json
-from mubench.utils.macro import DATASET_NAMES, SPLITTING
+from mubench.utils.macro import SPLITTING
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +39,10 @@ class Arguments:
     """
 
     # --- IO arguments ---
-    dataset_names: Optional[str] = field(
-        default=None,
+    dataset_path: Optional[str] = field(
+        default='./qm7.csv',
         metadata={
-            "nargs": "*",
-            "help": "The name of the dataset to construct."
+            "help": "Path to the qm9.csv dataset on Molecule Net."
         }
     )
     output_dir: Optional[str] = field(
@@ -46,13 +53,6 @@ class Arguments:
         metadata={
             "nargs": "*",
             "help": "Random seeds used if the dataset is randomly split."
-        }
-    )
-    tasks: Optional[str] = field(
-        default=None,
-        metadata={
-            "nargs": "*",
-            "help": "Tasks of each dataset. Will be inferred from the dataset if left empty."
         }
     )
     force_scaffold: Optional[bool] = field(
@@ -74,52 +74,66 @@ class Arguments:
     )
 
     def __post_init__(self):
-
-        if not self.dataset_names:
-            self.dataset_names: List[str] = [d_name for d_name in DATASET_NAMES if not d_name.startswith('QM')]
-        elif isinstance(self.dataset_names, str):
-            self.dataset_names: List[str] = [self.dataset_names]
+        self.dataset_name = 'QM7'
+        self.task = 'regression'
 
         if self.dataset_splitting_random_seeds is None:
             self.dataset_splitting_random_seeds: List[int] = [0, 1, 2, 3, 4]
         elif isinstance(self.dataset_splitting_random_seeds, int):
             self.dataset_splitting_random_seeds: List[int] = [self.dataset_splitting_random_seeds]
 
-        if self.tasks is None:
-            self.tasks: list = [None] * len(self.dataset_names)
-
 
 def main(args: Arguments):
-    for dataset_name, task in zip(args.dataset_names, args.tasks):
-        assert dataset_name in DATASET_NAMES, ValueError(f"Undefined dataset: {dataset_name}")
+    dataset_name = args.dataset_name
+    task = args.task
 
-        logger.info(f"Processing dataset {dataset_name}")
-        logger.info(f"Loading dataset")
+    logger.info(f"Loading dataset")
+    df = pd.read_csv(args.dataset_path)
+    dataset = MoleculeCSVDataset(df=df,
+                                 smiles_to_graph=None,
+                                 node_featurizer=None,
+                                 edge_featurizer=None,
+                                 smiles_column='smiles',
+                                 cache_file_path='./qm7_dglgraph.bin',
+                                 task_names=['u0_atom'],
+                                 load=False,
+                                 log_every=1000,
+                                 init_mask=False,
+                                 n_jobs=args.n_jobs)
 
-        dataset = getattr(dgllife.data, dataset_name)(n_jobs=args.n_jobs)
+    dataset.labels = dataset.labels if task == 'regression' else dataset.labels.to(torch.long)
 
-        if not task:
-            task = 'classification' if dataset.labels.dtype in (torch.int8, torch.int16, torch.int, torch.long) \
-                or len(torch.unique(dataset.labels)) < len(dataset) / 10 else 'regression'
-            logger.info(f"The task for dataset {dataset_name} is inferred as {task}.")
-        dataset.labels = dataset.labels if task == 'regression' else dataset.labels.to(torch.long)
+    logger.info("Getting meta information")
+    meta_dict = {
+        'task_type': task,
+        'n_tasks': dataset.labels.shape[1],
+        'classes': None if task == 'regression' else torch.unique(dataset.labels).tolist(),
+        'properties': ['u0_atom']
+    }
 
-        logger.info("Getting meta information")
-        meta_dict = {
-            'task_type': task,
-            'n_tasks': dataset.labels.shape[1],
-            'classes': None if task == 'regression' else torch.unique(dataset.labels).tolist(),
-        }
+    logger.info(f"Splitting dataset with {SPLITTING[dataset_name]} split strategy.")
 
-        logger.info(f"Splitting dataset with {SPLITTING[dataset_name]} split strategy.")
+    use_scaffold_splitting = SPLITTING[dataset_name] == 'scaffold' or args.force_scaffold
+    splitter = ScaffoldSplitter() if use_scaffold_splitting else SingleTaskStratifiedSplitter()
 
-        use_scaffold_splitting = SPLITTING[dataset_name] == 'scaffold' or args.force_scaffold
-        splitter = ScaffoldSplitter() if use_scaffold_splitting else RandomSplitter()
+    if use_scaffold_splitting:
+        training_instances, valid_instances, test_instances = get_splits(dataset, splitter)
 
-        if use_scaffold_splitting:
-            training_instances, valid_instances, test_instances = get_splits(dataset, splitter)
+        save_dir = os.path.join(args.output_dir, dataset_name, "scaffold")
+        init_dir(save_dir, args.overwrite_output)
+        logger.info(f"Saving dataset to {save_dir}")
 
-            save_dir = os.path.join(args.output_dir, dataset_name, "scaffold")
+        for instances, partition in zip((training_instances, valid_instances, test_instances),
+                                        ('train', 'valid', 'test')):
+            save_csv(instances, os.path.join(save_dir, f'{partition}.csv'))
+        save_json(meta_dict, os.path.join(save_dir, 'meta.json'), collapse_level=2)
+
+    else:
+        for seed in args.dataset_splitting_random_seeds:
+            logger.info(f"Dataset splitting random seed: {seed}")
+            training_instances, valid_instances, test_instances = get_splits(dataset, splitter, seed)
+
+            save_dir = os.path.join(args.output_dir, dataset_name, f"split-{seed}")
             init_dir(save_dir, args.overwrite_output)
             logger.info(f"Saving dataset to {save_dir}")
 
@@ -127,20 +141,6 @@ def main(args: Arguments):
                                             ('train', 'valid', 'test')):
                 save_csv(instances, os.path.join(save_dir, f'{partition}.csv'))
             save_json(meta_dict, os.path.join(save_dir, 'meta.json'), collapse_level=2)
-
-        else:
-            for seed in args.dataset_splitting_random_seeds:
-                logger.info(f"Dataset splitting random seed: {seed}")
-                training_instances, valid_instances, test_instances = get_splits(dataset, splitter, seed)
-
-                save_dir = os.path.join(args.output_dir, dataset_name, f"split-{seed}")
-                init_dir(save_dir, args.overwrite_output)
-                logger.info(f"Saving dataset to {save_dir}")
-
-                for instances, partition in zip((training_instances, valid_instances, test_instances),
-                                                ('train', 'valid', 'test')):
-                    save_csv(instances, os.path.join(save_dir, f'{partition}.csv'))
-                save_json(meta_dict, os.path.join(save_dir, 'meta.json'), collapse_level=2)
 
     if not args.keep_cache:
         logger.info("Clearing cache")
@@ -156,7 +156,9 @@ def get_splits(dataset, splitter, random_seed=None):
     if random_seed is None:
         train, valid, test = splitter.train_val_test_split(dataset)
     else:
-        train, valid, test = splitter.train_val_test_split(dataset, random_state=random_seed)
+        train, valid, test = splitter.train_val_test_split(
+            dataset, labels=dataset.labels, task_id=0, random_state=random_seed
+        )
 
     training_smiles = [dataset.smiles[idx] for idx in train.indices]
     training_labels = dataset.labels[train.indices, :]

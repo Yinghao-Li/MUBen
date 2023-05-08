@@ -20,9 +20,37 @@ from dgllife.data import MoleculeCSVDataset
 from transformers import HfArgumentParser
 
 from mubench.utils.io import set_logging, logging_args, init_dir, save_json
-from mubench.utils.macro import SPLITTING, QM9_PROPERTIES
+from mubench.utils.macro import SPLITTING
 
 logger = logging.getLogger(__name__)
+
+
+QM9_PROPERTIES = [
+    # |Dipole moment|
+    'mu',
+    # |Isotropic polarizability|
+    'alpha',
+    # |Energy of Highest occupied molecular orbital (HOMO)|
+    'homo',
+    # |Energy of Lowest unoccupied molecular orbital (LUMO)|
+    'lumo',
+    # |Gap, difference between LUMO and HOMO|
+    'gap',
+    # |Electronic spatial extent|
+    'r2',
+    # |Zero point vibrational energy|
+    'zpve',
+    # |Internal energy at 0 K|
+    'u0',
+    # |Internal energy at 298.15 K|
+    'u298',
+    # |Enthalpy at 298.15 K|
+    'h298',
+    # |Free energy at 298.15 K|
+    'g298',
+    # |Heat capacity at 298.15 K|
+    'cv'
+]
 
 
 @dataclass
@@ -47,6 +75,10 @@ class Arguments:
             "nargs": "*",
             "help": "Random seeds used if the dataset is randomly split."
         }
+    )
+    force_scaffold: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Force to use scaffold splitting even when the suggested method is random"}
     )
     n_jobs: Optional[int] = field(
         default=1,
@@ -102,13 +134,13 @@ def main(args: Arguments):
 
     logger.info(f"Splitting dataset with {SPLITTING[dataset_name]} split strategy.")
 
-    use_scaffold_splitting = SPLITTING[dataset_name] == 'scaffold'
+    use_scaffold_splitting = SPLITTING[dataset_name] == 'scaffold' or args.force_scaffold
     splitter = ScaffoldSplitter() if use_scaffold_splitting else RandomSplitter()
 
     if use_scaffold_splitting:
         training_instances, valid_instances, test_instances = get_splits(dataset, splitter)
 
-        save_dir = os.path.join(args.output_dir, dataset_name, "split-0")
+        save_dir = os.path.join(args.output_dir, dataset_name, "scaffold")
         init_dir(save_dir, args.overwrite_output)
         logger.info(f"Saving dataset to {save_dir}")
 
