@@ -132,6 +132,7 @@ dmypy.json
 .idea/
 .vscode/
 unused/
+__MACOXS/
 *.csv
 *.bin
 *.ckpt
