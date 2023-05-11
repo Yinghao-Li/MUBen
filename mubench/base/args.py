@@ -46,7 +46,7 @@ class Arguments:
         }
     )
     dataset_splitting_random_seed: Optional[int] = field(
-        default=0, metadata={
+        default=None, metadata={
             "help": "The random seed used during dataset construction. Leave default (0) if not randomly split."
         }
     )
@@ -200,7 +200,10 @@ class Arguments:
     )
 
     def __post_init__(self):
-        self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
+        if self.dataset_splitting_random_seed is not None:  # random splitting
+            self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
+        else:  # scaffold splitting
+            self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"scaffold")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
     # The following three functions are copied from transformers.training_args
