@@ -1,0 +1,50 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "data-constr",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/data/src/data_processing.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "3",
+            },
+            "args": [
+                "${workspaceFolder}/scripts/dataset_construction_config.json"
+            ]
+        },
+        {
+            "name": "run-grover",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_grover.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",
+            },
+            "args": [
+                "${workspaceFolder}/scripts/grover_config.json"
+            ]
+        },
+        {
+            "name": "run-unimol",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_unimol.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "1",
+            },
+            "args": [
+                "${workspaceFolder}/scripts/unimol_config.json"
+            ]
+        },
+    ]
+}
