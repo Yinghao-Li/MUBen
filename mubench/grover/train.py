@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator
 from .args import Config
-from .model import NoamLR, load_checkpoint
+from .model import load_checkpoint
 from mubench.utils.macro import UncertaintyMethods
 from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
@@ -66,25 +66,6 @@ class Trainer(BaseTrainer, ABC):
             sgld_optimizer = PSGLDOptimizer if self._config.apply_preconditioned_sgld else SGLDOptimizer
             self._sgld_optimizer = sgld_optimizer(output_params, lr=self._status.lr, norm_sigma=self._config.sgld_prior_sigma)
 
-        return self
-
-    def initialize_scheduler(self, use_default=False):
-        """
-        Initialize learning rate scheduler
-        """
-        if use_default:
-            return super().initialize_scheduler()
-
-        self._scheduler = NoamLR(
-            optimizer=self._optimizer,
-            warmup_epochs=self._config.warmup_epochs,
-            total_epochs=self._config.epochs,
-            steps_per_epoch=int(np.ceil(len(self.training_dataset) / self._config.batch_size)),
-            init_lr=self._status.lr,
-            max_lr=self._config.max_lr,
-            final_lr=self._config.final_lr,
-            fine_tune_coff=self._config.fine_tune_coff
-        )
         return self
 
     def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:

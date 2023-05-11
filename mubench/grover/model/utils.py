@@ -62,26 +62,6 @@ def get_activation_function(activation: str) -> nn.Module:
         raise ValueError(f'Activation "{activation}" not supported.')
 
 
-def initialize_weights(model: nn.Module, distinct_init=False, model_idx=0):
-    """
-    Initializes the weights of a model in place.
-    """
-    init_fns = [nn.init.kaiming_normal_, nn.init.kaiming_uniform_,
-                nn.init.xavier_normal_, nn.init.xavier_uniform_]
-    for param in model.parameters():
-        if param.dim() == 1:
-            nn.init.constant_(param, 0)
-        else:
-            if distinct_init:
-                init_fn = init_fns[model_idx % 4]
-                if 'kaiming' in init_fn.__name__:
-                    init_fn(param, nonlinearity='relu')
-                else:
-                    init_fn(param)
-            else:
-                nn.init.xavier_normal_(param)
-
-
 def select_neighbor_and_aggregate(feature, index):
     """
     The basic operation in message passing.

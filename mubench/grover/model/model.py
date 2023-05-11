@@ -8,13 +8,14 @@ from torch import nn as nn
 from typing import List, Dict
 
 from .layers import Readout, GTransEncoder
-from .utils import get_activation_function, get_model_args, initialize_weights
+from .utils import get_activation_function, get_model_args
 from ..dataset.molgraph import get_atom_fdim, get_bond_fdim
 from mubench.base.model import OutputLayer
 from mubench.utils.macro import UncertaintyMethods
 
 
 logger = logging.getLogger(__name__)
+
 
 class GROVEREmbedding(nn.Module):
     """
@@ -72,7 +73,6 @@ def create_ffn(config):
     first_linear_dim = config.hidden_size
 
     activation = get_activation_function(config.activation)
-    # TODO: ffn_hidden_size
     # Create FFN layers
     if config.ffn_num_layers == 1:
         ffn = [
@@ -108,7 +108,7 @@ class GROVERFinetuneModel(nn.Module):
         self.hidden_size = config.hidden_size
 
         self.grover = GROVEREmbedding(config)
-        self.readout = Readout(rtype="mean", hidden_size=self.hidden_size)
+        self.readout = Readout(hidden_size=self.hidden_size)
 
         self.mol_atom_from_atom_ffn = create_ffn(config)
         self.mol_atom_from_bond_ffn = create_ffn(config)
@@ -142,26 +142,27 @@ class GROVERFinetuneModel(nn.Module):
         return atom_ffn_output, bond_ffn_output
 
 
-def build_model(config, model_idx=0):
+def build_model(config):
     """
     Builds a MPNN, which is a message passing neural network + feed-forward layers.
 
     Parameters
     ----------
     config: Arguments.
-    model_idx: model index
 
     Returns
     -------
     A MPNN containing the MPN encoder along with final linear layers with parameters initialized.
     """
-    if hasattr(config, 'num_tasks'):
-        config.output_size = config.num_tasks
-    else:
-        config.output_size = 1
-
     model = GROVERFinetuneModel(config)
-    initialize_weights(model=model, model_idx=model_idx)
+
+    # Initializes the weights of a model in place.
+    for param in model.parameters():
+        if param.dim() == 1:
+            nn.init.constant_(param, 0)
+        else:
+            nn.init.xavier_normal_(param)
+
     return model
 
 

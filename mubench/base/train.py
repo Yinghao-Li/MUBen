@@ -25,7 +25,7 @@ from ..utils.container import ModelContainer, UpdateCriteria
 from ..utils.scaler import StandardScaler
 from ..utils.data import set_seed, Status
 from .metric import (
-    GaussianNLL,
+    GaussianNLLLoss,
     calculate_classification_metrics,
     calculate_regression_metrics
 )
@@ -190,7 +190,7 @@ class Trainer:
                 self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         else:
             if self._config.regression_with_variance:
-                self._loss_fn = GaussianNLL(reduction='none')
+                self._loss_fn = GaussianNLLLoss(reduction='none')
             else:
                 self._loss_fn = nn.MSELoss(reduction='none')
 
@@ -581,7 +581,7 @@ class Trainer:
 
             # mixed-precision training
             # GROVER uses PreLU which does not support bfloat16
-            dtype=torch.float if self._config.model_name == "GROVER" else torch.bfloat16
+            dtype = torch.float if self._config.model_name == "GROVER" else torch.bfloat16
             with torch.autocast(device_type=self._config.device_str, dtype=dtype):
                 logits = self.model(batch)
                 loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
@@ -664,7 +664,7 @@ class Trainer:
                 batch.to(self._config.device)
 
                 # GROVER uses PreLU which does not support bfloat16
-                dtype=torch.float if self._config.model_name == "GROVER" else torch.bfloat16
+                dtype = torch.float if self._config.model_name == "GROVER" else torch.bfloat16
                 with torch.autocast(device_type=self._config.device_str, dtype=dtype):
                     logits = self.model(batch)
                 logits_list.append(logits.to(torch.float).detach().cpu())
@@ -733,7 +733,7 @@ class Trainer:
         preds_list = list()
         vars_list = list()
         for test_run_idx in (pbar := tqdm(range(n_run))):
-            pbar.set_description(f'[Test {test_run_idx+1}]')
+            pbar.set_description(f'[Test {test_run_idx + 1}]')
 
             individual_seed = self._config.seed + test_run_idx
             set_seed(individual_seed)

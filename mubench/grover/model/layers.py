@@ -59,29 +59,16 @@ class SelfAttention(nn.Module):
 class Readout(nn.Module):
     """The readout function. Convert the node embeddings to the graph embeddings."""
 
-    def __init__(self,
-                 rtype: str = "none",
-                 hidden_size: int = 0,
-                 attn_hidden: int = None,
-                 attn_out: int = None):
+    def __init__(self, hidden_size: int = 0):
         """
         The readout function.
 
-        :param rtype: readout type, can be "mean" and "self_attention".
         :param hidden_size: input hidden size
-        :param attn_hidden: only valid if rtype == "self_attention". The attention hidden size.
-        :param attn_out: only valid if rtype == "self_attention". The attention out size.
         """
         super(Readout, self).__init__()
         # Cached zeros
         self.cached_zero_vector = nn.Parameter(torch.zeros(hidden_size), requires_grad=False)
         self.rtype = "mean"
-
-        if rtype == "self_attention":
-            self.attn = SelfAttention(hidden=attn_hidden,
-                                      in_feature=hidden_size,
-                                      out_feature=attn_out)
-            self.rtype = "self_attention"
 
     def forward(self, embeddings, scope):
         """
@@ -98,11 +85,7 @@ class Readout(nn.Module):
                 mol_vecs.append(self.cached_zero_vector)
             else:
                 cur_hiddens = embeddings.narrow(0, a_start, a_size)
-                if self.rtype == "self_attention":
-                    cur_hiddens, attn = self.attn(cur_hiddens)
-                    cur_hiddens = cur_hiddens.flatten()
-                else:
-                    cur_hiddens = cur_hiddens.sum(dim=0) / a_size
+                cur_hiddens = cur_hiddens.sum(dim=0) / a_size
                 mol_vecs.append(cur_hiddens)
 
         mol_vecs = torch.stack(mol_vecs, dim=0)  # (num_molecules, hidden_size)

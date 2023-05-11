@@ -1,7 +1,7 @@
 
 import numpy as np
 from torch import Tensor
-from torch.nn import GaussianNLLLoss
+from torch.nn import GaussianNLLLoss as GaussianNLLLossBase
 from torch.nn import functional as F
 from scipy.special import softmax, expit
 from sklearn.metrics import (
@@ -14,7 +14,7 @@ from typing import Optional, Union, List
 
 
 # noinspection PyShadowingBuiltins
-class GaussianNLL(GaussianNLLLoss):
+class GaussianNLLLoss(GaussianNLLLossBase):
     def __init__(self, full: bool = False, eps: float = 1e-6, reduction: str = 'mean') -> None:
         super().__init__(full=full, eps=eps, reduction=reduction)
 
