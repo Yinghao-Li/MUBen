@@ -580,7 +580,9 @@ class Trainer:
                 self._sgld_optimizer.zero_grad()
 
             # mixed-precision training
-            with torch.autocast(device_type=self._config.device_str, dtype=torch.bfloat16):
+            # GROVER uses PreLU which does not support bfloat16
+            dtype=torch.float if self._config.model_name == "GROVER" else torch.bfloat16
+            with torch.autocast(device_type=self._config.device_str, dtype=dtype):
                 logits = self.model(batch)
                 loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
 
@@ -661,7 +663,9 @@ class Trainer:
             for batch in dataloader:
                 batch.to(self._config.device)
 
-                with torch.autocast(device_type=self._config.device_str, dtype=torch.bfloat16):
+                # GROVER uses PreLU which does not support bfloat16
+                dtype=torch.float if self._config.model_name == "GROVER" else torch.bfloat16
+                with torch.autocast(device_type=self._config.device_str, dtype=dtype):
                     logits = self.model(batch)
                 logits_list.append(logits.to(torch.float).detach().cpu())
 

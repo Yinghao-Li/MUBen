@@ -58,8 +58,8 @@ class Trainer(BaseTrainer, ABC):
         # for sgld compatibility
         if self._config.uncertainty_method != UncertaintyMethods.sgld:
             self._optimizer = AdamW([
-                {'params': base_params, 'lr': self._config.init_lr * self._config.fine_tune_coff},
-                {'params': output_params, 'lr': self._config.init_lr}
+                {'params': base_params, 'lr': self._status.lr * self._config.fine_tune_coff},
+                {'params': output_params, 'lr': self._status.lr}
             ], lr=self._status.lr, weight_decay=self._config.weight_decay)
         else:
             self._optimizer = AdamW(base_params, lr=self._status.lr, weight_decay=self._config.weight_decay)
@@ -80,7 +80,7 @@ class Trainer(BaseTrainer, ABC):
             warmup_epochs=self._config.warmup_epochs,
             total_epochs=self._config.epochs,
             steps_per_epoch=int(np.ceil(len(self.training_dataset) / self._config.batch_size)),
-            init_lr=self._config.lr,
+            init_lr=self._status.lr,
             max_lr=self._config.max_lr,
             final_lr=self._config.final_lr,
             fine_tune_coff=self._config.fine_tune_coff
@@ -138,10 +138,10 @@ class Trainer(BaseTrainer, ABC):
         with torch.no_grad():
             for batch in dataloader:
                 batch.to(self._config.device)
-                with torch.autocast(device_type=self._config.device_str, dtype=torch.bfloat16):
-                    atom_logits, bond_logits = self.model(batch)
-                atom_logits_list.append(atom_logits.to(torch.float).detach().cpu())
-                bond_logits_list.append(bond_logits.to(torch.float).detach().cpu())
+                # disable autocast because of incompatibility with PReLU
+                atom_logits, bond_logits = self.model(batch)
+                atom_logits_list.append(atom_logits.detach().cpu())
+                bond_logits_list.append(bond_logits.detach().cpu())
 
         atom_logits = torch.cat(atom_logits_list, dim=0).numpy()
         bond_logits = torch.cat(bond_logits_list, dim=0).numpy()
