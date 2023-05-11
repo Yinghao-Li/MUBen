@@ -801,11 +801,18 @@ class Trainer:
                 preds = preds.reshape(1, *preds.shape)
             else:
                 preds = tuple([p.reshape(1, *p.shape) for p in preds])
+        
+        if isinstance(preds, np.ndarray):
+            preds = [{"preds": p} for p in preds]
+        elif isinstance(preds, tuple) and len(preds) == 2:
+            preds = [{"preds": p, "vars": v} for p, v in zip(*preds)]
+        else:
+            raise ValueError("Unrecognized type or shape of `preds`.")
 
         for idx, pred in enumerate(preds):
             file_path = os.path.join(self._status.result_dir, "preds", f"{idx}.pt")
             self.save_preds_to_pt(
-                lbs=self._test_dataset.lbs, preds=preds, masks=self.test_dataset.masks, file_path=file_path
+                lbs=self._test_dataset.lbs, preds=pred, masks=self.test_dataset.masks, file_path=file_path
             )
 
         return metrics
@@ -866,6 +873,7 @@ class Trainer:
     def load_best_model(self):
         self._model_container.load(os.path.join(self._status.result_dir, self._status.model_name))
         self._model.load_state_dict(self._model_container.state_dict)
+        self._model.to(self._device)
 
         return self
 
