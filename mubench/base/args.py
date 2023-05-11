@@ -201,7 +201,9 @@ class Arguments:
 
     def __post_init__(self):
         if self.dataset_splitting_random_seed is not None:  # random splitting
-            self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}")
+            self.data_dir = os.path.join(
+                self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}"
+            )
         else:  # scaffold splitting
             self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"scaffold")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
