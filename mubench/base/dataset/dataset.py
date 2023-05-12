@@ -7,6 +7,7 @@ import numpy as np
 
 from typing import List, Union
 from ast import literal_eval
+from multiprocessing import get_context
 from tqdm.auto import tqdm
 from functools import cached_property
 from torch.utils.data import Dataset as TorchDataset
@@ -107,6 +108,7 @@ class Dataset(TorchDataset):
         self.data_instances = self.get_instances()
         return self
 
+    # noinspection PyTypeChecker
     def create_features(self, config):
         """
         Create data features
@@ -118,7 +120,13 @@ class Dataset(TorchDataset):
         feature_type = config.feature_type
         if feature_type == 'rdkit':
             logger.info("Generating normalized RDKit features")
-            self._features = np.stack([rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)])
+            with get_context('fork').Pool(config.n_feature_generating_threads) as pool:
+                self._features = [f for f in tqdm(
+                    pool.imap(rdkit_2d_features_normalized_generator, self._smiles), total=len(self._smiles)
+                )]
+                # self._features = np.stack(
+                #     [rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)]
+                # )
         elif feature_type == 'morgan':
             logger.info("Generating Morgan binary features")
             self._features = np.stack(

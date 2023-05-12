@@ -75,8 +75,10 @@ class Trainer:
         self._model_name = 'model_best.ckpt'
 
         # Test variables and flags
+        model_name_and_feature = f"{config.model_name}-{config.feature_type}" \
+            if config.feature_type != 'none' else config.model_name
         self._result_dir = os.path.join(
-            config.result_dir, config.dataset_name, config.model_name, config.uncertainty_method
+            config.result_dir, config.dataset_name, model_name_and_feature, config.uncertainty_method
         )
 
         # mutable class attributes
@@ -581,7 +583,11 @@ class Trainer:
 
             # mixed-precision training
             # GROVER uses PreLU which does not support bfloat16
-            with torch.autocast(device_type=self._config.device_str, dtype=self._config.tensor_dtype):
+            if self._config.hf_training:
+                with torch.autocast(device_type=self._config.device, dtype=torch.bfloat16):
+                    logits = self.model(batch)
+                    loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
+            else:
                 logits = self.model(batch)
                 loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
 
@@ -662,7 +668,10 @@ class Trainer:
             for batch in dataloader:
                 batch.to(self._config.device)
 
-                with torch.autocast(device_type=self._config.device_str, dtype=self._config.tensor_dtype):
+                if self._config.hf_training:
+                    with torch.autocast(device_type=self._config.device, dtype=torch.bfloat16):
+                        logits = self.model(batch)
+                else:
                     logits = self.model(batch)
                 logits_list.append(logits.to(torch.float).detach().cpu())
 

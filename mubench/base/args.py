@@ -195,8 +195,14 @@ class Arguments:
     no_cuda: Optional[bool] = field(
         default=False, metadata={"help": "Disable CUDA even when it is available."}
     )
+    no_mps: Optional[bool] = field(
+        default=False, metadata={"help": "Disable MPS even when it is available."}
+    )
     num_workers: Optional[int] = field(
         default=0, metadata={"help": 'The number of threads to process the dataset.'}
+    )
+    n_feature_generating_threads: Optional[int] = field(
+        default=8, metadata={'help': "Number of feature generation threads"}
     )
 
     def __post_init__(self):
@@ -208,49 +214,36 @@ class Arguments:
             self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"scaffold")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
-        self.tensor_dtype = torch.float \
-            if self.model_name == "GROVER" or not torch.cuda.is_bf16_supported() \
-            else torch.bfloat16
+        try:
+            bf16_supported = True if torch.cuda.is_bf16_supported() else False
+        except AssertionError:  # case where gpu is not accessible
+            bf16_supported = True
+        self.hf_training = True \
+            if not self.model_name == "GROVER" and bf16_supported and not self.device == 'mps' \
+            else False
 
-    # The following three functions are copied from transformers.training_args
-    @cached_property
-    def _setup_devices(self) -> "torch.device":
-        if self.no_cuda or not torch.cuda.is_available():
-            device = torch.device("cpu")
-            self._n_gpu = 0
-        else:
-            device = torch.device("cuda")
-            self._n_gpu = 1
-
-        return device
-
-    @cached_property
+    @property
     def device_str(self) -> str:
-        if self.no_cuda or not torch.cuda.is_available():
+        return self.device
+
+    @cached_property
+    def device(self) -> str:
+        """
+        The device used by this process.
+        """
+        try:
+            mps_available = torch.backends.mps.is_available()
+        except AttributeError:
+            mps_available = False
+
+        if mps_available and not self.no_mps:
+            device = "mps"
+        elif self.no_cuda or not torch.cuda.is_available():
             device = "cpu"
         else:
             device = "cuda"
 
         return device
-
-    @property
-    def device(self) -> "torch.device":
-        """
-        The device used by this process.
-        """
-        return self._setup_devices
-
-    @property
-    def n_gpu(self) -> int:
-        """
-        The number of GPUs used by this process.
-        Note:
-            This will only be greater than one when you have multiple GPUs available but are not using distributed
-            training. For distributed training, it will always be 1.
-        """
-        # Make sure `self._n_gpu` is properly setup.
-        _ = self._setup_devices
-        return self._n_gpu
 
 
 @dataclass
