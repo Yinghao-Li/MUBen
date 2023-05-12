@@ -14,7 +14,7 @@
   "feature_type": "rdkit",
   "uncertainty_method": "none",
   "apply_temperature_scaling_after_focal_loss": true,
-  "n_feature_generating_threads": 8,
+  "n_feature_generating_threads": 1,
   "no_mps": true,
   "batch_size": 256
 }

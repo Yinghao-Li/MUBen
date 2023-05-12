@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "BBBP",
+  "dataset_name": "MUV",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 50,

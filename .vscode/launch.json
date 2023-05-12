@@ -26,7 +26,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "7",
+                "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
                 "${workspaceFolder}/scripts/base_config.json"
