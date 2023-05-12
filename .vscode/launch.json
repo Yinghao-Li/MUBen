@@ -19,6 +19,20 @@
             ]
         },
         {
+            "name": "run-base",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_base.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "7",
+            },
+            "args": [
+                "${workspaceFolder}/scripts/base_config.json"
+            ]
+        },
+        {
             "name": "run-grover",
             "type": "python",
             "request": "launch",
@@ -26,7 +40,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_VISIBLE_DEVICES": "4",
             },
             "args": [
                 "${workspaceFolder}/scripts/grover_config.json"

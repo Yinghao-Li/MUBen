@@ -1,10 +1,10 @@
 {
   "disable_wandb": true,
-  "dataset_name": "BBBP",
+  "dataset_name": "ESOL",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,
-  "n_epochs": 5,
+  "n_epochs": 50,
   "n_swa_epochs": 3,
   "k_swa_checkpoints": 3,
   "n_langevin_samples": 3,
@@ -12,6 +12,6 @@
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "feature_type": "rdkit",
-  "uncertainty_method": "SGLD",
+  "uncertainty_method": "none",
   "apply_temperature_scaling_after_focal_loss": true
 }

@@ -581,8 +581,7 @@ class Trainer:
 
             # mixed-precision training
             # GROVER uses PreLU which does not support bfloat16
-            dtype = torch.float if self._config.model_name == "GROVER" else torch.bfloat16
-            with torch.autocast(device_type=self._config.device_str, dtype=dtype):
+            with torch.autocast(device_type=self._config.device_str, dtype=self._config.tensor_dtype):
                 logits = self.model(batch)
                 loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
 
@@ -663,9 +662,7 @@ class Trainer:
             for batch in dataloader:
                 batch.to(self._config.device)
 
-                # GROVER uses PreLU which does not support bfloat16
-                dtype = torch.float if self._config.model_name == "GROVER" else torch.bfloat16
-                with torch.autocast(device_type=self._config.device_str, dtype=dtype):
+                with torch.autocast(device_type=self._config.device_str, dtype=self._config.tensor_dtype):
                     logits = self.model(batch)
                 logits_list.append(logits.to(torch.float).detach().cpu())
 

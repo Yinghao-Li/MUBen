@@ -120,9 +120,10 @@ class Trainer(BaseTrainer, ABC):
             for batch in dataloader:
                 batch.to(self._config.device)
                 # disable autocast because of incompatibility with PReLU
-                atom_logits, bond_logits = self.model(batch)
-                atom_logits_list.append(atom_logits.detach().cpu())
-                bond_logits_list.append(bond_logits.detach().cpu())
+                with torch.autocast(device_type=self._config.device_str, dtype=self._config.tensor_dtype):
+                    atom_logits, bond_logits = self.model(batch)
+                atom_logits_list.append(atom_logits.to(torch.float).detach().cpu())
+                bond_logits_list.append(bond_logits.to(torch.float).detach().cpu())
 
         atom_logits = torch.cat(atom_logits_list, dim=0).numpy()
         bond_logits = torch.cat(bond_logits_list, dim=0).numpy()

@@ -208,6 +208,10 @@ class Arguments:
             self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"scaffold")
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
+        self.tensor_dtype = torch.float \
+            if self.model_name == "GROVER" or not torch.cuda.is_bf16_supported() \
+            else torch.bfloat16
+
     # The following three functions are copied from transformers.training_args
     @cached_property
     def _setup_devices(self) -> "torch.device":

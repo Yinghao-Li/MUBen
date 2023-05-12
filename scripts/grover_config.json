@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "ESOL",
+  "dataset_name": "BBBP",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 50,
