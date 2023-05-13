@@ -22,15 +22,13 @@ class Dataset(BaseDataset):
         -------
         self
         """
-        bond_drop_rate = config.bond_drop_rate
-        self._molecule_graph = [MolGraphAttrs().from_mol_graph(MolGraph(smiles, bond_drop_rate))
-                                for smiles in tqdm(self._smiles)]
+        pass
 
     def get_instances(self):
 
         data_instances = feature_lists_to_instance_list(
             DataInstance,
-            molecule_graph=self._molecule_graph, lbs=self.lbs, masks=self.masks
+            smiles=self.smiles, lbs=self.lbs, masks=self.masks
         )
 
         return data_instances
