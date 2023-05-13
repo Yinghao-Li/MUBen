@@ -538,8 +538,8 @@ class Trainer:
                 training_loss = self.training_epoch(data_loader, pbar)
 
                 # Print the averaged training loss so far.
-                pbar.set_description(f'[Epoch {self._status.train_log_idx + 1}] Loss: {training_loss:.4f}')
-                wandb.log(data={'train/loss': training_loss}, step=self._status.train_log_idx + 1)
+                pbar.set_description(f'[Epoch {self._status.train_log_idx}] Loss: {training_loss:.4f}')
+                wandb.log(data={'train/loss': training_loss}, step=self._status.train_log_idx)
 
                 # Compatibility with SWAG
                 if self._swa_model:

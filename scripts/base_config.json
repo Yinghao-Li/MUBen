@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "MUV",
+  "dataset_name": "Tox21",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,
@@ -15,6 +15,6 @@
   "uncertainty_method": "none",
   "apply_temperature_scaling_after_focal_loss": true,
   "n_feature_generating_threads": 1,
-  "no_mps": true,
+  "no_mps": false,
   "batch_size": 256
 }
