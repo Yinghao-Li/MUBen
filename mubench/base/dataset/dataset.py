@@ -102,8 +102,9 @@ class Dataset(TorchDataset):
             self.create_features(config)
 
             # Always save pre-processed dataset to disk
-            logger.info("Saving pre-processed dataset")
-            self.save(preprocessed_path)
+            if not config.disable_dataset_saving:
+                logger.info("Saving pre-processed dataset")
+                self.save(preprocessed_path)
 
         self.data_instances = self.get_instances()
         return self

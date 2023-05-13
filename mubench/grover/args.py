@@ -65,6 +65,10 @@ class Arguments(BaseArguments):
         metadata={'help': 'The dist coefficient for output of two branches.'}
     )
 
+    def __post_init__(self):
+        super().__post_init__()
+        self.disable_dataset_saving = True
+
 
 @dataclass
 class Config(Arguments, BaseConfig):
