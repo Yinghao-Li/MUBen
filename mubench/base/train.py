@@ -75,8 +75,10 @@ class Trainer:
         self._model_name = 'model_best.ckpt'
 
         # Test variables and flags
+        model_name_and_feature = f"{config.model_name}-{config.feature_type}" \
+            if config.feature_type != 'none' else config.model_name
         self._result_dir = os.path.join(
-            config.result_dir, config.dataset_name, config.model_name, config.uncertainty_method
+            config.result_dir, config.dataset_name, model_name_and_feature, config.uncertainty_method
         )
 
         # mutable class attributes
@@ -536,8 +538,8 @@ class Trainer:
                 training_loss = self.training_epoch(data_loader, pbar)
 
                 # Print the averaged training loss so far.
-                pbar.set_description(f'[Epoch {self._status.train_log_idx + 1}] Loss: {training_loss:.4f}')
-                wandb.log(data={'train/loss': training_loss}, step=self._status.train_log_idx + 1)
+                pbar.set_description(f'[Epoch {self._status.train_log_idx}] Loss: {training_loss:.4f}')
+                wandb.log(data={'train/loss': training_loss}, step=self._status.train_log_idx)
 
                 # Compatibility with SWAG
                 if self._swa_model:
@@ -581,7 +583,11 @@ class Trainer:
 
             # mixed-precision training
             # GROVER uses PreLU which does not support bfloat16
-            with torch.autocast(device_type=self._config.device_str, dtype=self._config.tensor_dtype):
+            if self._config.hf_training:
+                with torch.autocast(device_type=self._config.device, dtype=torch.bfloat16):
+                    logits = self.model(batch)
+                    loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
+            else:
                 logits = self.model(batch)
                 loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
 
@@ -623,16 +629,24 @@ class Trainer:
 
         # modify data shapes to accommodate different tasks
         lbs, masks = batch.lbs, batch.masks  # so that we don't mess up batch instances
-        if self._config.task_type == 'classification' and self._config.binary_classification_with_softmax:
-            # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
-            logits = logits.view(-1, self._config.n_lbs)
-            lbs = lbs.view(-1)
-            masks = masks.view(-1)
-        if self._config.task_type == 'regression' and self._config.regression_with_variance:
-            logits = logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
+        bool_masks = masks.to(torch.bool)
+        masked_lbs = lbs[bool_masks]
 
-        loss = self._loss_fn(logits, lbs)
-        loss = torch.sum(loss * masks) / masks.sum()
+        if self._config.task_type == 'classification':
+            assert not self._config.binary_classification_with_softmax, NotImplementedError
+
+            masked_logits = logits[bool_masks]
+
+        elif self._config.task_type == 'regression':
+            assert self._config.regression_with_variance, NotImplementedError
+
+            masked_logits = logits.view(-1, self._config.n_tasks, 2)[bool_masks]  # mean and var for the last dimension
+
+        else:
+            raise NotImplementedError
+
+        loss = self._loss_fn(masked_logits, masked_lbs)
+        loss = torch.sum(loss) / masks.sum()
 
         # for compatability with bbp
         if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
@@ -662,7 +676,10 @@ class Trainer:
             for batch in dataloader:
                 batch.to(self._config.device)
 
-                with torch.autocast(device_type=self._config.device_str, dtype=self._config.tensor_dtype):
+                if self._config.hf_training:
+                    with torch.autocast(device_type=self._config.device, dtype=torch.bfloat16):
+                        logits = self.model(batch)
+                else:
                     logits = self.model(batch)
                 logits_list.append(logits.to(torch.float).detach().cpu())
 

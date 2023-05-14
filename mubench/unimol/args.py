@@ -41,9 +41,6 @@ class Arguments(BaseArguments):
     checkpoint_path: Optional[str] = field(
         default='', metadata={'help': "Path to the pre-trained model"}
     )
-    n_feature_generating_threads: Optional[int] = field(
-        default=8, metadata={'help': "Number of feature generation threads"}
-    )
 
     # --- Arguments from Uni-Mol original implementation ---
     batch_size: Optional[int] = field(

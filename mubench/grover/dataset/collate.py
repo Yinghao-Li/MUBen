@@ -7,6 +7,7 @@ from seqlbtoolkit.training.dataset import (
     instance_list_to_feature_lists
 )
 from .molgraph import BatchMolGraph
+from .molgraph import MolGraph, MolGraphAttrs
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class Collator:
         self._lbs_type = torch.float \
             if config.task_type == 'regression' or not config.binary_classification_with_softmax \
             else torch.long
+        self._bond_drop_rate = config.bond_drop_rate
 
     def __call__(self, instance_list: list, *args, **kwargs) -> Batch:
         """
@@ -31,8 +33,9 @@ class Collator:
         -------
         a Batch of instances
         """
-        molecule_graphs, lbs, masks = instance_list_to_feature_lists(instance_list)
+        smiles, lbs, masks = instance_list_to_feature_lists(instance_list)
 
+        molecule_graphs = [MolGraphAttrs().from_mol_graph(MolGraph(s, self._bond_drop_rate)) for s in smiles]
         molecule_graphs_batch = BatchMolGraph(molecule_graphs)
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))

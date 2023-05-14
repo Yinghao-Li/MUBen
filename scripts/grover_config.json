@@ -1,6 +1,10 @@
 {
   "disable_wandb": true,
+<<<<<<< HEAD
   "dataset_name": "ToxCast",
+=======
+  "dataset_name": "MUV",
+>>>>>>> 1fb633ed6817094b00b1ce16ed76342b06e0e7da
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 50,

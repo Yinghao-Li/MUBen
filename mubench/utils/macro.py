@@ -3,7 +3,7 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['DATASET_NAMES', 'SPLITTING', 'EVAL_METRICS',
+__all__ = ['DATASET_NAMES', 'EVAL_METRICS',
            'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES',
            'StrEnum']
 
@@ -22,7 +22,7 @@ DATASET_NAMES = [
     "Tox21",
     "ESOL",
     "FreeSolv",
-    "Lipophilicity",
+    "Lipo",
     "PCBA",
     "MUV",
     "HIV",
@@ -36,28 +36,10 @@ DATASET_NAMES = [
     "QM9"
 ]
 
-SPLITTING = {
-    "Tox21": "random",
-    "ESOL": "random",
-    "FreeSolv": "random",
-    "Lipophilicity": "random",
-    "PCBA": "random",
-    "MUV": "random",
-    "HIV": "scaffold",
-    "BACE": "scaffold",
-    "BBBP": "scaffold",
-    "ToxCast": "random",
-    "SIDER": "random",
-    "ClinTox": "random",
-    "QM7": "stratified",
-    "QM8": "random",
-    "QM9": "random",
-}
-
 EVAL_METRICS = {
     "ESOL": "RMSE",
     "FreeSolv": "RMSE",
-    "Lipophilicity": "RMSE",
+    "Lipo": "RMSE",
     "PCBA": "PRC-AUC",
     "MUV": "PRC-AUC",
     "HIV": "ROC-AUC",
