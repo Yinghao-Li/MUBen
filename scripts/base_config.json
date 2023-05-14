@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "Tox21",
+  "dataset_name": "BBBP",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,
@@ -14,7 +14,8 @@
   "feature_type": "rdkit",
   "uncertainty_method": "none",
   "apply_temperature_scaling_after_focal_loss": true,
-  "n_feature_generating_threads": 1,
-  "no_mps": false,
-  "batch_size": 256
+  "n_feature_generating_threads": 8,
+  "no_mps": true,
+  "batch_size": 256,
+  "lr": 0.0001
 }

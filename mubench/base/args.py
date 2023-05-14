@@ -204,6 +204,9 @@ class Arguments:
     num_workers: Optional[int] = field(
         default=0, metadata={"help": 'The number of threads to process the dataset.'}
     )
+    pin_memory: Optional[bool] = field(
+        default=False, metadata={"help": "Pin memory for data loader."}
+    )
     n_feature_generating_threads: Optional[int] = field(
         default=8, metadata={'help': "Number of feature generation threads"}
     )
@@ -214,7 +217,7 @@ class Arguments:
                 self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}"
             )
         else:  # scaffold splitting
-            self.data_dir = os.path.join(self.data_folder, self.dataset_name, f"scaffold")
+            self.data_dir = os.path.join(self.data_folder, self.dataset_name)
         self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
 
         try:

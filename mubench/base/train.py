@@ -629,16 +629,24 @@ class Trainer:
 
         # modify data shapes to accommodate different tasks
         lbs, masks = batch.lbs, batch.masks  # so that we don't mess up batch instances
-        if self._config.task_type == 'classification' and self._config.binary_classification_with_softmax:
-            # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
-            logits = logits.view(-1, self._config.n_lbs)
-            lbs = lbs.view(-1)
-            masks = masks.view(-1)
-        if self._config.task_type == 'regression' and self._config.regression_with_variance:
-            logits = logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
+        bool_masks = masks.to(torch.bool)
+        masked_lbs = lbs[bool_masks]
 
-        loss = self._loss_fn(logits, lbs)
-        loss = torch.sum(loss * masks) / masks.sum()
+        if self._config.task_type == 'classification':
+            assert not self._config.binary_classification_with_softmax, NotImplementedError
+
+            masked_logits = logits[bool_masks]
+
+        elif self._config.task_type == 'regression':
+            assert self._config.regression_with_variance, NotImplementedError
+
+            masked_logits = logits.view(-1, self._config.n_tasks, 2)[bool_masks]  # mean and var for the last dimension
+
+        else:
+            raise NotImplementedError
+
+        loss = self._loss_fn(masked_logits, masked_lbs)
+        loss = torch.sum(loss) / masks.sum()
 
         # for compatability with bbp
         if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
