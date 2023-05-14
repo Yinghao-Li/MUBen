@@ -64,15 +64,15 @@ MODEL_NAMES = [
 
 class UncertaintyMethods(StrEnum):
     none = 'none'
-    mc_dropout = 'MC-Dropout'
-    temperature = 'Temperature-Scaling'
+    mc_dropout = 'MCDropout'
+    temperature = 'TemperatureScaling'
     swag = 'SWAG'
     bbp = 'BBP'
     sgld = 'SGLD'
-    laplace = 'Laplace-Approximation'
-    ensembles = 'Deep-Ensembles'
-    conformal = 'Conformal-Prediction'
-    focal = 'Focal-Loss'
+    laplace = 'LaplaceApproximation'
+    ensembles = 'DeepEnsembles'
+    conformal = 'ConformalPrediction'
+    focal = 'FocalLoss'
 
 
 FINGERPRINT_FEATURE_TYPES = [

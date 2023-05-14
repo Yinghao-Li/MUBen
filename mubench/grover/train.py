@@ -64,7 +64,9 @@ class Trainer(BaseTrainer, ABC):
         else:
             self._optimizer = AdamW(base_params, lr=self._status.lr, weight_decay=self._config.weight_decay)
             sgld_optimizer = PSGLDOptimizer if self._config.apply_preconditioned_sgld else SGLDOptimizer
-            self._sgld_optimizer = sgld_optimizer(output_params, lr=self._status.lr, norm_sigma=self._config.sgld_prior_sigma)
+            self._sgld_optimizer = sgld_optimizer(
+                output_params, lr=self._status.lr, norm_sigma=self._config.sgld_prior_sigma
+            )
 
         return self
 

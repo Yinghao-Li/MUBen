@@ -343,8 +343,12 @@ class Trainer:
 
         if apply_test:
             test_metrics = self.test()
-            logger.info("Test results:")
+            logger.info("[Single Shot] Test results:")
             self.log_results(test_metrics)
+
+            # log results to wandb
+            for k, v in test_metrics.items():
+                wandb.run.summary[f"test-single_shot/{k}"] = v
 
         self.save_best_model()
 
@@ -374,8 +378,12 @@ class Trainer:
                 self.train()
 
             test_metrics = self.test()
-            logger.info("Test results:")
+            logger.info(f"[Ensemble {ensemble_idx}] Test results:")
             self.log_results(test_metrics)
+
+            # log results to wandb
+            for k, v in test_metrics.items():
+                wandb.run.summary[f"test-ensemble_{ensemble_idx}/{k}"] = v
 
             self.save_best_model()
 
@@ -411,8 +419,12 @@ class Trainer:
         self.train()
 
         test_metrics = self.test(load_best_model=False)
-        logger.info("Test results:")
+        logger.info("[SWAG] Test results:")
         self.log_results(test_metrics)
+
+        # log results to wandb
+        for k, v in test_metrics.items():
+            wandb.run.summary[f"test-swag/{k}"] = v
 
         return self
 
@@ -443,8 +455,12 @@ class Trainer:
         self.train(use_valid_dataset=True)
 
         test_metrics = self.test(load_best_model=False)
-        logger.info("Test results:")
+        logger.info("[Temperature Scaling] Test results:")
         self.log_results(test_metrics)
+
+        # log results to wandb
+        for k, v in test_metrics.items():
+            wandb.run.summary[f"test-temperature_scaling/{k}"] = v
 
         self.unfreeze()
 
@@ -478,8 +494,12 @@ class Trainer:
             self.train(use_valid_dataset=True)
 
             test_metrics = self.test(load_best_model=False)
-            logger.info("Test results:")
+            logger.info("[Temperature Scaling] Test results:")
             self.log_results(test_metrics)
+
+            # log results to wandb
+            for k, v in test_metrics.items():
+                wandb.run.summary[f"test-temperature_scaling/{k}"] = v
 
             self.unfreeze()
 
@@ -504,8 +524,12 @@ class Trainer:
         self.train()
 
         test_metrics = self.test(load_best_model=False)
-        logger.info("Test results:")
+        logger.info("[SGLD] Test results:")
         self.log_results(test_metrics)
+
+        # log results to wandb
+        for k, v in test_metrics.items():
+            wandb.run.summary[f"test-sgld/{k}"] = v
 
         return self
 

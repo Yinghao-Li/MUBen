@@ -212,13 +212,24 @@ class Arguments:
     )
 
     def __post_init__(self):
+        assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
+        if self.model_name != "DNN":
+            self.feature_type = "none"
+
         if self.dataset_splitting_random_seed is not None:  # random splitting
             self.data_dir = os.path.join(
                 self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}"
             )
         else:  # scaffold splitting
             self.data_dir = os.path.join(self.data_folder, self.dataset_name)
-        self.apply_wandb = self.wandb_project and self.wandb_name and not self.disable_wandb
+
+        # wandb arguments
+        self.apply_wandb = not self.disable_wandb
+        if not self.wandb_name:
+            self.wandb_name = f"{self.model_name}{'' if self.feature_type == 'none' else f'-{self.feature_type}'}" \
+                              f"-{self.uncertainty_method}"
+        if not self.wandb_project:
+            self.wandb_project = f"MUBench-{self.dataset_name}"
 
         try:
             bf16_supported = True if torch.cuda.is_bf16_supported() else False
@@ -336,8 +347,10 @@ class Config(Arguments):
 
         Returns
         -------
-
+        self
         """
+
+
         if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag, UncertaintyMethods.bbp] \
                 and self.n_test == 1:
             logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
