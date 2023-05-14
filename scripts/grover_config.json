@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "BBBP",
+  "dataset_name": "ToxCast",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 50,
@@ -12,7 +12,7 @@
   "regression_with_variance": true,
   "checkpoint_path": "models/grover_base.pt",
   "ffn_hidden_size": 200,
-  "batch_size": 256,
+  "batch_size": 64,
   "lr": 0.0001,
   "retrain_model": false
 }
