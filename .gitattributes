@@ -1,2 +1,0 @@
-models/unimol_base.pt filter=lfs diff=lfs merge=lfs -text
-models/grover_base.pt filter=lfs diff=lfs merge=lfs -text

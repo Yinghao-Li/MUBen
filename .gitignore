@@ -133,6 +133,7 @@ dmypy.json
 .vscode/
 unused/
 data/
+models/
 __MACOSX/
 *.csv
 *.bin
