@@ -212,7 +212,6 @@ class Arguments:
     )
 
     def __post_init__(self):
-        assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
         if self.model_name != "DNN":
             self.feature_type = "none"
 
@@ -350,6 +349,7 @@ class Config(Arguments):
         self
         """
 
+        assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
 
         if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag, UncertaintyMethods.bbp] \
                 and self.n_test == 1:

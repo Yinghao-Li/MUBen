@@ -10,7 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 def set_log_path(args, time):
-    log_path = os.path.join('logs', args.dataset_name, args.model_name, args.uncertainty_method, f'{time}.log')
+    log_path = os.path.join(
+        'logs', 
+        args.dataset_name,
+        args.model_name if args.feature_type == 'none' else f'{args.model_name}-{args.feature_type}',
+        args.uncertainty_method,
+        f'{time}.log'
+    )
     return log_path
 
 

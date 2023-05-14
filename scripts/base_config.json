@@ -1,8 +1,6 @@
 {
   "disable_wandb": false,
   "wandb_api_key": "86efcc8aa38a82bd8128db4c1cee3acde0f33920",
-  "wandb_project": "benchmark-test",
-  "wandb_name": "DNN-rdkit",
   "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
