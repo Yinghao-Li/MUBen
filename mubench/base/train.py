@@ -63,7 +63,7 @@ class Trainer:
         self._loss_fn = None
 
         # Validation variables and flags
-        self._valid_metric = EVAL_METRICS[config.dataset_name].lower().replace('-', '_')
+        self._valid_metric = EVAL_METRICS[config.dataset_name].replace('-', '_')
         if config.valid_epoch_interval == 0:
             update_criteria = UpdateCriteria.always
         elif config.task_type == 'classification':

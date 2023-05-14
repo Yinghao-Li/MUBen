@@ -19,39 +19,39 @@ class StrEnum(str, Enum):
 
 
 DATASET_NAMES = [
-    "Tox21",
-    "ESOL",
-    "FreeSolv",
-    "Lipo",
-    "PCBA",
-    "MUV",
-    "HIV",
-    "BACE",
-    "BBBP",
-    "ToxCast",
-    "SIDER",
-    "ClinTox",
-    "QM7",
-    "QM8",
-    "QM9"
+    "tox21",
+    "esol",
+    "freesolv",
+    "lipo",
+    "pcba",
+    "muv",
+    "hiv",
+    "bace",
+    "bbbp",
+    "toxcast",
+    "sider",
+    "clintox",
+    "qm7",
+    "qm8",
+    "qm9"
 ]
 
 EVAL_METRICS = {
-    "ESOL": "RMSE",
-    "FreeSolv": "RMSE",
-    "Lipo": "RMSE",
-    "PCBA": "PRC-AUC",
-    "MUV": "PRC-AUC",
-    "HIV": "ROC-AUC",
-    "BACE": "ROC-AUC",
-    "BBBP": "ROC-AUC",
-    "Tox21": "ROC-AUC",
-    "ToxCast": "ROC-AUC",
-    "SIDER": "ROC-AUC",
-    "ClinTox": "ROC-AUC",
-    "QM7": "MAE",
-    "QM8": "MAE",
-    "QM9": "MAE"
+    "esol": "rmse",
+    "freesolv": "rmse",
+    "lipo": "rmse",
+    "pcba": "prc-auc",
+    "muv": "prc-auc",
+    "hiv": "roc-auc",
+    "bace": "roc-auc",
+    "bbbp": "roc-auc",
+    "tox21": "roc-auc",
+    "toxcast": "roc-auc",
+    "sider": "roc-auc",
+    "clintox": "roc-auc",
+    "qm7": "mae",
+    "qm8": "mae",
+    "qm9": "mae"
 }
 
 MODEL_NAMES = [

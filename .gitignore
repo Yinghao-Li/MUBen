@@ -134,6 +134,7 @@ dmypy.json
 unused/
 data/
 models/
+wandb/
 __MACOSX/
 *.csv
 *.bin
