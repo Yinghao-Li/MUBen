@@ -81,7 +81,7 @@ do
     --dataset_name "$dataset_name" \
     --feature_type $feature_type \
     --num_workers $num_workers \
-    --num_preprocess_workers $num_proprocess_workers \
+    --num_preprocess_workers $num_preprocess_workers \
     --pin_memory $pin_memory \
     --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
     --uncertainty_method $uncertainty_method \

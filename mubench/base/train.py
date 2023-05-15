@@ -729,7 +729,11 @@ class Trainer:
                 preds = softmax(logits, axis=-1)
             else:
                 preds = expit(logits)  # sigmoid function
-        else:
+        elif self._config.task_type == 'regression':
+
+            if self._config.n_tasks > 1:
+                logits = logits.reshape(-1, self._config.n_tasks, 2)
+
             # get the mean of the preds
             if self._config.regression_with_variance:
                 mean = logits[..., 0]
@@ -737,6 +741,8 @@ class Trainer:
                 return mean, var
             else:
                 preds = logits
+        else:
+            raise ValueError(f"Unrecognized task type: {self._config.task_type}")
 
         return preds
 
@@ -864,7 +870,7 @@ class Trainer:
             lbs = lbs.squeeze(-1)
         lbs = lbs[bool_masks]
 
-        if self._config.n_tasks > 1:
+        if self._config.task_type == 'classification' and self._config.n_tasks > 1:
             preds = preds.reshape(-1, self._config.n_tasks, self._config.n_lbs)
         if preds.shape[-1] == 1 and len(preds.shape) > 1:
             preds = preds.squeeze(-1)
