@@ -1,25 +1,29 @@
+#!/bin/bash
+
+# Quit if there are any errors
+set -e
 
 # --- toggle the following command to decide whether train the model on each dataset ---
 # --- the argument values do not matter ---
 
 # regression tasks
-train_on_esol=true
-train_on_freesolv=true
-train_on_lipo=true
-train_on_qm7=true
-# train_on_qm8=true
+# train_on_esol=true
+# train_on_freesolv=true
+# train_on_lipo=true
+# train_on_qm7=true
+train_on_qm8=true
 # train_on_qm9=true
 
 # single-task classification
-train_on_bbbp=true
-train_on_bace=true
-train_on_hiv=true
+# train_on_bbbp=true
+# train_on_bace=true
+# train_on_hiv=true
 
 # multi-task classification
-train_on_tox21=true
-train_on_toxcast=true
-train_on_clintox=true
-train_on_sider=true
+# train_on_tox21=true
+# train_on_toxcast=true
+# train_on_clintox=true
+# train_on_sider=true
 # train_on_muv=true
 # train_on_pcba=true
 
@@ -33,16 +37,18 @@ disable_wandb=false
 
 data_folder="./data/files"
 feature_type="rdkit"
-num_workers=8
+num_workers=0
+num_preprocess_workers=24
 pin_memory=true
 ignore_preprocessed_dataset=false
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
+lr=0.0002
 batch_size=256
 n_epochs=200
 # --- universal arguments region ends ---
@@ -75,12 +81,14 @@ do
     --dataset_name "$dataset_name" \
     --feature_type $feature_type \
     --num_workers $num_workers \
+    --num_preprocess_workers $num_proprocess_workers \
     --pin_memory $pin_memory \
     --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
     --uncertainty_method $uncertainty_method \
     --retrain_model $retrain_model \
     --binary_classification_with_softmax $binary_classification_with_softmax \
     --regression_with_variance $regression_with_variance \
+    --lr $lr \
     --n_epochs $n_epochs \
     --batch_size $batch_size
 done

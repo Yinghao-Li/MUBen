@@ -1,5 +1,5 @@
 {
-  "disable_wandb": false,
+  "disable_wandb": true,
   "wandb_api_key": "86efcc8aa38a82bd8128db4c1cee3acde0f33920",
   "dataset_name": "qm8",
   "data_folder": "./data/files",
