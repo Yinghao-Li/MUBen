@@ -83,14 +83,6 @@ class Arguments:
         default=False, metadata={'help': "Use two regression output heads, one for mean and the other for variance."}
     )
 
-    # --- Uncertainty Arguments ---
-    uncertainty_method: Optional[str] = field(
-        default=UncertaintyMethods.none, metadata={
-            "help": "Uncertainty estimation method",
-            "choices": UncertaintyMethods.options()
-        }
-    )
-
     # -- Feature Arguments ---
     feature_type: Optional[str] = field(
         default='none', metadata={
@@ -138,6 +130,14 @@ class Arguments:
     )
     debug: Optional[bool] = field(
         default=False, metadata={"help": "Debugging mode with fewer training data"}
+    )
+
+    # --- Uncertainty Arguments ---
+    uncertainty_method: Optional[str] = field(
+        default=UncertaintyMethods.none, metadata={
+            "help": "Uncertainty estimation method",
+            "choices": UncertaintyMethods.options()
+        }
     )
 
     # --- Ensemble Arguments ---
