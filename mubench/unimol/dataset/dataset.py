@@ -60,7 +60,7 @@ class Dataset(BaseDataset):
         self._atoms = list()
         self._cooridnates = list()
 
-        with get_context('fork').Pool(config.n_feature_generating_threads) as pool:
+        with get_context('fork').Pool(config.num_workers) as pool:
 
             for outputs in tqdm(pool.imap(smiles_to_coords, self._smiles), total=len(self._smiles)):
                 atoms, coordinates = outputs

@@ -7,6 +7,7 @@ from scipy.special import softmax, expit
 from sklearn.metrics import (
     roc_auc_score,
     mean_squared_error,
+    mean_absolute_error,
     precision_recall_curve,
     auc,
 )
@@ -98,6 +99,8 @@ def calculate_regression_metrics(lbs: np.ndarray, preds: np.ndarray, metrics: Un
     for metric in metrics:
         if metric == 'rmse':
             val = mean_squared_error(lbs, preds, squared=False)
+        elif metric == 'mae':
+            val = mean_absolute_error(lbs, preds)
         else:
             raise NotImplementedError("Metric is not implemented")
 

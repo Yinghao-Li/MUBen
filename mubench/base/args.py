@@ -202,7 +202,7 @@ class Arguments:
         default=False, metadata={"help": "Disable MPS even when it is available."}
     )
     num_workers: Optional[int] = field(
-        default=0, metadata={"help": 'The number of threads to process the dataset.'}
+        default=4, metadata={"help": 'The number of threads to process the dataset.'}
     )
     pin_memory: Optional[bool] = field(
         default=False, metadata={"help": "Pin memory for data loader."}

@@ -121,13 +121,10 @@ class Dataset(TorchDataset):
         feature_type = config.feature_type
         if feature_type == 'rdkit':
             logger.info("Generating normalized RDKit features")
-            with get_context('fork').Pool(config.n_feature_generating_threads) as pool:
+            with get_context('fork').Pool(config.num_workers) as pool:
                 self._features = [f for f in tqdm(
                     pool.imap(rdkit_2d_features_normalized_generator, self._smiles), total=len(self._smiles)
                 )]
-                # self._features = np.stack(
-                #     [rdkit_2d_features_normalized_generator(smiles) for smiles in tqdm(self._smiles)]
-                # )
         elif feature_type == 'morgan':
             logger.info("Generating Morgan binary features")
             self._features = np.stack(

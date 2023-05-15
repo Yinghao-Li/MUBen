@@ -33,7 +33,8 @@ disable_wandb=false
 
 data_folder="./data/files"
 feature_type="rdkit"
-n_feature_generating_threads=8
+num_workers=8
+pin_memory=true
 ignore_preprocessed_dataset=false
 
 uncertainty_method="none"  # this is subject to change
@@ -43,21 +44,38 @@ binary_classification_with_softmax=false
 regression_with_variance=true
 
 batch_size=256
-n_epochs=100
+n_epochs=200
 # --- universal arguments region ends ---
 
+# construct the list of datasets used for training
+dataset_names=""
+if [ -z ${train_on_bbbp+x} ]; then echo "skip bbbp"; else dataset_names+=" bbbp"; fi
+if [ -z ${train_on_bace+x} ]; then echo "skip bace"; else dataset_names+=" bace"; fi
+if [ -z ${train_on_hiv+x} ]; then echo "skip hiv"; else dataset_names+=" hiv"; fi
+if [ -z ${train_on_tox21+x} ]; then echo "skip tox21"; else dataset_names+=" tox21"; fi
+if [ -z ${train_on_toxcast+x} ]; then echo "skip toxcast"; else dataset_names+=" toxcast"; fi
+if [ -z ${train_on_clintox+x} ]; then echo "skip clintox"; else dataset_names+=" clintox"; fi
+if [ -z ${train_on_sider+x} ]; then echo "skip sider"; else dataset_names+=" sider"; fi
+if [ -z ${train_on_muv+x} ]; then echo "skip muv"; else dataset_names+=" muv"; fi
+if [ -z ${train_on_pcab+x} ]; then echo "skip pcab"; else dataset_names+=" pcab"; fi
+if [ -z ${train_on_esol+x} ]; then echo "skip esol"; else dataset_names+=" esol"; fi
+if [ -z ${train_on_freesolv+x} ]; then echo "skip freesolv"; else dataset_names+=" freesolv"; fi
+if [ -z ${train_on_lipo+x} ]; then echo "skip lipo"; else dataset_names+=" lipo"; fi
+if [ -z ${train_on_qm7+x} ]; then echo "skip qm7"; else dataset_names+=" qm7"; fi
+if [ -z ${train_on_qm8+x} ]; then echo "skip qm8"; else dataset_names+=" qm8"; fi
+if [ -z ${train_on_qm9+x} ]; then echo "skip qm9"; else dataset_names+=" qm9"; fi
+
 # --- training scripts ---
-if [ -z ${train_on_bbbp+x} ];
-then
-  echo "skip bbbp"
-else
+for dataset_name in $dataset_names
+do
   CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
     --wandb_api_key $wandb_api_key \
     --disable_wandb $disable_wandb \
     --data_folder $data_folder \
-    --dataset_name bbbp \
+    --dataset_name "$dataset_name" \
     --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
+    --num_workers $num_workers \
+    --pin_memory $pin_memory \
     --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
     --uncertainty_method $uncertainty_method \
     --retrain_model $retrain_model \
@@ -65,284 +83,4 @@ else
     --regression_with_variance $regression_with_variance \
     --n_epochs $n_epochs \
     --batch_size $batch_size
-fi
-
-if [ -z ${train_on_bace+x} ];
-then
-  echo "skip bace"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name bace \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_hiv+x} ];
-then
-  echo "skip hiv"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name hiv \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_tox21+x} ];
-then
-  echo "skip tox21"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name tox21 \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_toxcast+x} ];
-then
-  echo "skip toxcast"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name toxcast \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_clintox+x} ];
-then
-  echo "skip clintox"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name clintox \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_sider+x} ];
-then
-  echo "skip sider"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name sider \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_muv+x} ];
-then
-  echo "skip muv"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name muv \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_pcba+x} ];
-then
-  echo "skip pcba"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name pcba \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_esol+x} ];
-then
-  echo "skip esol"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name esol \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_freesolv+x} ];
-then
-  echo "skip freesolv"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name freesolv \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_lipo+x} ];
-then
-  echo "skip lipo"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name lipo \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_qm7+x} ];
-then
-  echo "skip qm7"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name qm7 \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_qm8+x} ];
-then
-  echo "skip qm8"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name qm8 \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
-
-if [ -z ${train_on_qm9+x} ];
-then
-  echo "skip qm9"
-else
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name qm9 \
-    --feature_type $feature_type \
-    --n_feature_generating_threads $n_feature_generating_threads \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --n_epochs $n_epochs \
-    --batch_size $batch_size
-fi
+done

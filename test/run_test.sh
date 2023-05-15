@@ -1,13 +1,14 @@
 
-i=3
-RUN_TEST_1=123
-RUN_TEST_2=234
+X=""
+X1=123
 
-if [ -z ${"RUN_TEST$i"+x} ];
-then
-  echo "skip test"
-else
-  python test.py \
-    --x 123 \
-    --y True
-fi
+#include_x1=true
+
+if [ -z ${include_x1+x} ]; then echo "no x1"; else X+=" $X1"; fi
+
+for x in $X
+do
+python test.py \
+  --x "$x" \
+  --y True
+done
