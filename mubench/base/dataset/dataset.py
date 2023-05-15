@@ -121,7 +121,7 @@ class Dataset(TorchDataset):
         feature_type = config.feature_type
         if feature_type == 'rdkit':
             logger.info("Generating normalized RDKit features")
-            with get_context('fork').Pool(config.num_workers) as pool:
+            with get_context('fork').Pool(config.num_preprocess_workers) as pool:
                 self._features = [f for f in tqdm(
                     pool.imap(rdkit_2d_features_normalized_generator, self._smiles), total=len(self._smiles)
                 )]

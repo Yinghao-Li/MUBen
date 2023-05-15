@@ -1,7 +1,7 @@
 {
   "disable_wandb": false,
   "wandb_api_key": "86efcc8aa38a82bd8128db4c1cee3acde0f33920",
-  "dataset_name": "bbbp",
+  "dataset_name": "qm8",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,
@@ -15,7 +15,7 @@
   "feature_type": "rdkit",
   "uncertainty_method": "none",
   "apply_temperature_scaling_after_focal_loss": true,
-  "n_feature_generating_threads": 8,
+  "num_preprocess_workers": 8,
   "no_mps": true,
   "batch_size": 256,
   "lr": 0.0001
