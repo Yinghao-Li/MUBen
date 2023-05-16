@@ -1,9 +1,7 @@
 {
-  "wandb_project": "uncertainty benchmark test",
-  "wandb_name": "Uni-Mol.none",
-  "disable_wandb": false,
-  "dataset_name": "ESOL",
-  "data_dir": "./data/files",
+  "disable_wandb": true,
+  "dataset_name": "esol",
+  "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 10,
   "binary_classification_with_softmax": false,
@@ -11,5 +9,5 @@
   "checkpoint_path": "models/unimol_base.pt",
   "batch_size": 32,
   "retrain_model": true,
-  "n_feature_generating_threads": 64
+  "num_preprocess_workers": 24
 }

@@ -38,7 +38,7 @@ disable_wandb=false
 data_folder="./data/files"
 num_workers=16
 num_preprocess_workers=16
-pin_memory=false
+pin_memory=true
 ignore_preprocessed_dataset=false
 
 uncertainty_method="none"  # this is subject to change
@@ -73,12 +73,12 @@ if [ -z ${train_on_qm9+x} ]; then echo "skip qm9"; else dataset_names+=" qm9"; f
 # --- training scripts ---
 for dataset_name in $dataset_names
 do
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_grover.py \
+  CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
     --wandb_api_key $wandb_api_key \
     --disable_wandb $disable_wandb \
     --data_folder $data_folder \
     --dataset_name "$dataset_name" \
-    --checkpoint_path ./models/grover_base.pt \
+    --checkpoint_path ./models/unimol_base.pt \
     --num_workers $num_workers \
     --num_preprocess_workers $num_preprocess_workers \
     --pin_memory $pin_memory \
