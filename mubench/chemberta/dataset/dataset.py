@@ -23,7 +23,7 @@ class Dataset(BaseDataset):
         """
         tokenizer_name = config.pretrained_model_name_or_path
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
-        tokenized_instances = tokenizer(self._smiles, add_special_tokens=True)
+        tokenized_instances = tokenizer(self._smiles, add_special_tokens=True, truncation=True)
 
         self._atom_ids = tokenized_instances.input_ids
 
