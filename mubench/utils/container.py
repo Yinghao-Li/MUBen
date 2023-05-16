@@ -3,7 +3,6 @@ import regex
 import torch
 import logging
 import numpy as np
-from enum import Enum
 from typing import Optional, Union
 
 from .macro import StrEnum

@@ -127,8 +127,10 @@ class Dataset(TorchDataset):
                 )]
         elif feature_type == 'morgan':
             logger.info("Generating Morgan binary features")
-            self._features = np.stack(
-                [morgan_binary_features_generator(smiles) for smiles in tqdm(self._smiles)])
+            with get_context('fork').Pool(config.num_preprocess_workers) as pool:
+                self._features = [f for f in tqdm(
+                        pool.imap(morgan_binary_features_generator, self._smiles), total=len(self._smiles)
+                )]
         else:
             self._features = np.empty(len(self)) * np.nan
         return self
