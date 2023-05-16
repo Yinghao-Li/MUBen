@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from dataclasses import dataclass
 from rdkit import Chem
-from seqlbtoolkit.training.dataset import Batch
+from mubench.utils.data import Batch
 
 logger = logging.getLogger(__name__)
 

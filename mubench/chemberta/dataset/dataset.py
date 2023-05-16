@@ -1,10 +1,7 @@
 import logging
 
 from transformers import AutoTokenizer
-from seqlbtoolkit.training.dataset import (
-    DataInstance,
-    feature_lists_to_instance_list,
-)
+from mubench.utils.data import pack_instances
 from mubench.base.dataset import Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
@@ -32,9 +29,5 @@ class Dataset(BaseDataset):
 
     def get_instances(self):
 
-        data_instances = feature_lists_to_instance_list(
-            DataInstance,
-            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
-        )
-
+        data_instances = pack_instances(atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks)
         return data_instances

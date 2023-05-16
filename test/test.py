@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 from transformers import HfArgumentParser
 
-from seqlbtoolkit.io import set_logging, logging_args
+from mubench.utils.io import set_logging, logging_args
 
 logger = logging.getLogger(__name__)
 

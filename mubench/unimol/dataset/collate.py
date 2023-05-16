@@ -3,9 +3,7 @@ import logging
 import numpy as np
 import torch.nn.functional as F
 
-from seqlbtoolkit.training.dataset import (
-    Batch,
-)
+from mubench.utils.data import Batch
 from mubench.utils.data import unpack_instances
 
 logger = logging.getLogger(__name__)

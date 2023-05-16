@@ -1,11 +1,5 @@
-from tqdm.auto import tqdm
-from seqlbtoolkit.training.dataset import (
-    DataInstance,
-    feature_lists_to_instance_list,
-)
-
+from mubench.utils.data import pack_instances
 from mubench.base.dataset import Dataset as BaseDataset
-from .molgraph import MolGraph, MolGraphAttrs
 
 
 class Dataset(BaseDataset):
@@ -25,10 +19,5 @@ class Dataset(BaseDataset):
         pass
 
     def get_instances(self):
-
-        data_instances = feature_lists_to_instance_list(
-            DataInstance,
-            smiles=self.smiles, lbs=self.lbs, masks=self.masks
-        )
-
+        data_instances = pack_instances(smiles=self.smiles, lbs=self.lbs, masks=self.masks)
         return data_instances

@@ -2,9 +2,9 @@ import torch
 import logging
 import numpy as np
 
-from seqlbtoolkit.training.dataset import (
+from mubench.utils.data import (
     Batch,
-    instance_list_to_feature_lists
+    unpack_instances
 )
 from .molgraph import BatchMolGraph
 from .molgraph import MolGraph, MolGraphAttrs
@@ -33,7 +33,7 @@ class Collator:
         -------
         a Batch of instances
         """
-        smiles, lbs, masks = instance_list_to_feature_lists(instance_list)
+        smiles, lbs, masks = unpack_instances(instance_list)
 
         molecule_graphs = [MolGraphAttrs().from_mol_graph(MolGraph(s, self._bond_drop_rate)) for s in smiles]
         molecule_graphs_batch = BatchMolGraph(molecule_graphs)
