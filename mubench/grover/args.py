@@ -74,5 +74,5 @@ class Arguments(BaseArguments):
 class Config(Arguments, BaseConfig):
     activation = 'PReLU'  # activation function, will be overwritten during model loading
     weight_decay = 1e-7  # weight decay, will be overwritten during model loading
-    bond_drop_rate = 0  # Drop out bond in molecules.
+    bond_drop_rate = 0  # Drop out bond in molecules; notice that this argument is no longer used.
     fine_tune_coff = 1  # Enable distinct fine tune learning rate for fc and other layer

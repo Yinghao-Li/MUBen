@@ -150,8 +150,11 @@ class Trainer(BaseTrainer, ABC):
                 bond_preds = expit(bond_logits)  # sigmoid function
             preds = (atom_preds + bond_preds) / 2
 
-        else:
+        elif self._config.task_type == 'regression':
             logits = (atom_logits + bond_logits) / 2
+
+            if self._config.n_tasks > 1:
+                logits = logits.reshape(-1, self._config.n_tasks, 2)
 
             if self._config.regression_with_variance:
                 mean = logits[..., 0]
@@ -159,5 +162,7 @@ class Trainer(BaseTrainer, ABC):
                 return mean, var
             else:
                 preds = logits
+        else:
+            raise ValueError(f"Unrecognized task type: {self._config.task_type}")
 
         return preds

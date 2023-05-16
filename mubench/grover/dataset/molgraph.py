@@ -88,7 +88,7 @@ class MolGraph:
     - b2revb: A mapping from a bond index to the index of the reverse bond.
     """
 
-    def __init__(self, smiles: str, bond_drop_rate):
+    def __init__(self, smiles: str):
         """
         Computes the graph structure and featurization of a molecule.
 
@@ -139,10 +139,6 @@ class MolGraph:
 
                 if bond is None:
                     continue
-
-                if bond_drop_rate > 0:
-                    if np.random.binomial(1, bond_drop_rate):
-                        continue
 
                 f_bond = self.bond_features(bond)
 

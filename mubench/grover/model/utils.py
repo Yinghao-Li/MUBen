@@ -85,5 +85,5 @@ def get_model_args():
             'dropout', 'activation', 'undirected', 'ffn_hidden_size', 'ffn_num_layers',
             'atom_message', 'weight_decay', 'select_by_loss', 'skip_epoch', 'backbone',
             'embedding_output_type', 'self_attention', 'attn_hidden', 'attn_out', 'dense',
-            'bond_drop_rate', 'distinct_init', 'aug_rate', 'fine_tune_coff', 'nencoders',
+            'distinct_init', 'aug_rate', 'fine_tune_coff', 'nencoders',
             'dist_coff', 'no_attach_fea', 'coord', "num_attn_head", "num_mt_block"]
