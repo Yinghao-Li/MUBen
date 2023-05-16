@@ -1,13 +1,14 @@
 {
   "disable_wandb": true,
-  "dataset_name": "esol",
+  "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 10,
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "checkpoint_path": "models/unimol_base.pt",
-  "batch_size": 32,
+  "batch_size": 64,
   "retrain_model": true,
-  "num_preprocess_workers": 24
+  "num_preprocess_workers": 8,
+  "lr": 0.0001
 }

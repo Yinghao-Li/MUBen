@@ -88,4 +88,8 @@ if __name__ == '__main__':
 
     set_seed(arguments.seed)
 
-    main(args=arguments)
+    try:
+        main(args=arguments)
+    except Exception as e:
+        logger.exception(e)
+        raise Exception

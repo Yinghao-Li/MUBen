@@ -17,7 +17,7 @@ train_on_qm8=true
 # -- single-task classification --
 train_on_bbbp=true
 train_on_bace=true
-train_on_hiv=true
+# train_on_hiv=true
 
 # -- multi-task classification --
 train_on_tox21=true
@@ -36,20 +36,19 @@ wandb_api_key="86efcc8aa38a82bd8128db4c1cee3acde0f33920"
 disable_wandb=false
 
 data_folder="./data/files"
-num_workers=16
 num_preprocess_workers=16
-pin_memory=true
+pin_memory=false
 ignore_preprocessed_dataset=false
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
 lr=0.0001
 batch_size=64
-n_epochs=50
+n_epochs=30
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -79,7 +78,6 @@ do
     --data_folder $data_folder \
     --dataset_name "$dataset_name" \
     --checkpoint_path ./models/unimol_base.pt \
-    --num_workers $num_workers \
     --num_preprocess_workers $num_preprocess_workers \
     --pin_memory $pin_memory \
     --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
