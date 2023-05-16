@@ -33,6 +33,20 @@
             ]
         },
         {
+            "name": "run-chemberta",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_chemberta.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "3",
+            },
+            "args": [
+                "${workspaceFolder}/scripts/chemberta_config.json"
+            ]
+        },
+        {
             "name": "run-grover",
             "type": "python",
             "request": "launch",

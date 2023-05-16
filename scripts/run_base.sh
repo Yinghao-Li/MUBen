@@ -6,7 +6,7 @@ set -e
 # --- toggle the following command to decide whether train the model on each dataset ---
 # --- the argument values do not matter ---
 
-# regression tasks
+# -- regression tasks --
 # train_on_esol=true
 # train_on_freesolv=true
 # train_on_lipo=true
@@ -14,12 +14,12 @@ set -e
 train_on_qm8=true
 # train_on_qm9=true
 
-# single-task classification
+# -- single-task classification --
 # train_on_bbbp=true
 # train_on_bace=true
 # train_on_hiv=true
 
-# multi-task classification
+# -- multi-task classification --
 # train_on_tox21=true
 # train_on_toxcast=true
 # train_on_clintox=true
@@ -43,7 +43,7 @@ pin_memory=true
 ignore_preprocessed_dataset=false
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=true
+retrain_model=false
 
 binary_classification_with_softmax=false
 regression_with_variance=true
