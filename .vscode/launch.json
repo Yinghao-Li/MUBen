@@ -15,7 +15,7 @@
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/dataset_construction_config.json"
+                "${workspaceFolder}/scripts/config_dataset.json"
             ]
         },
         {
@@ -29,7 +29,7 @@
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/base_config.json"
+                "${workspaceFolder}/scripts/config_base.json"
             ]
         },
         {
@@ -43,7 +43,7 @@
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/chemberta_config.json"
+                "${workspaceFolder}/scripts/config_chemberta.json"
             ]
         },
         {
@@ -54,10 +54,10 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "4",
+                "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/grover_config.json"
+                "${workspaceFolder}/scripts/config_grover.json"
             ]
         },
         {
@@ -71,7 +71,7 @@
                 "CUDA_VISIBLE_DEVICES": "1",
             },
             "args": [
-                "${workspaceFolder}/scripts/unimol_config.json"
+                "${workspaceFolder}/scripts/config_unimol.json"
             ]
         },
     ]

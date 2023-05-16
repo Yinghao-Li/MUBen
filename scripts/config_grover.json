@@ -1,10 +1,6 @@
 {
   "disable_wandb": true,
-<<<<<<< HEAD
-  "dataset_name": "ToxCast",
-=======
-  "dataset_name": "MUV",
->>>>>>> 1fb633ed6817094b00b1ce16ed76342b06e0e7da
+  "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "n_epochs": 50,
@@ -17,6 +13,7 @@
   "checkpoint_path": "models/grover_base.pt",
   "ffn_hidden_size": 200,
   "batch_size": 64,
+  "num_workers": 16,
   "lr": 0.0001,
   "retrain_model": false
 }
