@@ -85,6 +85,7 @@ class Trainer:
         self._status = Status(
             train_log_idx=0,  # will increase by 1 each time you call `train_epoch`
             eval_log_idx=0,  # will increase by 1 each time you call `eval_and_save`
+            n_eval_no_improve=0,  # counts how many evaluation steps in total the model performance has not improved
             lr=config.lr,
             lr_scheduler_type=config.lr_scheduler_type,
             n_epochs=config.n_epochs,
@@ -125,6 +126,7 @@ class Trainer:
         self.initialize_loss()
         self._status.train_log_idx = 0  # will increase by 1 each time you call `train_epoch`
         self._status.eval_log_idx = 0  # will increase by 1 each time you call `eval_and_save`
+        self._status.n_eval_no_improve = 0
         return self
 
     def initialize_model(self, *args, **kwargs):
@@ -403,7 +405,7 @@ class Trainer:
         self._status.lr *= self._config.swa_lr_decay
         self._status.lr_scheduler_type = 'constant'
         self._status.n_epochs = self._config.n_swa_epochs
-        self._status.valid_epoch_interval = 0  # Can also set this to None
+        self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         self.initialize_optimizer()
         self.initialize_scheduler(use_default=True)  # the argument is for GROVER compatibility
@@ -442,7 +444,7 @@ class Trainer:
         self._status.lr = self._config.ts_lr
         self._status.lr_scheduler_type = 'constant'
         self._status.n_epochs = self._config.n_ts_epochs
-        self._status.valid_epoch_interval = 0  # Can also set this to None
+        self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         self.model.to(self._device)
         self.freeze()
@@ -480,7 +482,7 @@ class Trainer:
             self._status.lr = self._config.ts_lr
             self._status.lr_scheduler_type = 'constant'
             self._status.n_epochs = self._config.n_ts_epochs
-            self._status.valid_epoch_interval = 0  # Can also set this to None
+            self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
             self.model.to(self._device)
             self.freeze()
@@ -518,7 +520,7 @@ class Trainer:
         logger.info("Langevin Dynamics session start.")
         self._sgld_model_buffer = list()
         self._status.n_epochs = self._config.n_langevin_samples * self._config.sgld_sampling_interval
-        self._status.valid_epoch_interval = 0  # Can also set this to None
+        self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         logger.info("Training model")
         self.train()
@@ -575,6 +577,11 @@ class Trainer:
 
                 if self._status.valid_epoch_interval and (epoch_idx + 1) % self._status.valid_epoch_interval == 0:
                     self.eval_and_save()
+
+                if self._status.n_eval_no_improve > self._config.valid_tolerance:
+                    logger.warning("Quit training because of exceeding valid tolerance!")
+                    self._status.n_eval_no_improve = 0
+                    break
 
         return None
 
@@ -831,7 +838,10 @@ class Trainer:
 
         # ----- check model performance and update buffer -----
         if self._model_container.check_and_update(self.model, valid_results[self._valid_metric]):
+            self._status.n_eval_no_improve = 0
             logger.debug("Model buffer is updated!")
+        else:
+            self._status.n_eval_no_improve += 1
 
         return None
 
