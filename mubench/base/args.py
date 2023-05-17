@@ -60,7 +60,10 @@ class Arguments:
         default=False, metadata={"help": "Ignore pre-processed datasets and re-generate features if necessary."}
     )
     disable_dataset_saving: Optional[bool] = field(
-        default=False, metadata={"help": "Disable dataset saving function."}
+        default=False, metadata={"help": "Do not save pre-processed dataset."}
+    )
+    disable_result_saving: Optional[bool] = field(
+        default=False, metadata={"help": "Do not save training results and trained model checkpoints."}
     )
     overwrite_results: Optional[bool] = field(
         default=False, metadata={'help': 'Whether overwrite existing outputs.'}

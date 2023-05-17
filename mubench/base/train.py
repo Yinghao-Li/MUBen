@@ -910,8 +910,11 @@ class Trainer:
 
     def save_best_model(self):
 
-        os.makedirs(self._status.result_dir, exist_ok=True)
-        self._model_container.save(os.path.join(self._status.result_dir, self._status.model_name))
+        if not self._config.disable_result_saving:
+            os.makedirs(self._status.result_dir, exist_ok=True)
+            self._model_container.save(os.path.join(self._status.result_dir, self._status.model_name))
+        else:
+            logger.warning("Model is not saved because of `disable_result_saving` flag is set to `True`.")
 
         return self
 
@@ -1037,20 +1040,24 @@ class Trainer:
                 logger.warning("Scheduler file does not exist!")
         return self
 
-    @staticmethod
-    def save_preds_to_pt(lbs, preds, masks, file_path: str):
+    def save_preds_to_pt(self, lbs, preds, masks, file_path: str):
         """
         Save results to disk as csv files
         """
 
-        if not file_path.endswith('.pt'):
-            file_path = f"{file_path}.pt"
+        if not self._config.disable_result_saving:
+            if not file_path.endswith('.pt'):
+                file_path = f"{file_path}.pt"
 
-        data_dict = {
-            "lbs": lbs,
-            "preds": preds,
-            "masks": masks
-        }
+            data_dict = {
+                "lbs": lbs,
+                "preds": preds,
+                "masks": masks
+            }
 
-        os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
-        torch.save(data_dict, file_path)
+            os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
+            torch.save(data_dict, file_path)
+        else:
+            logger.warning("Results are not saved because of `disable_result_saving` flag is set to `True`.")
+
+        return None
