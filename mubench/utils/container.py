@@ -60,8 +60,8 @@ class ModelContainer:
 
         if update_flag:
             self._metric = metric
+            model.to('cpu')
             model_cp = copy.deepcopy(model)
-            model_cp.to('cpu')
 
             self._state_dict = model_cp.state_dict()
             return True

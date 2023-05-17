@@ -595,6 +595,7 @@ class Trainer:
         # Set the base model to evaluation mode for Temperature Scaling training
         if self._ts_model:
             self._model.eval()
+        self.model.to(self._device)
 
         avg_loss = 0.
         num_items = 0
