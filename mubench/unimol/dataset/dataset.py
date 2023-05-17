@@ -1,3 +1,6 @@
+import os
+import lmdb
+import pickle
 import logging
 from multiprocessing import get_context
 from tqdm.auto import tqdm
@@ -6,7 +9,6 @@ from .utils import smiles_to_coords
 from .process import ProcessingPipeline
 from mubench.base.dataset import Dataset as BaseDataset
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -14,6 +16,7 @@ class Dataset(BaseDataset):
     def __init__(self):
         super().__init__()
 
+        self._partition = None
         self._atoms = None
         self._cooridnates = None
         self.data_processor = None
@@ -35,6 +38,8 @@ class Dataset(BaseDataset):
 
     # noinspection PyMethodOverriding
     def prepare(self, config, partition, dictionary):
+        self._partition = partition
+
         super().prepare(config, partition)
 
         processor_variant = 'training' if partition == 'train' else 'inference'
@@ -60,16 +65,37 @@ class Dataset(BaseDataset):
         self._atoms = list()
         self._cooridnates = list()
 
-        with get_context('fork').Pool(config.num_preprocess_workers) as pool:
+        # load feature if UniMol LMDB file exists else generate feature
+        unimol_feature_path = os.path.join(config.unimol_feature_dir, f"{self._partition}.lmdb")
+        print(unimol_feature_path)
+        if os.path.exists(unimol_feature_path):
+            logger.info("Loading features form pre-processed Uni-Mol LMDB")
+            env = lmdb.open(unimol_feature_path,
+                            subdir=False,
+                            readonly=True,
+                            lock=False,
+                            readahead=False,
+                            meminit=False,
+                            max_readers=256)
+            txn = env.begin()
+            keys = list(txn.cursor().iternext(values=False))
+            for idx in tqdm(keys):
+                datapoint_pickled = txn.get(idx)
+                data = pickle.loads(datapoint_pickled)
+                self._atoms.append(data['atoms'])
+                self._cooridnates.append(data['coordinates'])
 
-            for outputs in tqdm(pool.imap(smiles_to_coords, self._smiles), total=len(self._smiles)):
-                atoms, coordinates = outputs
-                self._atoms.append(atoms)
-                self._cooridnates.append(coordinates)
+        else:
+            # TODO: there might be some issue with this generation method
+            logger.info("Generating Uni-Mol features.")
+            with get_context('fork').Pool(config.num_preprocess_workers) as pool:
+                for outputs in tqdm(pool.imap(smiles_to_coords, self._smiles), total=len(self._smiles)):
+                    atoms, coordinates = outputs
+                    self._atoms.append(atoms)
+                    self._cooridnates.append(coordinates)
 
         return self
 
     def get_instances(self):
 
         return None
-

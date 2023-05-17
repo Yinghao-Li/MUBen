@@ -1,3 +1,4 @@
+import os
 import logging
 from typing import Optional
 from dataclasses import field, dataclass
@@ -23,6 +24,9 @@ class Arguments(BaseArguments):
             'help': "The name of the model to be used.",
             "choices": MODEL_NAMES
         }
+    )
+    unimol_feature_folder: Optional[str] = field(
+        default='.', metadata={'help': "The folder containing files with pre-defined uni-mol atoms and coordinates"}
     )
 
     # --- Reload training arguments to adjust default values ---
@@ -71,6 +75,7 @@ class Arguments(BaseArguments):
 
     def __post_init__(self):
         super().__post_init__()
+        self.unimol_feature_dir = os.path.join(self.unimol_feature_folder, self.dataset_name)
 
         self.pooler_dropout = self.dropout
 
