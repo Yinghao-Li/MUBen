@@ -18,9 +18,9 @@ class Batch:
         for k, v in kwargs.items():
             setattr(self, k, v)
             self.register_tensor_members(k, v)
-    
+
     def register_tensor_members(self, k, v):
-        if isinstance(v, torch.Tensor):
+        if isinstance(v, torch.Tensor) or callable(getattr(v, "to", None)):
             self._tensor_members[k] = v
 
     def to(self, device):

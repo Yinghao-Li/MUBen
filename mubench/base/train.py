@@ -701,6 +701,7 @@ class Trainer:
         """
 
         dataloader = self.get_dataloader(dataset, batch_size=batch_size, shuffle=False)
+        self.model.to(self._device)
         self.eval_mode()
 
         logits_list = list()

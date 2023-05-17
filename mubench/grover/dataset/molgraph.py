@@ -293,6 +293,10 @@ class BatchMolGraph(Batch):
         self.a_scope = torch.tensor(self.a_scope, dtype=torch.long)
         self.b_scope = torch.tensor(self.b_scope, dtype=torch.long)
 
+        for k, v in self.__dict__.items():
+            if isinstance(v, torch.Tensor):
+                self.register_tensor_members(k, v)
+
     @property
     def components(self):
         """

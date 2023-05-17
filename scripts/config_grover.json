@@ -1,9 +1,9 @@
 {
   "disable_wandb": true,
-  "dataset_name": "qm8",
+  "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": true,
-  "n_epochs": 50,
+  "n_epochs": 10,
   "n_swa_epochs": 3,
   "k_swa_checkpoints": 3,
   "n_langevin_samples": 3,
@@ -16,5 +16,6 @@
   "num_preprocess_workers": 16,
   "num_workers": 16,
   "lr": 0.0001,
-  "retrain_model": false
+  "retrain_model": true,
+  "disable_result_saving": true
 }
