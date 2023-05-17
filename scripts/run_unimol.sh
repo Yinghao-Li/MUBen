@@ -36,9 +36,10 @@ wandb_api_key="86efcc8aa38a82bd8128db4c1cee3acde0f33920"
 disable_wandb=false
 
 data_folder="./data/files"
+unimol_feature_folder="./data/UniMol"
 num_preprocess_workers=16
 pin_memory=false
-ignore_preprocessed_dataset=false
+ignore_preprocessed_dataset=true
 
 uncertainty_method="none"  # this is subject to change
 retrain_model=true
@@ -46,9 +47,9 @@ retrain_model=true
 binary_classification_with_softmax=false
 regression_with_variance=true
 
-lr=0.0001
+lr=0.00005
 batch_size=64
-n_epochs=30
+n_epochs=100
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -76,6 +77,7 @@ do
     --wandb_api_key $wandb_api_key \
     --disable_wandb $disable_wandb \
     --data_folder $data_folder \
+    --unimol_feature_folder $unimol_feature_folder \
     --dataset_name "$dataset_name" \
     --checkpoint_path ./models/unimol_base.pt \
     --num_preprocess_workers $num_preprocess_workers \
