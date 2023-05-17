@@ -140,7 +140,7 @@ class SWAModel(Module):
 
 
 @torch.no_grad()
-def update_bn(model, training_loader, device: str = 'cpu'):
+def update_bn(model, training_loader, device: str = 'cpu', hf_training=False):
     r"""
     Updates BatchNorm running_mean, running_var buffers in the model.
 
@@ -181,7 +181,10 @@ def update_bn(model, training_loader, device: str = 'cpu'):
     for batch in training_loader:
         batch.to(device)
 
-        with torch.autocast(device_type=device, dtype=torch.bfloat16):
+        if hf_training:
+            with torch.autocast(device_type=device, dtype=torch.bfloat16):
+                model(batch)
+        else:
             model(batch)
 
     for bn_module in momenta.keys():

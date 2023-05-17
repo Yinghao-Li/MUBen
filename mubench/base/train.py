@@ -560,6 +560,7 @@ class Trainer:
             for epoch_idx in range(self._status.n_epochs):
 
                 training_loss = self.training_epoch(data_loader, pbar)
+                torch.cuda.empty_cache()
 
                 # Print the averaged training loss so far.
                 pbar.set_description(f'[Epoch {self._status.train_log_idx}] Loss: {training_loss:.4f}')
@@ -597,7 +598,7 @@ class Trainer:
             self._model.eval()
         self.model.to(self._device)
 
-        avg_loss = 0.
+        total_loss = 0.
         num_items = 0
         for batch in data_loader:
             batch.to(self._config.device)
@@ -627,14 +628,14 @@ class Trainer:
 
             self._scheduler.step()
 
-            avg_loss += loss.item() * len(batch)
+            total_loss += loss.detach().cpu().item() * len(batch)
             num_items += len(batch)
 
             pbar.update()
 
         self._status.train_log_idx += 1
-
-        return avg_loss / num_items
+        avg_loss = total_loss / num_items
+        return avg_loss
 
     def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
         """
@@ -792,7 +793,8 @@ class Trainer:
                 update_bn(
                     model=self.model,
                     training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
-                    device=self._config.device_str
+                    device=self._config.device_str,
+                    hf_training=self._config.hf_training
                 )
 
             preds = self.inverse_standardize_preds(self.process_logits(self.inference(dataset)))

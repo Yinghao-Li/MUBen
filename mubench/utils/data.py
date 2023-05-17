@@ -14,22 +14,22 @@ class Status:
 class Batch:
     def __init__(self, **kwargs):
         super().__init__()
+        self._tensor_members = dict()
         for k, v in kwargs.items():
             setattr(self, k, v)
+            self.register_tensor_members(k, v)
+    
+    def register_tensor_members(self, k, v):
+        if isinstance(v, torch.Tensor):
+            self._tensor_members[k] = v
 
     def to(self, device):
-        for k, v in self.__dict__.items():
-            try:
-                setattr(self, k, v.to(device))
-            except AttributeError:
-                pass
+        for k, v in self._tensor_members.items():
+            setattr(self, k, v.to(device))
         return self
 
-    @cache
     def __len__(self):
-        for v in list(self.__dict__.values()):
-            if isinstance(v, torch.Tensor):
-                return v.shape[0]
+        return len(tuple(self._tensor_members.values())[0])
 
 
 def pack_instances(**kwargs) -> List[dict]:
