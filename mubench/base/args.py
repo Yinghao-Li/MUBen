@@ -192,6 +192,9 @@ class Arguments:
         default=1, metadata={'help': 'How many training epochs within each validation step. '
                                      'Set to 0 to disable validation.'}
     )
+    valid_tolerance: Optional[int] = field(
+        default=20, metadata={'help': "Maximum validation steps allowed for non-increasing model performance."}
+    )
     n_test: Optional[int] = field(
         default=1, metadata={'help': "How many test loops to run in one training process. "
                                      "The default value for some Bayesian methods such as MC Dropout is 20."}
