@@ -75,18 +75,16 @@ def calculate_classification_metrics(lbs: np.ndarray,
                 lbs_ = lbs_[masks_]
                 probs_ = probs_[masks_]
 
+                if len(lbs_)<1:
+                    continue
                 if (lbs_ < 0).any():
                     raise ValueError("Invalid label value encountered!")
-                if lbs_.sum() < 1:  # skip tasks with no positive label, as Uni-Mol did.
+                if (lbs_ == 0).all() or (lbs_ == 1).all():  # skip tasks with no positive label, as Uni-Mol did.
                     continue
 
                 if metric == 'roc_auc':
-                    if probs_.shape[-1] == 2:
-                        probs_ = probs_[..., 1]
                     vals.append(roc_auc_score(lbs_, probs_))
                 elif metric == 'prc_auc':
-                    if probs_.shape[-1] == 2:
-                        probs_ = probs_[..., 1]
                     p, r, _ = precision_recall_curve(lbs_, probs_)
                     vals.append(auc(r, p))
                 else:
