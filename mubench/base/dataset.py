@@ -7,35 +7,25 @@ import numpy as np
 
 from typing import List, Union
 from ast import literal_eval
-from multiprocessing import get_context
-from tqdm.auto import tqdm
 from functools import cached_property
 from torch.utils.data import Dataset as TorchDataset
 
-from mubench.utils.data import pack_instances
-from .features import (
-    rdkit_2d_features_normalized_generator,
-    morgan_binary_features_generator
-)
 
 logger = logging.getLogger(__name__)
+
+__all__ = ["Dataset"]
 
 
 class Dataset(TorchDataset):
     def __init__(self):
         super().__init__()
 
-        self._features = None
         self._smiles: Union[List[str], None] = None
         self._lbs: Union[np.ndarray, None] = None
         self._masks: Union[np.ndarray, None] = None
 
         self.data_instances = None
     
-    @property
-    def features(self):
-        return self._features
-
     @property
     def smiles(self) -> List[str]:
         return self._smiles
@@ -118,30 +108,11 @@ class Dataset(TorchDataset):
         -------
         self
         """
-        feature_type = config.feature_type
-        if feature_type == 'rdkit':
-            logger.info("Generating normalized RDKit features")
-            with get_context('fork').Pool(config.num_preprocess_workers) as pool:
-                self._features = [f for f in tqdm(
-                    pool.imap(rdkit_2d_features_normalized_generator, self._smiles), total=len(self._smiles)
-                )]
-        elif feature_type == 'morgan':
-            logger.info("Generating Morgan binary features")
-            with get_context('fork').Pool(config.num_preprocess_workers) as pool:
-                self._features = [f for f in tqdm(
-                        pool.imap(morgan_binary_features_generator, self._smiles), total=len(self._smiles)
-                )]
-        else:
-            self._features = np.empty(len(self)) * np.nan
-        return self
+        raise NotImplementedError
 
     def get_instances(self):
 
-        data_instances = pack_instances(
-            features=self._features, lbs=self.lbs, masks=self.masks
-        )
-
-        return data_instances
+        raise NotImplementedError
 
     def save(self, file_path: str):
         """

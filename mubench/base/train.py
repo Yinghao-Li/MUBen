@@ -20,24 +20,25 @@ from transformers import get_scheduler
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
-from ..utils.macro import EVAL_METRICS, UncertaintyMethods
-from ..utils.container import ModelContainer, UpdateCriteria
-from ..utils.scaler import StandardScaler
-from ..utils.data import set_seed, Status
-from .metric import (
+from .model import (
     GaussianNLLLoss,
     calculate_classification_metrics,
     calculate_regression_metrics
 )
-from .dataset import Collator
-from .model import DNN
 from .args import Config
 from .uncertainty.swag import SWAModel, update_bn
 from .uncertainty.temperature_scaling import TSModel
 from .uncertainty.focal_loss import FocalLoss
 from .uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
+from mubench.utils.macro import EVAL_METRICS, UncertaintyMethods
+from mubench.utils.container import ModelContainer, UpdateCriteria
+from mubench.utils.scaler import StandardScaler
+from mubench.utils.data import set_seed, Status
+
 logger = logging.getLogger(__name__)
+
+__all__ = ["Trainer"]
 
 
 class Trainer:
@@ -53,7 +54,7 @@ class Trainer:
         self._training_dataset = training_dataset
         self._valid_dataset = valid_dataset
         self._test_dataset = test_dataset
-        self._collate_fn = collate_fn if collate_fn is not None else Collator(config)
+        self._collate_fn = collate_fn
         self._scalar = scalar
         self._device = getattr(config, "device", "cpu")
 
@@ -130,15 +131,7 @@ class Trainer:
         return self
 
     def initialize_model(self, *args, **kwargs):
-        self._model = DNN(
-            d_feature=self._config.d_feature,
-            n_lbs=self._config.n_lbs,
-            n_tasks=self._config.n_tasks,
-            n_hidden_layers=self._config.n_dnn_hidden_layers,
-            d_hidden=self._config.d_dnn_hidden,
-            p_dropout=self._config.dropout,
-            apply_bbp=self._config.uncertainty_method == UncertaintyMethods.bbp
-        )
+        raise NotImplementedError
 
     def initialize_optimizer(self, *args, **kwargs):
         """
@@ -160,7 +153,7 @@ class Trainer:
 
         return self
 
-    def initialize_scheduler(self, *args, **kwargs):
+    def initialize_scheduler(self):
         """
         Initialize learning rate scheduler
         """
@@ -408,7 +401,7 @@ class Trainer:
         self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         self.initialize_optimizer()
-        self.initialize_scheduler(use_default=True)  # the argument is for GROVER compatibility
+        self.initialize_scheduler()
 
         self._model.to(self._device)
         self._swa_model = SWAModel(
@@ -451,7 +444,7 @@ class Trainer:
         self._ts_model = TSModel(self._model)
 
         self.initialize_optimizer()
-        self.initialize_scheduler(use_default=True)  # the argument is for GROVER compatibility
+        self.initialize_scheduler()
 
         logger.info("Training model on validation")
         self.train(use_valid_dataset=True)
@@ -489,7 +482,7 @@ class Trainer:
             self._ts_model = TSModel(self._model)
 
             self.initialize_optimizer()
-            self.initialize_scheduler(use_default=True)  # the argument is for GROVER compatibility
+            self.initialize_scheduler()
             self.initialize_loss(disable_focal_loss=True)  # re-initialize the loss to CE as described in the paper
 
             logger.info("Training model on validation")
@@ -513,7 +506,7 @@ class Trainer:
         """
         self._status.lr_scheduler_type = "constant"
         self.initialize_optimizer()
-        self.initialize_scheduler(use_default=True)  # parameter for grover
+        self.initialize_scheduler()
 
         self.run_single_shot(apply_test=False)
 
@@ -739,10 +732,10 @@ class Trainer:
                 preds = softmax(logits, axis=-1)
             else:
                 preds = expit(logits)  # sigmoid function
-        elif self._config.task_type == 'regression':
 
+        elif self._config.task_type == 'regression':
             if self._config.n_tasks > 1:
-                logits = logits.reshape(-1, self._config.n_tasks, 2)
+                logits = logits.reshape((-1, self._config.n_tasks, 2))
 
             # get the mean of the preds
             if self._config.regression_with_variance:
@@ -801,7 +794,7 @@ class Trainer:
                 update_bn(
                     model=self.model,
                     training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
-                    device=self._config.device_str,
+                    device=self._config.device,
                     hf_training=self._config.hf_training
                 )
 

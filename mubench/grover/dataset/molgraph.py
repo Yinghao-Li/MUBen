@@ -3,10 +3,9 @@ The data structure of Molecules.
 This implementation is adapted from
 https://github.com/chemprop/chemprop/blob/master/chemprop/features/featurization.py
 """
-from typing import List, Tuple, Union
+from typing import List, Union
 
 import logging
-import numpy as np
 import torch
 from dataclasses import dataclass
 from rdkit import Chem

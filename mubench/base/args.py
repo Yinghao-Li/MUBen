@@ -6,14 +6,11 @@ from typing import Optional
 from dataclasses import dataclass, field, asdict
 from functools import cached_property
 
-from ..utils.macro import (
-    DATASET_NAMES,
-    MODEL_NAMES,
-    UncertaintyMethods,
-    FINGERPRINT_FEATURE_TYPES
-)
+from mubench.utils.macro import DATASET_NAMES, MODEL_NAMES, UncertaintyMethods
 
 logger = logging.getLogger(__name__)
+
+__all__ = ["Arguments", "Config"]
 
 
 @dataclass
@@ -84,22 +81,6 @@ class Arguments:
     )
     regression_with_variance: Optional[bool] = field(
         default=False, metadata={'help': "Use two regression output heads, one for mean and the other for variance."}
-    )
-
-    # -- Feature Arguments ---
-    feature_type: Optional[str] = field(
-        default='none', metadata={
-            "help": "Fingerprint generation function",
-            "choices": FINGERPRINT_FEATURE_TYPES
-        }
-    )
-
-    # --- DNN Arguments ---
-    n_dnn_hidden_layers: Optional[int] = field(
-        default=8, metadata={'help': "The number of DNN hidden layers."}
-    )
-    d_dnn_hidden: Optional[int] = field(
-        default=128, metadata={'help': "The dimensionality of DNN hidden layers."}
     )
 
     # --- Training Arguments ---
@@ -247,10 +228,6 @@ class Arguments:
             if not self.model_name == "GROVER" and bf16_supported and not self.device == 'mps' \
             else False
 
-    @property
-    def device_str(self) -> str:
-        return self.device
-
     @cached_property
     def device(self) -> str:
         """
@@ -290,15 +267,6 @@ class Config(Arguments):
             return 2 if self.regression_with_variance else 1
         else:
             ValueError(f"Unrecognized task type: {self.task_type}")
-
-    @cached_property
-    def d_feature(self):
-        if self.feature_type == 'rdkit':
-            return 200
-        elif self.feature_type == 'rdkit':
-            return 1024
-        else:
-            return 0
 
     def get_meta(self,
                  meta_dir: Optional[str] = None,

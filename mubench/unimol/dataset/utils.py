@@ -1,12 +1,8 @@
-import logging
-import pandas as pd
-import numpy as np
-from rdkit import Chem
-from tqdm.auto import tqdm
-from rdkit.Chem import AllChem
-from rdkit import RDLogger
-from multiprocessing import Pool
 import warnings
+import logging
+import numpy as np
+from rdkit import Chem, RDLogger
+from rdkit.Chem import AllChem
 
 RDLogger.DisableLog('rdApp.*')
 warnings.filterwarnings(action='ignore')

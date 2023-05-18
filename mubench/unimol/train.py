@@ -6,11 +6,11 @@ import torch
 import numpy as np
 from torch.optim import AdamW
 
-from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator, Dictionary
 from .model import UniMol
 from .args import Config
 from mubench.utils.macro import UncertaintyMethods
+from mubench.base.train import Trainer as BaseTrainer
 from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
 logger = logging.getLogger(__name__)

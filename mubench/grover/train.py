@@ -8,11 +8,11 @@ from torch.optim import AdamW
 from scipy.special import softmax, expit
 from typing import Optional, Tuple
 
-from ..base.train import Trainer as BaseTrainer
 from .dataset import Collator
 from .args import Config
 from .model import load_checkpoint
 from mubench.utils.macro import UncertaintyMethods
+from mubench.base.train import Trainer as BaseTrainer
 from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
 logger = logging.getLogger(__name__)

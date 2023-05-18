@@ -3,7 +3,7 @@ from abc import ABC
 import logging
 
 from mubench.utils.macro import UncertaintyMethods
-from ..base.train import Trainer as BaseTrainer
+from mubench.base.train import Trainer as BaseTrainer
 from .dataset import Collator
 from .model import ChemBERTa
 from .args import Config

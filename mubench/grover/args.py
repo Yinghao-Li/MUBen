@@ -3,11 +3,11 @@ from typing import Optional
 from dataclasses import field
 from dataclasses import dataclass
 
-from ..base.args import (
+from mubench.base.args import (
     Config as BaseConfig,
     Arguments as BaseArguments
 )
-from ..utils.macro import MODEL_NAMES
+from mubench.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
 

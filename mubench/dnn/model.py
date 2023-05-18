@@ -7,7 +7,10 @@ A simple deep neural network with customizable activation function.
 import torch
 import torch.nn as nn
 from typing import Optional
-from .layers import OutputLayer
+
+from mubench.base.model import OutputLayer
+
+__all__ = ["DNN"]
 
 
 class DNN(nn.Module):
