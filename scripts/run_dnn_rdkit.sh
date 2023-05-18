@@ -74,7 +74,7 @@ if [ -z ${train_on_qm9+x} ]; then echo "skip qm9"; else dataset_names+=" qm9"; f
 # --- training scripts ---
 for dataset_name in $dataset_names
 do
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_base.py \
+  CUDA_VISIBLE_DEVICES=$cuda_device python run_dnn.py \
     --wandb_api_key $wandb_api_key \
     --disable_wandb $disable_wandb \
     --data_folder $data_folder \
