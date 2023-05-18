@@ -875,19 +875,18 @@ class Trainer:
 
         if lbs.shape[-1] == 1 and len(lbs.shape) > 1:
             lbs = lbs.squeeze(-1)
-        lbs = lbs[bool_masks]
+        # lbs = lbs[bool_masks]
 
         if self._config.task_type == 'classification' and self._config.n_tasks > 1:
             preds = preds.reshape(-1, self._config.n_tasks, self._config.n_lbs)
         if preds.shape[-1] == 1 and len(preds.shape) > 1:
             preds = preds.squeeze(-1)
-
-        preds = preds[bool_masks]
+        # preds = preds[bool_masks]
 
         if self._config.task_type == 'classification':
-            metrics = calculate_classification_metrics(lbs, preds, self._valid_metric)
+            metrics = calculate_classification_metrics(lbs, preds, bool_masks, self._valid_metric)
         else:
-            metrics = calculate_regression_metrics(lbs, preds, self._valid_metric)
+            metrics = calculate_regression_metrics(lbs, preds, bool_masks, self._valid_metric)
 
         return metrics
 
