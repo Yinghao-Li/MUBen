@@ -22,7 +22,7 @@ def calculate_classification_metrics(lbs: np.ndarray,
     Parameters
     ----------
     lbs: true labels, with shape (dataset_size, n_tasks)
-    logits: predicted logits, of shape (dataset_size, n_tasks, n_lbs)
+    logits: predicted logits, of shape (dataset_size, n_tasks, [n_lbs])
     masks: label masks, of shape (dataset_size, n_tasks), should be bool values
     metrics: which metric to calculate
     normalized: whether the logits are already normalized and became probabilities
@@ -35,14 +35,14 @@ def calculate_classification_metrics(lbs: np.ndarray,
         metrics = [metrics]
 
     if not normalized:
-        if len(logits.shape) > 1 and logits.shape[-1] >= 2:
+        if len(logits.shape) > 2 and logits.shape[-1] >= 2:
             probs = softmax(logits, axis=-1)
         else:
             probs = expit(logits)  # sigmoid function
     else:
         probs = logits
 
-    assert not (len(logits.shape) > 1 and probs.shape[-1] > 2), \
+    assert not (len(logits.shape) > 2 and probs.shape[-1] > 2), \
         ValueError('Currently only support binary classification metrics!')
 
     results = dict()

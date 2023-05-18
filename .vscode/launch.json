@@ -19,17 +19,17 @@
             ]
         },
         {
-            "name": "run-base",
+            "name": "run-dnn",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/run_base.py",
+            "program": "${workspaceFolder}/run_dnn.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/config_base.json"
+                "${workspaceFolder}/scripts/config_dnn.json"
             ]
         },
         {

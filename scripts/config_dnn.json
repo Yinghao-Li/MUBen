@@ -1,7 +1,7 @@
 {
   "disable_wandb": true,
-  "wandb_api_key": "86efcc8aa38a82bd8128db4c1cee3acde0f33920",
-  "dataset_name": "qm8",
+  "disable_result_saving": true,
+  "dataset_name": "clintox",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,
@@ -18,6 +18,5 @@
   "num_preprocess_workers": 8,
   "no_mps": true,
   "batch_size": 256,
-  "lr": 0.0001,
-  "disable_result_saving": true
+  "lr": 0.0001
 }
