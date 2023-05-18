@@ -7,17 +7,17 @@ set -e
 # --- the argument values do not matter ---
 
 # -- regression tasks --
-train_on_esol=true
-train_on_freesolv=true
-train_on_lipo=true
-train_on_qm7=true
-train_on_qm8=true
+# train_on_esol=true
+# train_on_freesolv=true
+# train_on_lipo=true
+# train_on_qm7=true
+# train_on_qm8=true
 # train_on_qm9=true
 
 # -- single-task classification --
-train_on_bbbp=true
-train_on_bace=true
-train_on_hiv=true
+# train_on_bbbp=true
+# train_on_bace=true
+# train_on_hiv=true
 
 # -- multi-task classification --
 train_on_tox21=true
@@ -50,6 +50,7 @@ regression_with_variance=true
 lr=0.00005
 batch_size=128
 n_epochs=100
+valid_tolerance=40
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -88,5 +89,6 @@ do
     --regression_with_variance $regression_with_variance \
     --lr $lr \
     --n_epochs $n_epochs \
+    --valid_tolerance $valid_tolerance \
     --batch_size $batch_size
 done

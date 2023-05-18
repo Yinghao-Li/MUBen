@@ -18,13 +18,13 @@ set -e
 # -- single-task classification --
 # train_on_bbbp=true
 # train_on_bace=true
-train_on_hiv=true
+# train_on_hiv=true
 
 # -- multi-task classification --
-# train_on_tox21=true
-# train_on_toxcast=true
-# train_on_clintox=true
-# train_on_sider=true
+train_on_tox21=true
+train_on_toxcast=true
+train_on_clintox=true
+train_on_sider=true
 # train_on_muv=true
 # train_on_pcba=true
 
@@ -43,14 +43,15 @@ pin_memory=false
 ignore_preprocessed_dataset=false
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
 lr=0.0001
 batch_size=64
-n_epochs=50
+n_epochs=100
+valid_tolerance=40
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -90,5 +91,6 @@ do
     --regression_with_variance $regression_with_variance \
     --lr $lr \
     --n_epochs $n_epochs \
+    --valid_tolerance $valid_tolerance \
     --batch_size $batch_size
 done

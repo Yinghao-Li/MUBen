@@ -11,7 +11,7 @@ set -e
 # train_on_freesolv=true
 # train_on_lipo=true
 # train_on_qm7=true
-train_on_qm8=true
+# train_on_qm8=true
 # train_on_qm9=true
 
 # -- single-task classification --
@@ -20,10 +20,10 @@ train_on_qm8=true
 # train_on_hiv=true
 
 # -- multi-task classification --
-# train_on_tox21=true
-# train_on_toxcast=true
-# train_on_clintox=true
-# train_on_sider=true
+train_on_tox21=true
+train_on_toxcast=true
+train_on_clintox=true
+train_on_sider=true
 # train_on_muv=true
 # train_on_pcba=true
 
@@ -51,6 +51,7 @@ regression_with_variance=true
 lr=0.0002
 batch_size=256
 n_epochs=200
+valid_tolerance=200
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -90,5 +91,6 @@ do
     --regression_with_variance $regression_with_variance \
     --lr $lr \
     --n_epochs $n_epochs \
+    --valid_tolerance $valid_tolerance \
     --batch_size $batch_size
 done
