@@ -83,4 +83,3 @@ if __name__ == '__main__':
         main(args=arguments)
     except Exception as e:
         logger.exception(e)
-        raise Exception

@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "bbbp",
+  "dataset_name": "sider",
   "data_folder": "./data/files",
   "unimol_feature_folder": "./data/UniMol",
   "ignore_preprocessed_dataset": false,
@@ -8,8 +8,9 @@
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "checkpoint_path": "models/unimol_base.pt",
-  "batch_size": 8,
+  "batch_size": 32,
   "retrain_model": true,
   "num_preprocess_workers": 8,
-  "lr": 0.0001
+  "lr": 0.0005,
+  "disable_result_saving": true
 }

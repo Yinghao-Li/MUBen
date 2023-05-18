@@ -15,14 +15,14 @@ train_on_qm8=true
 # train_on_qm9=true
 
 # -- single-task classification --
-train_on_bbbp=true
-train_on_bace=true
+# train_on_bbbp=true
+# train_on_bace=true
 # train_on_hiv=true
 
 # -- multi-task classification --
-train_on_tox21=true
-train_on_toxcast=true
-train_on_clintox=true
+# train_on_tox21=true
+# train_on_toxcast=true
+# train_on_clintox=true
 train_on_sider=true
 # train_on_muv=true
 # train_on_pcba=true
@@ -42,13 +42,13 @@ pin_memory=false
 ignore_preprocessed_dataset=true
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=true
+retrain_model=false
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
 lr=0.00005
-batch_size=64
+batch_size=32
 n_epochs=100
 # --- universal arguments region ends ---
 

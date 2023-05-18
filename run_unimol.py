@@ -5,6 +5,7 @@ Train and test Uni-Mol
 import os
 import sys
 import wandb
+import torch
 import logging
 from datetime import datetime
 
@@ -88,9 +89,10 @@ if __name__ == '__main__':
 
     set_logging(log_path=arguments.log_path)
     set_seed(arguments.seed)
+    torch.autograd.set_detect_anomaly(True)
 
-    try:
-        main(args=arguments)
-    except Exception as e:
-        logger.exception(e)
-        raise Exception
+    # try:
+    #     main(args=arguments)
+    # except Exception as e:
+    #     logger.exception(e)
+    main(args=arguments)

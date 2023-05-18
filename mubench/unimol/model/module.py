@@ -40,7 +40,6 @@ class DistanceHead(nn.Module):
 
     def forward(self, x):
         bsz, seq_len, seq_len, _ = x.size()
-        # x[x == float('-inf')] = 0
         x = self.dense(x)
         x = self.activation_fn(x)
         x = self.layer_norm(x)
@@ -49,10 +48,8 @@ class DistanceHead(nn.Module):
         return x
 
 
-@torch.jit.script
 def gaussian(x, mean, std):
-    pi = 3.14159
-    a = (2 * pi) ** 0.5
+    a = (2 * torch.pi) ** 0.5
     return torch.exp(-0.5 * (((x - mean) / std) ** 2)) / (a * std)
 
 
@@ -77,5 +74,3 @@ class GaussianLayer(nn.Module):
         mean = self.means.weight.float().view(-1)
         std = self.stds.weight.float().view(-1).abs() + 1e-5
         return gaussian(x.float(), mean, std).type_as(self.means.weight)
-
-
