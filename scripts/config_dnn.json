@@ -1,7 +1,7 @@
 {
   "disable_wandb": true,
   "disable_result_saving": true,
-  "dataset_name": "toxcast",
+  "dataset_name": "clintox",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,

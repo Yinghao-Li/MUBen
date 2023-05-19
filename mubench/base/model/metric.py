@@ -1,6 +1,5 @@
 
 import numpy as np
-from scipy.special import softmax, expit
 from sklearn.metrics import (
     roc_auc_score,
     mean_squared_error,
@@ -12,10 +11,9 @@ from typing import Optional, Union, List
 
 
 def calculate_classification_metrics(lbs: np.ndarray,
-                                     logits: np.ndarray,
+                                     probs: np.ndarray,
                                      masks: np.ndarray,
-                                     metrics: Union[str, List[str]],
-                                     normalized: Optional[bool] = False) -> dict:
+                                     metrics: Union[str, List[str]]) -> dict:
     """
     Calculate the classification metrics
 
@@ -33,17 +31,6 @@ def calculate_classification_metrics(lbs: np.ndarray,
     """
     if isinstance(metrics, str):
         metrics = [metrics]
-
-    if not normalized:
-        if len(logits.shape) > 2 and logits.shape[-1] >= 2:
-            probs = softmax(logits, axis=-1)
-        else:
-            probs = expit(logits)  # sigmoid function
-    else:
-        probs = logits
-
-    assert not (len(logits.shape) > 2 and probs.shape[-1] > 2), \
-        ValueError('Currently only support binary classification metrics!')
 
     results = dict()
     for metric in metrics:

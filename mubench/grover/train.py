@@ -143,7 +143,7 @@ class Trainer(BaseTrainer, ABC):
 
         if self._config.task_type == 'classification':
 
-            if len(atom_logits.shape) > 1 and atom_logits.shape[-1] >= 2:
+            if self._config.binary_classification_with_softmax:
                 atom_preds = softmax(atom_logits, axis=-1)
                 bond_preds = softmax(bond_logits, axis=-1)
             else:

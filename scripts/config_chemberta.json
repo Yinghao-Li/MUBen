@@ -1,9 +1,12 @@
 {
   "disable_wandb": true,
-  "dataset_name": "sider",
+  "disable_result_saving": true,
+  "retrain_model": true,
+  "dataset_name": "clintox",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": true,
-  "n_epochs": 50,
+  "n_epochs": 30,
   "binary_classification_with_softmax": false,
-  "regression_with_variance": true
+  "regression_with_variance": true,
+  "seed": 0
 }

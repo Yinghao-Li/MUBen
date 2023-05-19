@@ -1,6 +1,6 @@
 {
   "disable_wandb": true,
-  "dataset_name": "bbbp",
+  "dataset_name": "clintox",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": true,
   "n_epochs": 10,
