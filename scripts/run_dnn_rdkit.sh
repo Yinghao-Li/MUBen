@@ -43,14 +43,14 @@ pin_memory=true
 ignore_preprocessed_dataset=false
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
 lr=0.0002
 batch_size=256
-n_epochs=200
+n_epochs=400
 valid_tolerance=200
 # --- universal arguments region ends ---
 

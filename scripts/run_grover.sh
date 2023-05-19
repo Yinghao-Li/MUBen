@@ -50,7 +50,7 @@ regression_with_variance=true
 
 lr=0.0001
 batch_size=64
-n_epochs=100
+n_epochs=150
 valid_tolerance=40
 # --- universal arguments region ends ---
 
