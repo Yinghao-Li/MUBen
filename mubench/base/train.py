@@ -59,7 +59,6 @@ class Trainer:
         self._device = getattr(config, "device", "cpu")
 
         self._model = None
-        self._opt_model = None  # compiled model
         self._optimizer = None
         self._scheduler = None
         self._loss_fn = None
@@ -111,21 +110,12 @@ class Trainer:
         # initialize training modules
         self.initialize()
 
-        # compile model
-        self.compile_model()
-
     @property
     def model(self):
         # return the scaled model if it exits
         if self._ts_model:
             return self._ts_model
-        if self._opt_model:
-            return self._opt_model
         return self._model
-
-    def compile_model(self):
-        self._opt_model = torch.compile(self._model)
-        return self
 
     def initialize(self):
         """
@@ -565,7 +555,6 @@ class Trainer:
             for epoch_idx in range(self._status.n_epochs):
 
                 training_loss = self.training_epoch(data_loader, pbar)
-                torch.cuda.empty_cache()
 
                 # Print the averaged training loss so far.
                 pbar.set_description(f'[Epoch {self._status.train_log_idx}] Loss: {training_loss:.4f}')
@@ -617,15 +606,8 @@ class Trainer:
             if self._sgld_optimizer is not None:  # for sgld compatibility
                 self._sgld_optimizer.zero_grad()
 
-            # mixed-precision training
-            # GROVER uses PreLU which does not support bfloat16
-            if self._config.hf_training:
-                with torch.autocast(device_type=self._config.device, dtype=torch.bfloat16):
-                    logits = self.model(batch)
-                    loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
-            else:
-                logits = self.model(batch)
-                loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
+            logits = self.model(batch)
+            loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
 
             loss.backward()
 
@@ -713,11 +695,7 @@ class Trainer:
             for batch in dataloader:
                 batch.to(self._config.device)
 
-                if self._config.hf_training:
-                    with torch.autocast(device_type=self._config.device, dtype=torch.bfloat16):
-                        logits = self.model(batch)
-                else:
-                    logits = self.model(batch)
+                logits = self.model(batch)
                 logits_list.append(logits.to(torch.float).detach().cpu())
 
         logits = torch.cat(logits_list, dim=0).numpy()
@@ -805,7 +783,6 @@ class Trainer:
                     model=self.model,
                     training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
                     device=self._config.device,
-                    hf_training=self._config.hf_training
                 )
 
             preds = self.inverse_standardize_preds(self.process_logits(self.inference(dataset)))

@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from functools import cached_property
 from .layers import utils
 
 
@@ -48,11 +50,6 @@ class DistanceHead(nn.Module):
         return x
 
 
-def gaussian(x, mean, std):
-    a = (2 * torch.pi) ** 0.5
-    return torch.exp(-0.5 * (((x - mean) / std) ** 2)) / (a * std)
-
-
 class GaussianLayer(nn.Module):
     def __init__(self, k=128, edge_types=1024):
         super().__init__()
@@ -66,11 +63,21 @@ class GaussianLayer(nn.Module):
         nn.init.constant_(self.bias.weight, 0)
         nn.init.constant_(self.mul.weight, 1)
 
+    @cached_property
+    def half_log_2pi(self):
+        return 0.9189385  # float32 precision
+
+    def gaussian_prob(self, x, mu, sigma):
+        """
+        Use exp-log-gaussian for numerical stability
+        """
+        return torch.exp(-0.5 * ((x - mu) / sigma) ** 2 - torch.log(sigma) - self.half_log_2pi)
+
     def forward(self, x, edge_type):
-        mul = self.mul(edge_type).type_as(x)
-        bias = self.bias(edge_type).type_as(x)
+        mul = self.mul(edge_type)
+        bias = self.bias(edge_type)
         x = mul * x.unsqueeze(-1) + bias
         x = x.expand(-1, -1, -1, self.K)
-        mean = self.means.weight.float().view(-1)
-        std = self.stds.weight.float().view(-1).abs() + 1e-5
-        return gaussian(x.float(), mean, std).type_as(self.means.weight)
+        mean = self.means.weight.view(-1)
+        std = self.stds.weight.view(-1).abs() + 1e-5
+        return self.gaussian_prob(x, mean, std)

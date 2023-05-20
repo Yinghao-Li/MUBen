@@ -72,7 +72,6 @@ class Trainer(BaseTrainer, ABC):
 
     def process_logits(self, logits: np.ndarray):
 
-        # TODO: should keep preds of all conformations during result saving
         preds = super().process_logits(logits)
 
         if isinstance(preds, np.ndarray):

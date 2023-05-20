@@ -220,14 +220,6 @@ class Arguments:
         if not self.wandb_project:
             self.wandb_project = f"MUBench-{self.dataset_name}"
 
-        try:
-            bf16_supported = True if torch.cuda.is_bf16_supported() else False
-        except AssertionError:  # case where gpu is not accessible
-            bf16_supported = True
-        self.hf_training = True \
-            if not self.model_name == "GROVER" and bf16_supported and not self.device == 'mps' \
-            else False
-
     @cached_property
     def device(self) -> str:
         """
