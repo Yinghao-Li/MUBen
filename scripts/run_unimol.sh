@@ -42,7 +42,7 @@ pin_memory=false
 ignore_preprocessed_dataset=true
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
