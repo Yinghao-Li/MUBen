@@ -42,15 +42,10 @@ class Arguments:
             "choices": DATASET_NAMES
         }
     )
-    dataset_splitting_random_seed: Optional[int] = field(
-        default=None, metadata={
-            "help": "The random seed used during dataset construction. Leave default (0) if not randomly split."
-        }
-    )
     data_folder: Optional[str] = field(
         default='', metadata={'help': 'The folder containing all datasets.'}
     )
-    result_dir: Optional[str] = field(
+    result_folder: Optional[str] = field(
         default='./output', metadata={'help': "where to save model outputs."}
     )
     ignore_preprocessed_dataset: Optional[bool] = field(
@@ -110,7 +105,7 @@ class Arguments:
         default=0.1, metadata={"help": "Learning rate scheduler warm-up ratio"}
     )
     seed: Optional[int] = field(
-        default=42, metadata={"help": "Random seed that will be set at the beginning of training."}
+        default=0, metadata={"help": "Random seed that will be set at the beginning of training."}
     )
     debug: Optional[bool] = field(
         default=False, metadata={"help": "Debugging mode with fewer training data"}
@@ -204,13 +199,16 @@ class Arguments:
     def __post_init__(self):
         if self.model_name != "DNN":
             self.feature_type = "none"
+            model_name_and_feature = self.model_name
+        else:
+            assert self.feature_type != "none", ValueError("Must specify `feature_type` for DNN!")
+            model_name_and_feature = f"{self.model_name}-{self.feature_type}"
 
-        if self.dataset_splitting_random_seed is not None:  # random splitting
-            self.data_dir = os.path.join(
-                self.data_folder, self.dataset_name, f"split-{self.dataset_splitting_random_seed}"
-            )
-        else:  # scaffold splitting
-            self.data_dir = os.path.join(self.data_folder, self.dataset_name)
+        # update data and result dir
+        self.data_dir = os.path.join(self.data_folder, self.dataset_name)
+        self.result_dir = os.path.join(
+            self.result_folder, self.dataset_name, model_name_and_feature, self.uncertainty_method, f"seed-{self.seed}"
+        )
 
         # wandb arguments
         self.apply_wandb = not self.disable_wandb
