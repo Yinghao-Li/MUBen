@@ -59,6 +59,7 @@ class Trainer:
         self._device = getattr(config, "device", "cpu")
 
         self._model = None
+        self._opt_model = None  # compiled model
         self._optimizer = None
         self._scheduler = None
         self._loss_fn = None
@@ -110,12 +111,21 @@ class Trainer:
         # initialize training modules
         self.initialize()
 
+        # compile model
+        self.compile_model()
+
     @property
     def model(self):
         # return the scaled model if it exits
         if self._ts_model:
             return self._ts_model
+        if self._opt_model:
+            return self._opt_model
         return self._model
+
+    def compile_model(self):
+        self._opt_model = torch.compile(self._model)
+        return self
 
     def initialize(self):
         """

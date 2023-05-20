@@ -3,8 +3,8 @@ The scaler for the regression task.
 This implementation is adapted from
 https://github.com/chemprop/chemprop/blob/master/chemprop/data/scaler.py
 """
-from typing import Any, Optional
 import numpy as np
+from typing import Any, Optional
 
 __all__ = ['StandardScaler']
 

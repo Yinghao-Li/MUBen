@@ -7,7 +7,7 @@ from sklearn.metrics import (
     precision_recall_curve,
     auc,
 )
-from typing import Optional, Union, List
+from typing import Union, List
 
 
 def calculate_classification_metrics(lbs: np.ndarray,
@@ -20,10 +20,9 @@ def calculate_classification_metrics(lbs: np.ndarray,
     Parameters
     ----------
     lbs: true labels, with shape (dataset_size, n_tasks)
-    logits: predicted logits, of shape (dataset_size, n_tasks, [n_lbs])
+    probs: predicted logits, of shape (dataset_size, n_tasks, [n_lbs])
     masks: label masks, of shape (dataset_size, n_tasks), should be bool values
     metrics: which metric to calculate
-    normalized: whether the logits are already normalized and became probabilities
 
     Returns
     -------
@@ -62,7 +61,7 @@ def calculate_classification_metrics(lbs: np.ndarray,
                 lbs_ = lbs_[masks_]
                 probs_ = probs_[masks_]
 
-                if len(lbs_)<1:
+                if len(lbs_) < 1:
                     continue
                 if (lbs_ < 0).any():
                     raise ValueError("Invalid label value encountered!")
