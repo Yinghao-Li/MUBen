@@ -7,24 +7,24 @@ set -e
 # --- the argument values do not matter ---
 
 # -- regression tasks --
-# train_on_esol=true
-# train_on_freesolv=true
-# train_on_lipo=true
-# train_on_qm7=true
-# train_on_qm8=true
-# train_on_qm9=true
+train_on_esol=true
+train_on_freesolv=true
+train_on_lipo=true
+train_on_qm7=true
+train_on_qm8=true
+train_on_qm9=true
 
 # -- single-task classification --
-# train_on_bbbp=true
-# train_on_bace=true
-# train_on_hiv=true
+train_on_bbbp=true
+train_on_bace=true
+train_on_hiv=true
 
 # -- multi-task classification --
 train_on_tox21=true
 train_on_toxcast=true
 train_on_clintox=true
 train_on_sider=true
-# train_on_muv=true
+train_on_muv=true
 # train_on_pcba=true
 
 # --- dataset choosing region ends ---
@@ -37,6 +37,7 @@ disable_wandb=false
 
 data_folder="./data/files"
 unimol_feature_folder="./data/UniMol"
+num_workers=16
 num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
@@ -49,8 +50,11 @@ regression_with_variance=true
 
 lr=0.00005
 batch_size=32
+batch_size_inference=16
 n_epochs=100
 valid_tolerance=40
+
+seed=0
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -81,6 +85,7 @@ do
     --unimol_feature_folder $unimol_feature_folder \
     --dataset_name "$dataset_name" \
     --checkpoint_path ./models/unimol_base.pt \
+    --num_workers $num_workers \
     --num_preprocess_workers $num_preprocess_workers \
     --pin_memory $pin_memory \
     --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
@@ -91,5 +96,6 @@ do
     --lr $lr \
     --n_epochs $n_epochs \
     --valid_tolerance $valid_tolerance \
-    --batch_size $batch_size
+    --batch_size $batch_size \
+    --seed $seed
 done
