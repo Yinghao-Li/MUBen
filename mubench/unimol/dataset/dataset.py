@@ -9,7 +9,6 @@ from .utils import smiles_to_coords
 from .process import ProcessingPipeline
 from .dictionary import Dictionary
 from mubench.base.dataset import Dataset as BaseDataset
-from mubench.utils.data import pack_instances
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +21,24 @@ class Dataset(BaseDataset):
         self._atoms = None
         self._cooridnates = None
         self.data_processor = None
+
+    def __getitem__(self, idx):
+        """
+        Re-define the getitem function to accommodate the random sampling during training
+        """
+        atoms, coordinates, distances, edge_types = self.data_processor(
+            atoms=self._atoms[idx],
+            coordinates=self._cooridnates[idx]
+        )
+        feature_dict = {
+            'atoms': atoms,
+            'coordinates': coordinates,
+            'distances': distances,
+            'edge_types': edge_types,
+            'lbs': self.lbs[idx],
+            'masks': self.masks[idx]
+        }
+        return feature_dict
 
     def prepare(self, config, partition, dictionary=None):
         self._partition = partition
@@ -88,21 +105,4 @@ class Dataset(BaseDataset):
         return self
 
     def get_instances(self):
-        atoms = list()
-        coordinates = list()
-        distances = list()
-        edge_types = list()
-
-        for atom, coord in tqdm(zip(self._atoms, self._cooridnates), total=len(self._atoms)):
-            a, c, d, e = self.data_processor(atom, coord)
-            atoms.append(a)
-            coordinates.append(c)
-            distances.append(d)
-            edge_types.append(e)
-
-        data_instances = pack_instances(
-            atoms=atoms, coordinates=coordinates, distances=distances, edge_types=edge_types,
-            lbs=self.lbs, masks=self.masks
-        )
-
-        return data_instances
+        return None
