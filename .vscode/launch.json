@@ -8,14 +8,16 @@
             "name": "data-constr",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/data/src/data_processing.py",
+            "program": "${workspaceFolder}/data_constr/build_datasets_from_unimol.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
+                "PYTHONPATH": "${workspaceRoot}",
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/config_dataset.json"
+                "--unimol_data_path", "./data/UniMol",
+                "--output_dir", "./data/files"
             ]
         },
         {

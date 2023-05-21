@@ -59,6 +59,7 @@ class Arguments:
 
 def main(args: Arguments):
     for dataset_name in args.dataset_names:
+        skip_dataset = False
         assert dataset_name in DATASET_NAMES, ValueError(f"Undefined dataset: {dataset_name}")
 
         if dataset_name in CLASSIFICATION_DATASET:
@@ -80,6 +81,10 @@ def main(args: Arguments):
 
             # read data points
             lmdb_path = os.path.join(args.unimol_data_path, dataset_name, f"{partition}.lmdb")
+            if not os.path.exists(lmdb_path):
+                logger.warning(f"Path {lmdb_path} does not exist!")
+                skip_dataset = True
+                break
             env = lmdb.open(
                 lmdb_path,
                 subdir=False,
@@ -112,6 +117,9 @@ def main(args: Arguments):
                 "masks": masks.tolist()
             }
             save_csv(insts, os.path.join(output_dir, f"{partition}.csv"))
+        
+        if skip_dataset:
+            continue
 
         meta_dict = {
             'task_type': task,
