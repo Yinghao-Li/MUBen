@@ -5,6 +5,7 @@ Base trainer function.
 """
 
 import os
+import os.path as op
 import copy
 import torch
 import wandb
@@ -75,13 +76,6 @@ class Trainer:
 
         self._model_name = 'model_best.ckpt'
 
-        # Test variables and flags
-        model_name_and_feature = f"{config.model_name}-{config.feature_type}" \
-            if config.feature_type != 'none' else config.model_name
-        self._result_dir = os.path.join(
-            config.result_dir, config.dataset_name, model_name_and_feature, config.uncertainty_method
-        )
-
         # mutable class attributes
         self._status = Status(
             train_log_idx=0,  # will increase by 1 each time you call `train_epoch`
@@ -92,7 +86,10 @@ class Trainer:
             n_epochs=config.n_epochs,
             valid_epoch_interval=config.valid_epoch_interval,
             model_name=self._model_name,  # mutable model name for ensemble
-            result_dir=self._result_dir
+            result_dir=config.result_dir,  # mutable result directory for ensemble
+            result_dir_no_uncertainty=UncertaintyMethods.none.join(  # substitute uncertainty method to none
+                config.result_dir.rsplit(config.uncertainty_method, 1)
+            )
         )
 
         # uncertainty-specific variables
@@ -328,11 +325,7 @@ class Trainer:
         """
 
         set_seed(self._config.seed)
-        if os.path.exists(os.path.join(self._status.result_dir, self._status.model_name)) \
-                and not self._config.retrain_model:
-            logger.info("Find existing model, will skip training.")
-            self.load_best_model()
-        else:
+        if not self.load_best_model():
             logger.info("Training model")
             self.train()
 
@@ -361,14 +354,13 @@ class Trainer:
             self.initialize()
             logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
 
-            # update the name of the best model
-            self._status.result_dir = os.path.join(self._result_dir, str(ensemble_idx))
+            # update result dir
+            self._status.result_dir = \
+                op.join(op.dirname(op.normpath(self._status.result_dir)), f"seed-{individual_seed}")
+            self._status.result_dir_no_uncertainty = \
+                op.join(op.dirname(op.normpath(self._status.result_dir_no_uncertainty)), f"seed-{individual_seed}")
 
-            if os.path.exists(os.path.join(self._status.result_dir, self._status.model_name)) and \
-                    not self._config.retrain_model:
-                logger.info("Find existing model, will skip training.")
-                self.load_best_model()
-            else:
+            if not self.load_best_model():
                 logger.info("Training model")
                 self.train()
 
@@ -848,7 +840,7 @@ class Trainer:
             raise ValueError("Unrecognized type or shape of `preds`.")
 
         for idx, pred in enumerate(preds):
-            file_path = os.path.join(self._status.result_dir, "preds", f"{idx}.pt")
+            file_path = op.join(self._status.result_dir, "preds", f"{idx}.pt")
             self.save_preds_to_pt(
                 lbs=self._test_dataset.lbs, preds=pred, masks=self.test_dataset.masks, file_path=file_path
             )
@@ -902,18 +894,34 @@ class Trainer:
 
         if not self._config.disable_result_saving:
             os.makedirs(self._status.result_dir, exist_ok=True)
-            self._model_container.save(os.path.join(self._status.result_dir, self._status.model_name))
+            self._model_container.save(op.join(self._status.result_dir, self._status.model_name))
         else:
             logger.warning("Model is not saved because of `disable_result_saving` flag is set to `True`.")
 
         return self
 
-    def load_best_model(self):
-        self._model_container.load(os.path.join(self._status.result_dir, self._status.model_name))
+    def _load_from_container(self, model_path):
+        if not op.exists(model_path):
+            return False
+        logger.info(f"Loading trained model from {model_path}.")
+        self._model_container.load(model_path)
         self._model.load_state_dict(self._model_container.state_dict)
         self._model.to(self._device)
+        return True
 
-        return self
+    def load_best_model(self):
+        if self._config.retrain_model:
+            return False
+
+        model_path = op.join(self._status.result_dir, self._status.model_name)
+        if self._load_from_container(model_path):
+            return True
+
+        model_path = op.join(self._status.result_dir_no_uncertainty, self._status.model_name)
+        if self._load_from_container(model_path):
+            return True
+
+        return False
 
     def get_dataloader(self,
                        dataset,
@@ -961,14 +969,14 @@ class Trainer:
         output_dir = output_dir if output_dir is not None else self._status.result_dir
 
         model_state_dict = self._model.state_dict()
-        torch.save(model_state_dict, os.path.join(output_dir, model_name))
+        torch.save(model_state_dict, op.join(output_dir, model_name))
 
         self._config.save(output_dir)
 
         if save_optimizer:
-            torch.save(self._optimizer.state_dict(), os.path.join(output_dir, optimizer_name))
+            torch.save(self._optimizer.state_dict(), op.join(output_dir, optimizer_name))
         if save_scheduler and self._scheduler is not None:
-            torch.save(self._scheduler.state_dict(), os.path.join(output_dir, scheduler_name))
+            torch.save(self._scheduler.state_dict(), op.join(output_dir, scheduler_name))
 
         return None
 
@@ -1000,7 +1008,7 @@ class Trainer:
         logger.info(f"Loading model from {input_dir}")
 
         self.initialize_model()
-        self._model.load_state_dict(torch.load(os.path.join(input_dir, model_name)))
+        self._model.load_state_dict(torch.load(op.join(input_dir, model_name)))
         self._model.to(self._device)
 
         if load_optimizer:
@@ -1009,9 +1017,9 @@ class Trainer:
             if self._optimizer is None:
                 self.initialize_optimizer()
 
-            if os.path.isfile(os.path.join(input_dir, optimizer_name)):
+            if op.isfile(op.join(input_dir, optimizer_name)):
                 self._optimizer.load_state_dict(
-                    torch.load(os.path.join(input_dir, optimizer_name), map_location=self._device)
+                    torch.load(op.join(input_dir, optimizer_name), map_location=self._device)
                 )
             else:
                 logger.warning("Optimizer file does not exist!")
@@ -1022,9 +1030,9 @@ class Trainer:
             if self._scheduler is None:
                 self.initialize_scheduler()
 
-            if os.path.isfile(os.path.join(input_dir, scheduler_name)):
+            if op.isfile(op.join(input_dir, scheduler_name)):
                 self._optimizer.load_state_dict(
-                    torch.load(os.path.join(input_dir, scheduler_name), map_location=self._device)
+                    torch.load(op.join(input_dir, scheduler_name), map_location=self._device)
                 )
             else:
                 logger.warning("Scheduler file does not exist!")
@@ -1045,7 +1053,7 @@ class Trainer:
                 "masks": masks
             }
 
-            os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
+            os.makedirs(op.dirname(op.normpath(file_path)), exist_ok=True)
             torch.save(data_dict, file_path)
         else:
             logger.warning("Results are not saved because of `disable_result_saving` flag is set to `True`.")
