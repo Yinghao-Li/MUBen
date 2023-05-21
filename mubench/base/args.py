@@ -201,7 +201,6 @@ class Arguments:
             self.feature_type = "none"
             model_name_and_feature = self.model_name
         else:
-            assert self.feature_type != "none", ValueError("Must specify `feature_type` for DNN!")
             model_name_and_feature = f"{self.model_name}-{self.feature_type}"
 
         # update data and result dir
