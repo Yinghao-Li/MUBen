@@ -1,16 +1,18 @@
 {
   "disable_wandb": true,
-  "disable_result_saving": true,
-  "dataset_name": "bbbp",
+  "disable_result_saving": false,
+  "dataset_name": "clintox",
   "data_folder": "./data/files",
   "unimol_feature_folder": "./data/UniMol",
   "ignore_preprocessed_dataset": false,
-  "n_epochs": 10,
+  "n_epochs": 20,
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "checkpoint_path": "models/unimol_base.pt",
-  "batch_size": 64,
+  "batch_size": 32,
+  "batch_size_inference": 8,
   "retrain_model": true,
+  "num_workers": 8,
   "num_preprocess_workers": 8,
   "lr": 0.00005
 }

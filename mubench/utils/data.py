@@ -62,7 +62,7 @@ def unpack_instances(instance_list: List[dict], attr_names: Optional[List[str]] 
     """
     if not attr_names:
         attr_names = list(instance_list[0].keys())
-    attribute_tuple = ((inst[name] for inst in instance_list) for name in attr_names)
+    attribute_tuple = [[inst[name] for inst in instance_list] for name in attr_names]
 
     return attribute_tuple
 
