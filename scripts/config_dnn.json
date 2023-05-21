@@ -1,7 +1,7 @@
 {
   "disable_wandb": true,
-  "disable_result_saving": true,
-  "dataset_name": "clintox",
+  "disable_result_saving": false,
+  "dataset_name": "esol",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,

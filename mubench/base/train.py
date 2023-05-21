@@ -8,6 +8,7 @@ import os
 import os.path as op
 import copy
 import torch
+import torch.nn.functional as F
 import wandb
 import logging
 import numpy as np
@@ -720,7 +721,7 @@ class Trainer:
             # get the mean of the preds
             if self._config.regression_with_variance:
                 mean = logits[..., 0]
-                var = logits[..., 1]
+                var = F.softplus(torch.from_numpy(logits[..., 1])).numpy()
                 return mean, var
             else:
                 preds = logits
