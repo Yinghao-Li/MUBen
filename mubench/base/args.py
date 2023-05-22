@@ -111,6 +111,19 @@ class Arguments:
         default=False, metadata={"help": "Debugging mode with fewer training data"}
     )
 
+    # --- Evaluation Arguments ---
+    valid_epoch_interval: Optional[int] = field(
+        default=1, metadata={'help': 'How many training epochs within each validation step. '
+                                     'Set to 0 to disable validation.'}
+    )
+    valid_tolerance: Optional[int] = field(
+        default=20, metadata={'help': "Maximum validation steps allowed for non-increasing model performance."}
+    )
+    n_test: Optional[int] = field(
+        default=1, metadata={'help': "How many test loops to run in one training process. "
+                                     "The default value for some Bayesian methods such as MC Dropout is 20."}
+    )
+
     # --- Uncertainty Arguments ---
     uncertainty_method: Optional[str] = field(
         default=UncertaintyMethods.none, metadata={
@@ -161,19 +174,6 @@ class Arguments:
     )
     sgld_sampling_interval: Optional[int] = field(
         default=2, metadata={"help": "The number of epochs per sampling operation."}
-    )
-
-    # --- Evaluation Arguments ---
-    valid_epoch_interval: Optional[int] = field(
-        default=1, metadata={'help': 'How many training epochs within each validation step. '
-                                     'Set to 0 to disable validation.'}
-    )
-    valid_tolerance: Optional[int] = field(
-        default=20, metadata={'help': "Maximum validation steps allowed for non-increasing model performance."}
-    )
-    n_test: Optional[int] = field(
-        default=1, metadata={'help': "How many test loops to run in one training process. "
-                                     "The default value for some Bayesian methods such as MC Dropout is 20."}
     )
 
     # --- Device Arguments ---

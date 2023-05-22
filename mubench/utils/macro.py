@@ -3,7 +3,7 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['DATASET_NAMES', 'EVAL_METRICS',
+__all__ = ['DATASET_NAMES', 'CLASSIFICATION_DATASET', 'REGRESSION_DATASET', 'EVAL_METRICS',
            'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES',
            'StrEnum']
 
@@ -34,6 +34,27 @@ DATASET_NAMES = [
     "qm7",
     "qm8",
     "qm9"
+]
+
+CLASSIFICATION_DATASET = [
+    'bace',
+    'bbbp',
+    'clintox',
+    'hiv',
+    'muv',
+    'pcba',
+    'sider',
+    'tox21',
+    'toxcast'
+]
+
+REGRESSION_DATASET = [
+    'qm7',
+    'qm8',
+    'qm9',
+    'esol',
+    'freesolv',
+    'lipo',
 ]
 
 EVAL_METRICS = {

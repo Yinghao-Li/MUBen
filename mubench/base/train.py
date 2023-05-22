@@ -791,7 +791,7 @@ class Trainer:
 
         if not return_preds:
             return metrics
-        elif not vars_array:
+        elif vars_array is None:
             return metrics, preds_array
         else:
             return metrics, (preds_array, vars_array)

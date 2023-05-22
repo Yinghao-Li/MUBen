@@ -1,0 +1,7 @@
+{
+  "dataset_name": "tox21",
+  "model_name": "DNN",
+  "feature_type": "rdkit",
+  "uncertainty_method": "none",
+  "result_folder": "./output/"
+}
