@@ -10,7 +10,7 @@ set -e
 train_on_esol=true
 train_on_freesolv=true
 train_on_lipo=true
-# train_on_qm7=true
+train_on_qm7=true
 # train_on_qm8=true
 # train_on_qm9=true
 
@@ -93,7 +93,6 @@ do
   if [ $dataset_name == "sider" ]
   then
     lr=0.0001
-    batch_size=32
   fi
   CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
     --wandb_api_key $wandb_api_key \
