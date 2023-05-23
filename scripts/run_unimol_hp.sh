@@ -16,14 +16,14 @@ set -e
 
 # -- single-task classification --
 # train_on_bbbp=true  # fine-tuned
-train_on_bace=true  # fine-tuned
+# train_on_bace=true  # fine-tuned
 #train_on_hiv=true
 
 # -- multi-task classification --
 #train_on_tox21=true  # fine-tuned
 #train_on_toxcast=true  # fine-tuned
 #train_on_clintox=true
-#train_on_sider=true
+train_on_sider=true
 #train_on_muv=true
 # train_on_pcba=true
 
@@ -48,10 +48,10 @@ retrain_model=true
 binary_classification_with_softmax=false
 regression_with_variance=true
 
-lr=0.00005
+lr=0.0005
 batch_size=32
 batch_size_inference=16
-n_epochs=100
+n_epochs=80
 valid_tolerance=40
 
 seed=0
