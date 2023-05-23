@@ -7,21 +7,21 @@ set -e
 # --- the argument values do not matter ---
 
 # -- regression tasks --
-#train_on_esol=true
-#train_on_freesolv=true
-#train_on_lipo=true
-#train_on_qm7=true
-#train_on_qm8=true
-#train_on_qm9=true
+#train_on_esol=true  # fine-tuned
+#train_on_freesolv=true  # fine-tuned
+#train_on_lipo=true  # fine-tuned
+#train_on_qm7=true  # fine-tuned
+#train_on_qm8=true  # fine-tuned
+#train_on_qm9=true  # fine-tuned
 
 # -- single-task classification --
 # train_on_bbbp=true  # fine-tuned
-train_on_bace=true
+train_on_bace=true  # fine-tuned
 #train_on_hiv=true
 
 # -- multi-task classification --
-#train_on_tox21=true
-#train_on_toxcast=true
+#train_on_tox21=true  # fine-tuned
+#train_on_toxcast=true  # fine-tuned
 #train_on_clintox=true
 #train_on_sider=true
 #train_on_muv=true

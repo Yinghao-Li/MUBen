@@ -15,8 +15,8 @@ set -e
 # train_on_qm9=true
 
 # -- single-task classification --
-train_on_bbbp=true
-# train_on_bace=true
+# train_on_bbbp=true
+train_on_bace=true
 # train_on_hiv=true
 
 # -- multi-task classification --
