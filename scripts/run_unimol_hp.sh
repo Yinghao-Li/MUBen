@@ -48,10 +48,10 @@ retrain_model=true
 binary_classification_with_softmax=false
 regression_with_variance=true
 
-lr=0.0005
-batch_size=32
+lr=0.0001
+batch_size=16
 batch_size_inference=16
-n_epochs=80
+n_epochs=60
 valid_tolerance=40
 
 seed=0

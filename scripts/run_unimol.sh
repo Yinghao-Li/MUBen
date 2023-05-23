@@ -15,15 +15,15 @@ train_on_lipo=true
 # train_on_qm9=true
 
 # -- single-task classification --
-# train_on_bbbp=true
-# train_on_bace=true
+train_on_bbbp=true
+train_on_bace=true
 # train_on_hiv=true
 
 # -- multi-task classification --
 train_on_tox21=true
 train_on_toxcast=true
-# train_on_clintox=true
-# train_on_sider=true
+train_on_clintox=true
+train_on_sider=true
 #train_on_muv=true
 # train_on_pcba=true
 
@@ -43,7 +43,7 @@ pin_memory=false
 ignore_preprocessed_dataset=true
 
 uncertainty_method="DeepEnsembles"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
@@ -88,8 +88,12 @@ do
   if [ $dataset_name == "bbbp" ]
   then
     lr=0.0001
-    batch_size=32
     n_epochs=20
+  fi
+  if [ $dataset_name == "sider" ]
+  then
+    lr=0.0001
+    batch_size=32
   fi
   CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
     --wandb_api_key $wandb_api_key \
