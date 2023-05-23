@@ -42,8 +42,8 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="none"  # this is subject to change
-retrain_model=true
+uncertainty_method="MCDropout"  # this is subject to change
+retrain_model=false
 
 binary_classification_with_softmax=false
 regression_with_variance=true
@@ -55,6 +55,10 @@ n_epochs=100
 valid_tolerance=40
 
 seed=0
+
+# Uncertainty arguments
+n_test=30
+
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -97,5 +101,6 @@ do
     --n_epochs $n_epochs \
     --valid_tolerance $valid_tolerance \
     --batch_size $batch_size \
-    --seed $seed
+    --seed $seed \
+    --n_test $n_test
 done
