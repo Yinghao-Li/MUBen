@@ -15,8 +15,8 @@ set -e
 #train_on_qm9=true
 
 # -- single-task classification --
-train_on_bbbp=true
-#train_on_bace=true
+# train_on_bbbp=true  # fine-tuned
+train_on_bace=true
 #train_on_hiv=true
 
 # -- multi-task classification --
@@ -48,16 +48,16 @@ retrain_model=true
 binary_classification_with_softmax=false
 regression_with_variance=true
 
-lr=0.0001
+lr=0.00005
 batch_size=32
 batch_size_inference=16
-n_epochs=20
+n_epochs=100
 valid_tolerance=40
 
 seed=0
 
 # Uncertainty arguments
-n_test=30
+n_test=1
 
 # --- universal arguments region ends ---
 
