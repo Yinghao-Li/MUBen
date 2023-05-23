@@ -54,6 +54,10 @@ n_epochs=150
 valid_tolerance=40
 
 seed=0
+
+# Uncertainty arguments
+n_test=30
+
 # --- universal arguments region ends ---
 
 # construct the list of datasets used for training
@@ -95,5 +99,6 @@ do
     --n_epochs $n_epochs \
     --valid_tolerance $valid_tolerance \
     --batch_size $batch_size \
-    --seed $seed
+    --seed $seed \
+    --n_test $n_test
 done

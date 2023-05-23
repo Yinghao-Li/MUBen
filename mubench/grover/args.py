@@ -48,7 +48,7 @@ class Arguments(BaseArguments):
 
     # Model arguments
     dropout: Optional[float] = field(
-        default=0.0,
+        default=0.1,
         metadata={'help': 'Dropout probability'}
     )
     ffn_hidden_size: Optional[int] = field(

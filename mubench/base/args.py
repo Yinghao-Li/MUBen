@@ -317,6 +317,9 @@ class Config(Arguments):
 
         assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
 
+        if self.uncertainty_method == UncertaintyMethods.none:
+            self.n_test = 1
+
         if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag, UncertaintyMethods.bbp] \
                 and self.n_test == 1:
             logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
