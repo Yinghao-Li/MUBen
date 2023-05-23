@@ -4,7 +4,7 @@
   "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
-  "retrain_model": false,
+  "retrain_model": true,
   "n_epochs": 100,
   "n_swa_epochs": 3,
   "k_swa_checkpoints": 3,

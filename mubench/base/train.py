@@ -73,7 +73,8 @@ class Trainer:
             update_criteria = UpdateCriteria.metric_larger
         else:
             update_criteria = UpdateCriteria.metric_smaller
-        self._model_container = ModelContainer(update_criteria)
+        self._update_criteria = update_criteria
+        self._model_container = ModelContainer(self._update_criteria)
 
         self._model_name = 'model_best.ckpt'
 
@@ -126,6 +127,7 @@ class Trainer:
         self._status.train_log_idx = 0  # will increase by 1 each time you call `train_epoch`
         self._status.eval_log_idx = 0  # will increase by 1 each time you call `eval_and_save`
         self._status.n_eval_no_improve = 0
+        self._model_container = ModelContainer(self._update_criteria)
         return self
 
     def initialize_model(self, *args, **kwargs):
@@ -351,6 +353,8 @@ class Trainer:
         for ensemble_idx in range(self._config.n_ensembles):
             # update random seed and re-initialize training status
             individual_seed = self._config.seed + ensemble_idx
+
+            del self._model
             set_seed(individual_seed)
             self.initialize()
             logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
