@@ -24,7 +24,7 @@ train_on_tox21=true
 train_on_toxcast=true
 train_on_clintox=true
 train_on_sider=true
-train_on_muv=true
+#train_on_muv=true
 # train_on_pcba=true
 
 # --- dataset choosing region ends ---
@@ -65,19 +65,20 @@ n_test=30
 dataset_names=""
 if [ -z ${train_on_bbbp+x} ]; then echo "skip bbbp"; else dataset_names+=" bbbp"; fi
 if [ -z ${train_on_bace+x} ]; then echo "skip bace"; else dataset_names+=" bace"; fi
-if [ -z ${train_on_hiv+x} ]; then echo "skip hiv"; else dataset_names+=" hiv"; fi
 if [ -z ${train_on_tox21+x} ]; then echo "skip tox21"; else dataset_names+=" tox21"; fi
 if [ -z ${train_on_toxcast+x} ]; then echo "skip toxcast"; else dataset_names+=" toxcast"; fi
 if [ -z ${train_on_clintox+x} ]; then echo "skip clintox"; else dataset_names+=" clintox"; fi
 if [ -z ${train_on_sider+x} ]; then echo "skip sider"; else dataset_names+=" sider"; fi
-if [ -z ${train_on_muv+x} ]; then echo "skip muv"; else dataset_names+=" muv"; fi
-if [ -z ${train_on_pcab+x} ]; then echo "skip pcab"; else dataset_names+=" pcab"; fi
 if [ -z ${train_on_esol+x} ]; then echo "skip esol"; else dataset_names+=" esol"; fi
 if [ -z ${train_on_freesolv+x} ]; then echo "skip freesolv"; else dataset_names+=" freesolv"; fi
 if [ -z ${train_on_lipo+x} ]; then echo "skip lipo"; else dataset_names+=" lipo"; fi
 if [ -z ${train_on_qm7+x} ]; then echo "skip qm7"; else dataset_names+=" qm7"; fi
 if [ -z ${train_on_qm8+x} ]; then echo "skip qm8"; else dataset_names+=" qm8"; fi
+# large datasets have lower priority
+if [ -z ${train_on_hiv+x} ]; then echo "skip hiv"; else dataset_names+=" hiv"; fi
+if [ -z ${train_on_muv+x} ]; then echo "skip muv"; else dataset_names+=" muv"; fi
 if [ -z ${train_on_qm9+x} ]; then echo "skip qm9"; else dataset_names+=" qm9"; fi
+if [ -z ${train_on_pcab+x} ]; then echo "skip pcab"; else dataset_names+=" pcab"; fi
 
 # --- training scripts ---
 for dataset_name in $dataset_names
@@ -101,6 +102,7 @@ do
     --n_epochs $n_epochs \
     --valid_tolerance $valid_tolerance \
     --batch_size $batch_size \
+    --batch_size_inference $batch_size_inference \
     --seed $seed \
     --n_test $n_test
 done

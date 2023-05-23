@@ -6,25 +6,24 @@ set -e
 # --- toggle the following command to decide whether train the model on each dataset ---
 # --- the argument values do not matter ---
 
-
 # -- regression tasks --
-train_on_esol=true
-train_on_freesolv=true
-train_on_lipo=true
-train_on_qm7=true
-train_on_qm8=true
-train_on_qm9=true
+#train_on_esol=true
+#train_on_freesolv=true
+#train_on_lipo=true
+#train_on_qm7=true
+#train_on_qm8=true
+#train_on_qm9=true
 
 # -- single-task classification --
 train_on_bbbp=true
-train_on_bace=true
-train_on_hiv=true
+#train_on_bace=true
+#train_on_hiv=true
 
 # -- multi-task classification --
-train_on_tox21=true
-train_on_toxcast=true
-train_on_clintox=true
-train_on_sider=true
+#train_on_tox21=true
+#train_on_toxcast=true
+#train_on_clintox=true
+#train_on_sider=true
 #train_on_muv=true
 # train_on_pcba=true
 
@@ -37,20 +36,22 @@ wandb_api_key="86efcc8aa38a82bd8128db4c1cee3acde0f33920"
 disable_wandb=false
 
 data_folder="./data/files"
+unimol_feature_folder="./data/UniMol"
 num_workers=16
 num_preprocess_workers=16
 pin_memory=false
-ignore_preprocessed_dataset=false
+ignore_preprocessed_dataset=true
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=true
+retrain_model=false
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
 lr=0.0001
 batch_size=64
-n_epochs=150
+batch_size_inference=16
+n_epochs=50
 valid_tolerance=40
 
 seed=0
@@ -77,17 +78,18 @@ if [ -z ${train_on_qm8+x} ]; then echo "skip qm8"; else dataset_names+=" qm8"; f
 if [ -z ${train_on_hiv+x} ]; then echo "skip hiv"; else dataset_names+=" hiv"; fi
 if [ -z ${train_on_muv+x} ]; then echo "skip muv"; else dataset_names+=" muv"; fi
 if [ -z ${train_on_qm9+x} ]; then echo "skip qm9"; else dataset_names+=" qm9"; fi
-if [ -z ${train_on_pcba+x} ]; then echo "skip pcba"; else dataset_names+=" pcba"; fi
+if [ -z ${train_on_pcab+x} ]; then echo "skip pcab"; else dataset_names+=" pcab"; fi
 
 # --- training scripts ---
 for dataset_name in $dataset_names
 do
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_grover.py \
+  CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
     --wandb_api_key $wandb_api_key \
     --disable_wandb $disable_wandb \
     --data_folder $data_folder \
+    --unimol_feature_folder $unimol_feature_folder \
     --dataset_name "$dataset_name" \
-    --checkpoint_path ./models/grover_base.pt \
+    --checkpoint_path ./models/unimol_base.pt \
     --num_workers $num_workers \
     --num_preprocess_workers $num_preprocess_workers \
     --pin_memory $pin_memory \
@@ -100,6 +102,7 @@ do
     --n_epochs $n_epochs \
     --valid_tolerance $valid_tolerance \
     --batch_size $batch_size \
+    --batch_size_inference $batch_size_inference \
     --seed $seed \
     --n_test $n_test
 done
