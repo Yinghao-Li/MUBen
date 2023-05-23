@@ -24,7 +24,7 @@ train_on_tox21=true
 train_on_toxcast=true
 train_on_clintox=true
 train_on_sider=true
-#train_on_muv=true
+train_on_muv=true
 # train_on_pcba=true
 
 # --- dataset choosing region ends ---
@@ -43,7 +43,7 @@ pin_memory=false
 ignore_preprocessed_dataset=false
 
 uncertainty_method="DeepEnsembles"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
