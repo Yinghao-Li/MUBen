@@ -7,23 +7,23 @@ set -e
 # --- the argument values do not matter ---
 
 # -- regression tasks --
-train_on_esol=true
-train_on_freesolv=true
-train_on_lipo=true
-train_on_qm7=true
-train_on_qm8=true
-train_on_qm9=true
+# train_on_esol=true
+# train_on_freesolv=true
+# train_on_lipo=true
+# train_on_qm7=true
+# train_on_qm8=true
+# train_on_qm9=true
 
 # -- single-task classification --
 train_on_bbbp=true
-train_on_bace=true
-train_on_hiv=true
+# train_on_bace=true
+# train_on_hiv=true
 
 # -- multi-task classification --
-train_on_tox21=true
-train_on_toxcast=true
-train_on_clintox=true
-train_on_sider=true
+# train_on_tox21=true
+# train_on_toxcast=true
+# train_on_clintox=true
+# train_on_sider=true
 #train_on_muv=true
 # train_on_pcba=true
 
@@ -42,12 +42,13 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="MCDropout"  # this is subject to change
+uncertainty_method="DeepEnsembles"  # this is subject to change
 retrain_model=false
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
+# default hyper-parameters
 lr=0.00005
 batch_size=32
 batch_size_inference=16
@@ -57,7 +58,8 @@ valid_tolerance=40
 seed=0
 
 # Uncertainty arguments
-n_test=30
+n_test=1
+n_ensembles=10
 
 # --- universal arguments region ends ---
 
@@ -83,6 +85,12 @@ if [ -z ${train_on_pcab+x} ]; then echo "skip pcab"; else dataset_names+=" pcab"
 # --- training scripts ---
 for dataset_name in $dataset_names
 do
+  if [ $dataset_name == "bbbp" ]
+  then
+    lr=0.0001
+    batch_size=32
+    n_epochs=20
+  fi
   CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
     --wandb_api_key $wandb_api_key \
     --disable_wandb $disable_wandb \
@@ -104,5 +112,6 @@ do
     --batch_size $batch_size \
     --batch_size_inference $batch_size_inference \
     --seed $seed \
-    --n_test $n_test
+    --n_test $n_test \
+    --n_ensembles $n_ensembles
 done

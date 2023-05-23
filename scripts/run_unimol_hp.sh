@@ -43,15 +43,15 @@ pin_memory=false
 ignore_preprocessed_dataset=true
 
 uncertainty_method="none"  # this is subject to change
-retrain_model=false
+retrain_model=true
 
 binary_classification_with_softmax=false
 regression_with_variance=true
 
 lr=0.0001
-batch_size=64
+batch_size=32
 batch_size_inference=16
-n_epochs=50
+n_epochs=20
 valid_tolerance=40
 
 seed=0
