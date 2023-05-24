@@ -18,6 +18,8 @@ class TSModel(nn.Module):
 
     def forward(self, batch):
         """forward method that returns softmax-ed confidence scores."""
+
+        # Set the base model to evaluation mode for Temperature Scaling training
         self.model.eval()
 
         logits = self.model(batch)

@@ -59,6 +59,6 @@ class BBPOutputLayer(nn.Module):
         logits = act_w_out + act_b_out.unsqueeze(0).expand(x.shape[0], -1)
 
         kld = kld_cost(mu_p=0, sig_p=self.prior_sig, mu_q=self.weight_mu, sig_q=std_weight) + \
-              kld_cost(mu_p=0, sig_p=0.1, mu_q=self.bias_mu, sig_q=std_bias)
+            kld_cost(mu_p=0, sig_p=0.1, mu_q=self.bias_mu, sig_q=std_bias)
 
         return logits, kld

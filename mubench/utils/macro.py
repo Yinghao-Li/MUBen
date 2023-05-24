@@ -90,7 +90,6 @@ class UncertaintyMethods(StrEnum):
     swag = 'SWAG'
     bbp = 'BBP'
     sgld = 'SGLD'
-    laplace = 'LaplaceApproximation'
     ensembles = 'DeepEnsembles'
     conformal = 'ConformalPrediction'
     focal = 'FocalLoss'

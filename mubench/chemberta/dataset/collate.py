@@ -12,9 +12,7 @@ class Collator:
 
     def __init__(self, config):
         self._task = config.task_type
-        self._lbs_type = torch.float \
-            if config.task_type == 'regression' or not config.binary_classification_with_softmax \
-            else torch.long
+        self._lbs_type = torch.float
 
         tokenizer = AutoTokenizer.from_pretrained(config.pretrained_model_name_or_path)
         self._pad_id = tokenizer.pad_token_id

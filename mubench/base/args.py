@@ -6,7 +6,11 @@ from typing import Optional
 from dataclasses import dataclass, field, asdict
 from functools import cached_property
 
-from mubench.utils.macro import DATASET_NAMES, MODEL_NAMES, UncertaintyMethods
+from mubench.utils.macro import (
+    DATASET_NAMES,
+    MODEL_NAMES,
+    UncertaintyMethods,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +76,8 @@ class Arguments:
         default=0.1, metadata={'help': "Dropout ratio."}
     )
     binary_classification_with_softmax: Optional[bool] = field(
-        default=False, metadata={'help': "Use softmax output instead of sigmoid for binary classification."}
+        default=False, metadata={'help': "Use softmax output instead of sigmoid for binary classification. "
+                                         "Notice that this argument is now deprecated"}
     )
     regression_with_variance: Optional[bool] = field(
         default=False, metadata={'help': "Use two regression output heads, one for mean and the other for variance."}
@@ -85,6 +90,9 @@ class Arguments:
     ignore_uncertainty_output: Optional[bool] = field(
         default=False, metadata={"help": "Ignore the saved uncertainty estimation models and results. "
                                          "Load model from the no-uncertainty output if possible."}
+    )
+    ignore_no_uncertainty_output: Optional[bool] = field(
+        default=False, metadata={"help": "Ignore the model checkpoints from no-uncertainty training processes."}
     )
     batch_size: Optional[int] = field(
         default=32, metadata={'help': "Batch size."}
@@ -143,13 +151,13 @@ class Arguments:
 
     # --- SWAG Arguments ---
     swa_lr_decay: Optional[float] = field(
-        default=0.1, metadata={"help": "The learning rate decay coefficient during SWA training."}
+        default=0.5, metadata={"help": "The learning rate decay coefficient during SWA training."}
     )
     n_swa_epochs: Optional[int] = field(
-        default=30, metadata={"help": "The number of SWA training epochs."}
+        default=20, metadata={"help": "The number of SWA training epochs."}
     )
     k_swa_checkpoints: Optional[int] = field(
-        default=30, metadata={"help": "The number of SWA checkpoints for Gaussian covariance matrix. "
+        default=20, metadata={"help": "The number of SWA checkpoints for Gaussian covariance matrix. "
                                       "This number should not exceed `n_swa_epochs`."}
     )
 
@@ -158,7 +166,7 @@ class Arguments:
         default=0.01, metadata={"help": "The learning rate to train temperature scaling parameters."}
     )
     n_ts_epochs: Optional[int] = field(
-        default=10, metadata={"help": "The number of Temperature Scaling training epochs."}
+        default=20, metadata={"help": "The number of Temperature Scaling training epochs."}
     )
 
     # --- Focal Loss Arguments ---
@@ -252,7 +260,7 @@ class Config(Arguments):
     @cached_property
     def n_lbs(self):
         if self.task_type == 'classification':
-            if len(self.classes) == 2 and not self.binary_classification_with_softmax:
+            if len(self.classes) == 2:
                 return 1
             else:
                 return len(self.classes)
@@ -321,24 +329,27 @@ class Config(Arguments):
 
         assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
 
-        if self.uncertainty_method == UncertaintyMethods.none:
+        if self.uncertainty_method in [UncertaintyMethods.none, UncertaintyMethods.ensembles,
+                                       UncertaintyMethods.focal, UncertaintyMethods.temperature]:
             self.n_test = 1
 
         if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag, UncertaintyMethods.bbp] \
                 and self.n_test == 1:
             logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
                            f"multiple test runs! Setting `n_test` to the default value 20.")
-            self.n_test = 20
+            self.n_test = 30
+
+        assert not (self.uncertainty_method in [UncertaintyMethods.temperature, UncertaintyMethods.focal]
+                    and self.task_type == 'regression'), \
+            f"{self.uncertainty_method} is not compatible with regression tasks!"
+
+        if self.uncertainty_method == UncertaintyMethods.focal:
+            self.ignore_no_uncertainty_output = True
 
         if self.k_swa_checkpoints > self.n_swa_epochs:
             logger.warning("The number of SWA checkpoints should not exceeds that of SWA training epochs! "
                            "Setting `k_swa_checkpoints` = `n_swa_epochs`.")
             self.k_swa_checkpoints = self.n_swa_epochs
-
-        if self.uncertainty_method == UncertaintyMethods.focal and not self.binary_classification_with_softmax:
-            logger.warning("Focal Loss requires model with Softmax output! "
-                           "Setting `binary_classification_with_softmax` to True.")
-            self.binary_classification_with_softmax = True
 
         if self.uncertainty_method == UncertaintyMethods.sgld and not self.lr_scheduler_type == "constant":
             logger.warning("SGLD currently only works with constant lr scheduler. The argument will be modified")

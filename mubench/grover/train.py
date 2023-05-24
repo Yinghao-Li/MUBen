@@ -92,18 +92,12 @@ class Trainer(BaseTrainer, ABC):
     def get_distance_loss(self, atom_logits, bond_logits, batch):
 
         # modify data shapes to accommodate different tasks
-        masks = batch.masks  # so that we don't mess up batch instances
-        if self._config.task_type == 'classification' and self._config.binary_classification_with_softmax:
-            # this works the same as logits.view(-1, n_tasks, n_lbs).view(-1, n_lbs)
-            atom_logits = atom_logits.view(-1, self._config.n_lbs)
-            bond_logits = bond_logits.view(-1, self._config.n_lbs)
-            masks = masks.view(-1)
         if self._config.task_type == 'regression' and self._config.regression_with_variance:
             atom_logits = atom_logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
             bond_logits = bond_logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
 
         loss = F.mse_loss(atom_logits, bond_logits)
-        loss = torch.sum(loss * masks) / masks.sum()
+        loss = torch.sum(loss * batch.masks) / batch.masks.sum()
         return loss
 
     def inference(self, dataset, batch_size: Optional[int] = None):
@@ -138,12 +132,8 @@ class Trainer(BaseTrainer, ABC):
 
         if self._config.task_type == 'classification':
 
-            if self._config.binary_classification_with_softmax:
-                atom_preds = softmax(atom_logits, axis=-1)
-                bond_preds = softmax(bond_logits, axis=-1)
-            else:
-                atom_preds = expit(atom_logits)  # sigmoid function
-                bond_preds = expit(bond_logits)  # sigmoid function
+            atom_preds = expit(atom_logits)  # sigmoid function
+            bond_preds = expit(bond_logits)  # sigmoid function
             preds = (atom_preds + bond_preds) / 2
 
         elif self._config.task_type == 'regression':

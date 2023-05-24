@@ -15,9 +15,7 @@ class Collator:
 
     def __init__(self, config):
         self._task = config.task_type
-        self._lbs_type = torch.float \
-            if config.task_type == 'regression' or not config.binary_classification_with_softmax \
-            else torch.long
+        self._lbs_type = torch.float
 
     def __call__(self, instance_list: list, *args, **kwargs) -> Batch:
         """

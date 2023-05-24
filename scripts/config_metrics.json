@@ -1,7 +1,7 @@
 {
-  "dataset_name": "tox21",
+  "dataset_name": "esol",
   "model_name": "DNN",
   "feature_type": "rdkit",
-  "uncertainty_method": "none",
+  "uncertainty_method": "BBP",
   "result_folder": "./output/"
 }

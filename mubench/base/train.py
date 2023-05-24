@@ -30,7 +30,7 @@ from .model import (
 from .args import Config
 from .uncertainty.swag import SWAModel, update_bn
 from .uncertainty.temperature_scaling import TSModel
-from .uncertainty.focal_loss import FocalLoss
+from .uncertainty.focal_loss import SigmoidFocalLoss
 from .uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
 from mubench.utils.macro import EVAL_METRICS, UncertaintyMethods
@@ -180,9 +180,7 @@ class Trainer:
         if self._config.task_type == 'classification':
             # for compatibility with focal loss
             if self._config.uncertainty_method == UncertaintyMethods.focal and not disable_focal_loss:
-                self._loss_fn = FocalLoss()
-            elif self._config.binary_classification_with_softmax:
-                self._loss_fn = nn.CrossEntropyLoss(reduction='none')
+                self._loss_fn = SigmoidFocalLoss(reduction='none')
             else:
                 self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         else:
@@ -589,9 +587,6 @@ class Trainer:
         """
 
         self.train_mode()
-        # Set the base model to evaluation mode for Temperature Scaling training
-        if self._ts_model:
-            self._model.eval()
         self.model.to(self._device)
 
         total_loss = 0.
@@ -648,8 +643,6 @@ class Trainer:
         masked_lbs = lbs[bool_masks]
 
         if self._config.task_type == 'classification':
-            assert not self._config.binary_classification_with_softmax, NotImplementedError
-
             masked_logits = logits[bool_masks]
 
         elif self._config.task_type == 'regression':
@@ -665,7 +658,7 @@ class Trainer:
 
         # for compatability with bbp
         if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
-            loss += self.model.output_layer.kld / n_steps_per_epoch
+            loss += self.model.output_layer.kld / n_steps_per_epoch / len(batch)
         return loss
 
     def inference(self, dataset, batch_size: Optional[int] = 0):
@@ -693,7 +686,7 @@ class Trainer:
                 batch.to(self._config.device)
 
                 logits = self.model(batch)
-                logits_list.append(logits.to(torch.float).detach().cpu())
+                logits_list.append(logits.detach().cpu())
 
         logits = torch.cat(logits_list, dim=0).numpy()
 
@@ -713,10 +706,7 @@ class Trainer:
         """
 
         if self._config.task_type == 'classification':
-            if self._config.binary_classification_with_softmax:
-                preds = softmax(logits, axis=-1)
-            else:
-                preds = expit(logits)  # sigmoid function
+            preds = expit(logits)  # sigmoid function
 
         elif self._config.task_type == 'regression':
             if self._config.n_tasks > 1:
