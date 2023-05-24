@@ -918,9 +918,10 @@ class Trainer:
         if self._config.retrain_model:
             return False
 
-        model_path = op.join(self._status.result_dir, self._status.model_name)
-        if self._load_from_container(model_path):
-            return True
+        if not self._config.ignore_uncertainty_output:
+            model_path = op.join(self._status.result_dir, self._status.model_name)
+            if self._load_from_container(model_path):
+                return True
 
         model_path = op.join(self._status.result_dir_no_uncertainty, self._status.model_name)
         if self._load_from_container(model_path):

@@ -82,6 +82,10 @@ class Arguments:
     retrain_model: Optional[bool] = field(
         default=False, metadata={"help": "Train the model from scratch even if there are models saved in result dir"}
     )
+    ignore_uncertainty_output: Optional[bool] = field(
+        default=False, metadata={"help": "Ignore the saved uncertainty estimation models and results. "
+                                         "Load model from the no-uncertainty output if possible."}
+    )
     batch_size: Optional[int] = field(
         default=32, metadata={'help': "Batch size."}
     )

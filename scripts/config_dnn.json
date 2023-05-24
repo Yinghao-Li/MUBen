@@ -1,7 +1,7 @@
 {
   "disable_wandb": true,
   "disable_result_saving": false,
-  "dataset_name": "bbbp",
+  "dataset_name": "tox21",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,
@@ -13,7 +13,7 @@
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "feature_type": "rdkit",
-  "uncertainty_method": "DeepEnsembles",
+  "uncertainty_method": "none",
   "n_test": 1,
   "n_ensembles": 5,
   "apply_temperature_scaling_after_focal_loss": true,
