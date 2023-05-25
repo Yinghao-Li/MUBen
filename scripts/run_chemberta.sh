@@ -41,10 +41,9 @@ num_preprocess_workers=24
 pin_memory=false
 ignore_preprocessed_dataset=false
 
-uncertainty_method="DeepEnsembles"  # this is subject to change
-retrain_model=true
+uncertainty_method="SWAG"  # this is subject to change
+retrain_model=false
 
-binary_classification_with_softmax=false
 regression_with_variance=true
 
 lr=0.00005
@@ -52,11 +51,11 @@ batch_size=128
 n_epochs=200
 valid_tolerance=40
 
-seed=0
-
 # Uncertainty arguments
 n_test=30
 n_ensembles=10
+
+n_ts_epochs=30
 
 # --- universal arguments region ends ---
 
@@ -82,24 +81,27 @@ if [ -z ${train_on_pcba+x} ]; then echo "skip pcba"; else dataset_names+=" pcba"
 # --- training scripts ---
 for dataset_name in $dataset_names
 do
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_chemberta.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --dataset_name "$dataset_name" \
-    --num_workers $num_workers \
-    --num_preprocess_workers $num_preprocess_workers \
-    --pin_memory $pin_memory \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --lr $lr \
-    --n_epochs $n_epochs \
-    --valid_tolerance $valid_tolerance \
-    --batch_size $batch_size \
-    --seed $seed \
-    --n_test $n_test \
-    --n_ensembles $n_ensembles
+  for seed in 0 1 2
+  do
+    CUDA_VISIBLE_DEVICES=$cuda_device python run_chemberta.py \
+      --wandb_api_key $wandb_api_key \
+      --disable_wandb $disable_wandb \
+      --data_folder $data_folder \
+      --dataset_name "$dataset_name" \
+      --num_workers $num_workers \
+      --num_preprocess_workers $num_preprocess_workers \
+      --pin_memory $pin_memory \
+      --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
+      --uncertainty_method $uncertainty_method \
+      --retrain_model $retrain_model \
+      --regression_with_variance $regression_with_variance \
+      --lr $lr \
+      --n_epochs $n_epochs \
+      --valid_tolerance $valid_tolerance \
+      --batch_size $batch_size \
+      --seed $seed \
+      --n_test $n_test \
+      --n_ensembles $n_ensembles \
+      --n_ts_epochs $n_ts_epochs
+  done
 done

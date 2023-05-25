@@ -88,16 +88,17 @@ class SWAModel(Module):
             sq_mean = self.__getattr__(f"{name_}_SqMean")
             cov_mat_sqrt = self.__getattr__(f"{name_}_CovMatSqrt")
 
-            if self.n_averaged == 0:
+            n_averaged = self.n_averaged.to("cpu")
+            if n_averaged == 0:
                 self.__setattr__(f"{name_}_Mean", params.data.cpu())
                 self.__setattr__(f"{name_}_SqMean", params.data.square().cpu())
 
             else:
                 # first moment
-                mean = mean * self.n_averaged / (self.n_averaged + 1.0) + params.data.cpu() / (self.n_averaged + 1.0)
+                mean = mean * n_averaged / (n_averaged + 1.0) + params.data.cpu() / (n_averaged + 1.0)
                 # second moment
-                sq_mean = sq_mean * self.n_averaged / (self.n_averaged + 1.0) + \
-                    params.data.square().cpu() / (self.n_averaged + 1.0)
+                sq_mean = sq_mean * n_averaged / (n_averaged + 1.0) + \
+                    params.data.square().cpu() / (n_averaged + 1.0)
                 # block covariance matrices, store deviation from current mean
                 dev = (params.data.cpu() - mean).view(-1, 1)
                 cov_mat_sqrt = torch.cat((cov_mat_sqrt, dev.view(-1, 1).T), dim=0)
