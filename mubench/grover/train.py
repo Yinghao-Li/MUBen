@@ -85,7 +85,7 @@ class Trainer(BaseTrainer, ABC):
 
         # for compatability with bbp
         if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
-            kld = (self.model.atom_output_layer.kld + self.model.bond_output_layer.kld) / n_steps_per_epoch
+            kld = (self.model.atom_output_layer.kld + self.model.bond_output_layer.kld) / n_steps_per_epoch / len(batch)
             loss += kld
         return loss
 
