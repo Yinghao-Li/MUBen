@@ -21,6 +21,24 @@
             ]
         },
         {
+            "name": "move-models",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/assist/move_models.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}",
+                "CUDA_VISIBLE_DEVICES": "3",
+            },
+            "args": [
+                "--model_name", "DNN",
+                "--feature_type", "rdkit",
+                "--result_folder", "./output/",
+                "--overwrite_folder",
+            ]
+        },
+        {
             "name": "run-dnn",
             "type": "python",
             "request": "launch",
