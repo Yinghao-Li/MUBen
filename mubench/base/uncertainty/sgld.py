@@ -1,3 +1,7 @@
+"""
+Modified from
+https://github.com/JavierAntoran/Bayesian-Neural-Networks/blob/master/src/Stochastic_Gradient_Langevin_Dynamics/optimizers.py
+"""
 import torch
 import numpy as np
 from torch.optim.optimizer import Optimizer

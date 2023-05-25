@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import torch.nn.functional as F
 from torch.optim import AdamW
-from scipy.special import softmax, expit
+from scipy.special import expit
 from typing import Optional, Tuple
 
 from .dataset import Collator

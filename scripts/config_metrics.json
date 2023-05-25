@@ -1,7 +1,7 @@
 {
-  "dataset_name": "esol",
+  "dataset_name": "bbbp",
   "model_name": "DNN",
   "feature_type": "rdkit",
-  "uncertainty_method": "BBP",
+  "uncertainty_method": "SGLD",
   "result_folder": "./output/"
 }

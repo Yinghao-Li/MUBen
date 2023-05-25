@@ -17,7 +17,7 @@ import torch.nn as nn
 from tqdm.auto import tqdm
 from typing import Optional, Union, Tuple
 
-from scipy.special import softmax, expit
+from scipy.special import expit
 from transformers import get_scheduler
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -559,8 +559,10 @@ class Trainer:
                 if self._swa_model:
                     self._swa_model.update_parameters(self.model)
 
-                if self._sgld_model_buffer is not None and epoch_idx % self._config.sgld_sampling_interval == 0:
+                if self._sgld_model_buffer is not None and (epoch_idx + 1) % self._config.sgld_sampling_interval == 0:
+                    self.model.to('cpu')
                     self._sgld_model_buffer.append(copy.deepcopy(self.model.state_dict()))
+                    self.model.to(self._device)
 
                 if self._status.valid_epoch_interval and (epoch_idx + 1) % self._status.valid_epoch_interval == 0:
                     self.eval_and_save()
