@@ -20,6 +20,7 @@ class Dataset(BaseDataset):
         self._partition = None
         self._atoms = None
         self._cooridnates = None
+        self.processing_pipeline = None
         self.data_processor = None
 
     def __getitem__(self, idx):
@@ -40,6 +41,11 @@ class Dataset(BaseDataset):
         }
         return feature_dict
 
+    def set_processor_variant(self, variant: str):
+        assert variant in ('training', 'inference'), "Processor variant must be `training` or `inference`"
+        self.data_processor = getattr(self.processing_pipeline, f'process_{variant}')
+        return self
+
     def prepare(self, config, partition, dictionary=None):
         self._partition = partition
 
@@ -48,14 +54,14 @@ class Dataset(BaseDataset):
             dictionary.add_symbol("[MASK]", is_special=True)
 
         processor_variant = 'training' if partition == 'train' else 'inference'
-        data_processor = ProcessingPipeline(
+        self.processing_pipeline = ProcessingPipeline(
             dictionary=dictionary,
             max_atoms=config.max_atoms,
             max_seq_len=config.max_seq_len,
             remove_hydrogen_flag=config.remove_hydrogen,
             remove_polar_hydrogen_flag=config.remove_polar_hydrogen
         )
-        self.data_processor = getattr(data_processor, f'process_{processor_variant}')
+        self.set_processor_variant(processor_variant)
 
         super().prepare(config, partition)
 

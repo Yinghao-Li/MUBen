@@ -3,6 +3,7 @@ from abc import ABC
 import logging
 
 import torch
+import wandb
 import numpy as np
 from torch.optim import AdamW
 
@@ -12,6 +13,7 @@ from .args import Config
 from mubench.utils.macro import UncertaintyMethods
 from mubench.base.train import Trainer as BaseTrainer
 from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
+from mubench.base.uncertainty.temperature_scaling import TSModel
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +71,46 @@ class Trainer(BaseTrainer, ABC):
             )
 
         return None
+
+    def run_temperature_scaling(self):
+        """
+        Run the training and evaluation pipeline with temperature scaling.
+        """
+
+        # Train the model with early stopping.
+        self.run_single_shot()
+
+        logger.info("Temperature Scaling session start.")
+
+        # update hyper parameters
+        self._status.lr = self._config.ts_lr
+        self._status.lr_scheduler_type = 'constant'
+        self._status.n_epochs = self._config.n_ts_epochs
+        self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
+
+        self.model.to(self._device)
+        self.freeze()
+        self._ts_model = TSModel(self._model)
+
+        self.initialize_optimizer()
+        self.initialize_scheduler()
+
+        logger.info("Training model on validation")
+        self._valid_dataset.set_processor_variant('training')
+        self.train(use_valid_dataset=True)
+        self._valid_dataset.set_processor_variant('inference')
+
+        test_metrics = self.test(load_best_model=False)
+        logger.info("[Temperature Scaling] Test results:")
+        self.log_results(test_metrics)
+
+        # log results to wandb
+        for k, v in test_metrics.items():
+            wandb.run.summary[f"test-temperature_scaling/{k}"] = v
+
+        self.unfreeze()
+
+        return self
 
     def process_logits(self, logits: np.ndarray):
 
