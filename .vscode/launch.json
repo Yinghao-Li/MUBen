@@ -32,7 +32,7 @@
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "--model_name", "DNN",
+                "--model_name", "Uni-Mol",
                 "--feature_type", "rdkit",
                 "--result_folder", "./output/",
                 "--overwrite_folder",

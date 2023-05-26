@@ -11,7 +11,7 @@ set -e
 # train_on_freesolv=true
 # train_on_lipo=true
 # train_on_qm7=true
-# train_on_qm8=true
+train_on_qm8=true
 train_on_qm9=true
 
 # -- single-task classification --
@@ -42,10 +42,9 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="DeepEnsembles"  # this is subject to change
-retrain_model=true
+uncertainty_method="TemperatureScaling"  # this is subject to change
+retrain_model=false
 
-binary_classification_with_softmax=false
 regression_with_variance=true
 
 # default hyper-parameters
@@ -55,10 +54,8 @@ batch_size_inference=16
 n_epochs=100
 valid_tolerance=40
 
-seed=0
-
 # Uncertainty arguments
-n_test=1
+n_test=30
 n_ensembles=3
 
 # --- universal arguments region ends ---
@@ -104,6 +101,8 @@ do
     batch_size=64
     n_epochs=40
   fi
+  for seed in 0 1 2
+  do
   CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
     --wandb_api_key $wandb_api_key \
     --disable_wandb $disable_wandb \
@@ -117,7 +116,6 @@ do
     --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
     --uncertainty_method $uncertainty_method \
     --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
     --regression_with_variance $regression_with_variance \
     --lr $lr \
     --n_epochs $n_epochs \
@@ -127,4 +125,5 @@ do
     --seed $seed \
     --n_test $n_test \
     --n_ensembles $n_ensembles
+  done
 done

@@ -42,10 +42,9 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="DeepEnsembles"  # this is subject to change
-retrain_model=true
+uncertainty_method="TemperatureScaling"  # this is subject to change
+retrain_model=false
 
-binary_classification_with_softmax=false
 regression_with_variance=true
 
 # default hyper-parameters
@@ -55,10 +54,8 @@ batch_size_inference=16
 n_epochs=100
 valid_tolerance=40
 
-seed=0
-
 # Uncertainty arguments
-n_test=1
+n_test=30
 n_ensembles=10
 
 # --- universal arguments region ends ---
@@ -94,27 +91,40 @@ do
   then
     lr=0.0001
   fi
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --unimol_feature_folder $unimol_feature_folder \
-    --dataset_name "$dataset_name" \
-    --checkpoint_path ./models/unimol_base.pt \
-    --num_workers $num_workers \
-    --num_preprocess_workers $num_preprocess_workers \
-    --pin_memory $pin_memory \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --binary_classification_with_softmax $binary_classification_with_softmax \
-    --regression_with_variance $regression_with_variance \
-    --lr $lr \
-    --n_epochs $n_epochs \
-    --valid_tolerance $valid_tolerance \
-    --batch_size $batch_size \
-    --batch_size_inference $batch_size_inference \
-    --seed $seed \
-    --n_test $n_test \
-    --n_ensembles $n_ensembles
+  if [ $dataset_name == "hiv" ]
+  then
+    batch_size=64
+    n_epochs=20
+  fi
+  if [ $dataset_name == "muv" ]
+  then
+    batch_size=64
+    n_epochs=40
+  fi
+
+  for seed in 0 1 2
+  do
+    CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
+      --wandb_api_key $wandb_api_key \
+      --disable_wandb $disable_wandb \
+      --data_folder $data_folder \
+      --unimol_feature_folder $unimol_feature_folder \
+      --dataset_name "$dataset_name" \
+      --checkpoint_path ./models/unimol_base.pt \
+      --num_workers $num_workers \
+      --num_preprocess_workers $num_preprocess_workers \
+      --pin_memory $pin_memory \
+      --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
+      --uncertainty_method $uncertainty_method \
+      --retrain_model $retrain_model \
+      --regression_with_variance $regression_with_variance \
+      --lr $lr \
+      --n_epochs $n_epochs \
+      --valid_tolerance $valid_tolerance \
+      --batch_size $batch_size \
+      --batch_size_inference $batch_size_inference \
+      --seed $seed \
+      --n_test $n_test \
+      --n_ensembles $n_ensembles
+  done
 done
