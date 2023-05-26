@@ -343,7 +343,7 @@ class Config(Arguments):
                     and self.task_type == 'regression'), \
             f"{self.uncertainty_method} is not compatible with regression tasks!"
 
-        if self.uncertainty_method == UncertaintyMethods.focal:
+        if self.uncertainty_method in [UncertaintyMethods.focal, UncertaintyMethods.bbp, UncertaintyMethods.sgld]:
             self.ignore_no_uncertainty_output = True
 
         if self.k_swa_checkpoints > self.n_swa_epochs:
