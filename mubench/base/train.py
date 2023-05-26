@@ -385,7 +385,8 @@ class Trainer:
         """
 
         # Train the model with early stopping.
-        self.run_single_shot()
+        self.run_single_shot(apply_test=False)
+        self._model.load_state_dict(self._model_container.state_dict)
 
         logger.info("SWA session start")
 
@@ -424,7 +425,8 @@ class Trainer:
         """
 
         # Train the model with early stopping.
-        self.run_single_shot()
+        self.run_single_shot(apply_test=False)
+        self._model.load_state_dict(self._model_container.state_dict)
 
         logger.info("Temperature Scaling session start.")
 
