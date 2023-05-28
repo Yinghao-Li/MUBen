@@ -117,12 +117,12 @@ class GROVERFinetuneModel(nn.Module):
             config.ffn_hidden_size,
             config.n_lbs*config.n_tasks,
             config.uncertainty_method == UncertaintyMethods.bbp
-        )
+        ).initialize()
         self.bond_output_layer = OutputLayer(
             config.ffn_hidden_size,
             config.n_lbs*config.n_tasks,
             config.uncertainty_method == UncertaintyMethods.bbp
-        )
+        ).initialize()
 
     def forward(self, batch, **kwargs):
         molecule_components = batch.molecule_graphs.components

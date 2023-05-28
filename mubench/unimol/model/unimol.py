@@ -69,7 +69,7 @@ class UniMol(nn.Module):
             config.encoder_embed_dim,
             config.n_lbs * config.n_tasks,
             config.uncertainty_method == UncertaintyMethods.bbp
-        )
+        ).initialize()
 
     def forward(self, batch, **kwargs):
         src_tokens, src_distance, src_edge_type = batch.atoms, batch.distances, batch.edge_types

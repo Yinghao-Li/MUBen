@@ -93,6 +93,7 @@ class UncertaintyMethods(StrEnum):
     ensembles = 'DeepEnsembles'
     conformal = 'ConformalPrediction'
     focal = 'FocalLoss'
+    iso = 'IsotonicCalibration'
 
 
 FINGERPRINT_FEATURE_TYPES = [

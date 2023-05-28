@@ -32,6 +32,7 @@ from .uncertainty.swag import SWAModel, update_bn
 from .uncertainty.temperature_scaling import TSModel
 from .uncertainty.focal_loss import SigmoidFocalLoss
 from .uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
+from .uncertainty.iso import IsotonicCalibration
 
 from mubench.utils.macro import EVAL_METRICS, UncertaintyMethods
 from mubench.utils.container import ModelContainer, UpdateCriteria
@@ -296,6 +297,9 @@ class Trainer:
         # temperature scaling
         elif self._config.uncertainty_method == UncertaintyMethods.temperature:
             self.run_temperature_scaling()
+        # isotonic calibration
+        elif self._config.uncertainty_method == UncertaintyMethods.iso:
+            self.run_iso_calibration()
         # focal loss
         elif self._config.uncertainty_method == UncertaintyMethods.focal:
             self.run_focal_loss()
@@ -455,6 +459,28 @@ class Trainer:
             wandb.run.summary[f"test-temperature_scaling/{k}"] = v
 
         self.unfreeze()
+
+        return self
+
+    def run_iso_calibration(self):
+        """
+        Run the isotonic calibration process proposed in
+        `Accurate Uncertainties for Deep Learning Using Calibrated Regression`.
+        """
+        # Train the model with early stopping.
+        self.run_single_shot(apply_test=False)
+        self._model.load_state_dict(self._model_container.state_dict)
+
+        logger.info("Isotonic calibration session start.")
+
+        # get validation predictions
+        mean_cal, var_cal = self.inverse_standardize_preds(self.process_logits(self.inference(self.valid_dataset)))
+
+        iso_calibrator = IsotonicCalibration(self._config.n_tasks)
+        iso_calibrator.fit(mean_cal, var_cal, self.valid_dataset.lbs, self.valid_dataset.masks)
+
+        mean_test, var_test = self.inverse_standardize_preds(self.process_logits(self.inference(self.test_dataset)))
+        iso_calibrator.calibrate(mean_test, var_test, self.test_dataset.lbs, self.test_dataset.masks)
 
         return self
 

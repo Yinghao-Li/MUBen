@@ -342,6 +342,9 @@ class Config(Arguments):
         assert not (self.uncertainty_method in [UncertaintyMethods.temperature, UncertaintyMethods.focal]
                     and self.task_type == 'regression'), \
             f"{self.uncertainty_method} is not compatible with regression tasks!"
+        assert not (self.uncertainty_method in [UncertaintyMethods.iso]
+                    and self.task_type == 'classification'), \
+            f"{self.uncertainty_method} is not compatible with classification tasks!"
 
         if self.uncertainty_method in [UncertaintyMethods.focal, UncertaintyMethods.bbp, UncertaintyMethods.sgld]:
             self.ignore_no_uncertainty_output = True
