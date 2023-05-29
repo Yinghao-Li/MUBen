@@ -17,7 +17,7 @@ train_on_qm7=true
 # -- single-task classification --
 train_on_bbbp=true
 train_on_bace=true
-# train_on_hiv=true
+train_on_hiv=true
 
 # -- multi-task classification --
 train_on_tox21=true
@@ -42,7 +42,7 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="TemperatureScaling"  # this is subject to change
+uncertainty_method="BBP"  # this is subject to change
 retrain_model=false
 
 regression_with_variance=true

@@ -9,7 +9,7 @@
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "checkpoint_path": "models/unimol_base.pt",
-  "uncertainty_method": "TemperatureScaling",
+  "uncertainty_method": "BBP",
   "batch_size": 32,
   "batch_size_inference": 8,
   "retrain_model": false,
