@@ -1,7 +1,7 @@
 {
-  "dataset_name": "bbbp",
+  "dataset_name": "tox21",
   "model_name": "DNN",
   "feature_type": "rdkit",
-  "uncertainty_method": "SGLD",
-  "result_folder": "./output/"
+  "uncertainty_method": "BBP",
+  "result_folder": "../output/"
 }

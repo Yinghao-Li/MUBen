@@ -189,6 +189,24 @@ def classification_metrics(preds, lbs, masks):
         'macro-avg': mce_avg
     }
 
+    # --- nll ---
+    nll_list = list()
+    for i in range(lbs.shape[-1]):
+        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
+        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        nll = F.binary_cross_entropy(
+            input=torch.from_numpy(preds_),
+            target=torch.from_numpy(lbs_).to(torch.float),
+            reduction='mean'
+        ).item()
+        nll_list.append(nll)
+    nll_avg = np.mean(nll_list)
+
+    result_metrics_dict['nll'] = {
+        'all': nll_list,
+        'macro-avg': nll_avg
+    }
+
     return result_metrics_dict
 
 
@@ -267,4 +285,3 @@ if __name__ == '__main__':
     set_logging(log_path=arguments.log_path)
 
     main(args=arguments)
-
