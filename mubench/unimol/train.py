@@ -3,7 +3,6 @@ from abc import ABC
 import logging
 
 import torch
-import wandb
 import numpy as np
 from torch.optim import AdamW
 
@@ -60,7 +59,7 @@ class Trainer(BaseTrainer, ABC):
 
         # for sgld compatibility
         if self._config.uncertainty_method == UncertaintyMethods.sgld:
-            output_param_ids = [id(x) for x in self._model.state_dict() if "output_layer" in x]
+            output_param_ids = [id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]]
             base_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
             output_params = filter(lambda p: id(p) in output_param_ids, self._model.parameters())
 
@@ -72,16 +71,7 @@ class Trainer(BaseTrainer, ABC):
 
         return None
 
-    def run_temperature_scaling(self):
-        """
-        Run the training and evaluation pipeline with temperature scaling.
-        """
-
-        # Train the model with early stopping.
-        self.run_single_shot()
-
-        logger.info("Temperature Scaling session start.")
-
+    def ts_session(self):
         # update hyper parameters
         self._status.lr = self._config.ts_lr
         self._status.lr_scheduler_type = 'constant'
@@ -94,22 +84,14 @@ class Trainer(BaseTrainer, ABC):
 
         self.initialize_optimizer()
         self.initialize_scheduler()
+        self.initialize_loss(disable_focal_loss=True)
 
         logger.info("Training model on validation")
         self._valid_dataset.set_processor_variant('training')
         self.train(use_valid_dataset=True)
         self._valid_dataset.set_processor_variant('inference')
 
-        test_metrics = self.test(load_best_model=False)
-        logger.info("[Temperature Scaling] Test results:")
-        self.log_results(test_metrics)
-
-        # log results to wandb
-        for k, v in test_metrics.items():
-            wandb.run.summary[f"test-temperature_scaling/{k}"] = v
-
         self.unfreeze()
-
         return self
 
     def process_logits(self, logits: np.ndarray):
