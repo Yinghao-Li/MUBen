@@ -29,7 +29,7 @@ from .model import (
 )
 from .args import Config
 from .uncertainty.swag import SWAModel, update_bn
-from .uncertainty.temperature_scaling import TSModel
+from .uncertainty.ts import TSModel
 from .uncertainty.focal_loss import SigmoidFocalLoss
 from .uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 from .uncertainty.iso import IsotonicCalibration
@@ -393,7 +393,19 @@ class Trainer:
         self._model.load_state_dict(self._model_container.state_dict)
 
         logger.info("SWA session start")
+        self.swa_session()
 
+        test_metrics = self.test(load_best_model=False)
+        logger.info("[SWAG] Test results:")
+        self.log_results(test_metrics)
+
+        # log results to wandb
+        for k, v in test_metrics.items():
+            wandb.run.summary[f"test-swag/{k}"] = v
+
+        return self
+
+    def swa_session(self):
         # update hyper parameters
         self._status.lr *= self._config.swa_lr_decay
         self._status.lr_scheduler_type = 'constant'
@@ -412,15 +424,6 @@ class Trainer:
 
         logger.info("Training model")
         self.train()
-
-        test_metrics = self.test(load_best_model=False)
-        logger.info("[SWAG] Test results:")
-        self.log_results(test_metrics)
-
-        # log results to wandb
-        for k, v in test_metrics.items():
-            wandb.run.summary[f"test-swag/{k}"] = v
-
         return self
 
     def run_temperature_scaling(self):
@@ -433,7 +436,19 @@ class Trainer:
         self._model.load_state_dict(self._model_container.state_dict)
 
         logger.info("Temperature Scaling session start.")
+        self.ts_session()
 
+        test_metrics = self.test(load_best_model=False)
+        logger.info("[Temperature Scaling] Test results:")
+        self.log_results(test_metrics)
+
+        # log results to wandb
+        for k, v in test_metrics.items():
+            wandb.run.summary[f"test-temperature_scaling/{k}"] = v
+
+        return self
+
+    def ts_session(self):
         # update hyper parameters
         self._status.lr = self._config.ts_lr
         self._status.lr_scheduler_type = 'constant'
@@ -446,20 +461,11 @@ class Trainer:
 
         self.initialize_optimizer()
         self.initialize_scheduler()
+        self.initialize_loss(disable_focal_loss=True)
 
         logger.info("Training model on validation")
         self.train(use_valid_dataset=True)
-
-        test_metrics = self.test(load_best_model=False)
-        logger.info("[Temperature Scaling] Test results:")
-        self.log_results(test_metrics)
-
-        # log results to wandb
-        for k, v in test_metrics.items():
-            wandb.run.summary[f"test-temperature_scaling/{k}"] = v
-
         self.unfreeze()
-
         return self
 
     def run_iso_calibration(self):
@@ -493,23 +499,7 @@ class Trainer:
 
         if self._config.apply_temperature_scaling_after_focal_loss:
             logger.info("[Focal Loss] Temperature Scaling session start.")
-
-            # update hyper parameters
-            self._status.lr = self._config.ts_lr
-            self._status.lr_scheduler_type = 'constant'
-            self._status.n_epochs = self._config.n_ts_epochs
-            self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
-
-            self.model.to(self._device)
-            self.freeze()
-            self._ts_model = TSModel(self._model)
-
-            self.initialize_optimizer()
-            self.initialize_scheduler()
-            self.initialize_loss(disable_focal_loss=True)  # re-initialize the loss to CE as described in the paper
-
-            logger.info("Training model on validation")
-            self.train(use_valid_dataset=True)
+            self.ts_session()
 
             test_metrics = self.test(load_best_model=False)
             logger.info("[Temperature Scaling] Test results:")
@@ -519,19 +509,14 @@ class Trainer:
             for k, v in test_metrics.items():
                 wandb.run.summary[f"test-temperature_scaling/{k}"] = v
 
-            self.unfreeze()
-
         return self
 
     def run_sgld(self):
         """
         Run the training and evaluation steps with stochastic gradient Langevin Dynamics
         """
-        self._status.lr_scheduler_type = "constant"
-        self.initialize_optimizer()
-        self.initialize_scheduler()
-
         self.run_single_shot(apply_test=False)
+        self._model.load_state_dict(self._model_container.state_dict)
 
         logger.info("Langevin Dynamics session start.")
         self._sgld_model_buffer = list()
