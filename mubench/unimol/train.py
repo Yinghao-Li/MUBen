@@ -90,7 +90,7 @@ class Trainer(BaseTrainer, ABC):
 
         self.model.to(self._device)
         self.freeze()
-        self._ts_model = TSModel(self._model)
+        self._ts_model = TSModel(self._model, self._config.n_tasks)
 
         self.initialize_optimizer()
         self.initialize_scheduler()
