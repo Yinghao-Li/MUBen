@@ -11,6 +11,7 @@ from typing import Optional, Tuple
 from .dataset import Collator
 from .args import Config
 from .model import load_checkpoint
+from .uncertainty.ts import TSModel
 from mubench.utils.macro import UncertaintyMethods
 from mubench.base.train import Trainer as BaseTrainer
 from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
@@ -70,6 +71,27 @@ class Trainer(BaseTrainer, ABC):
 
         return self
 
+    def ts_session(self):
+        # update hyper parameters
+        self._status.lr = self._config.ts_lr
+        self._status.lr_scheduler_type = 'constant'
+        self._status.n_epochs = self._config.n_ts_epochs
+        self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
+
+        self.model.to(self._device)
+        self.freeze()
+        # notice that here TS model is different from the base one
+        self._ts_model = TSModel(self._model, self._config.n_tasks)
+
+        self.initialize_optimizer()
+        self.initialize_scheduler()
+        self.initialize_loss(disable_focal_loss=True)
+
+        logger.info("Training model on validation")
+        self.train(use_valid_dataset=True)
+        self.unfreeze()
+        return self
+
     def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
 
         assert isinstance(logits, tuple) and len(logits) == 2, \
@@ -79,9 +101,11 @@ class Trainer(BaseTrainer, ABC):
 
         atom_loss = super().get_loss(atom_logits, batch)
         bond_loss = super().get_loss(bond_logits, batch)
-        dist = self.get_distance_loss(atom_logits, bond_logits, batch)
+        loss = atom_loss + bond_loss
 
-        loss = atom_loss + bond_loss + self._config.dist_coff * dist
+        if self._ts_model is None:
+            dist = self.get_distance_loss(atom_logits, bond_logits, batch)
+            loss += self._config.dist_coff * dist
 
         # for compatability with bbp
         if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:

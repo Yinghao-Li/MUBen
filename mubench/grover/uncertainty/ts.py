@@ -14,7 +14,8 @@ class TSModel(nn.Module):
         # the single temperature scaling parameter, the initialization value doesn't
         # seem to matter that much based on some ad-hoc experimentation
         self.model = model
-        self.temperature = nn.Parameter(torch.ones(n_task))  # assign one temperature for each task
+        self.atom_temperature = nn.Parameter(torch.ones(n_task))  # assign one temperature for each task
+        self.bond_temperature = nn.Parameter(torch.ones(n_task))  # assign one temperature for each task
 
     def forward(self, batch):
         """forward method that returns softmax-ed confidence scores."""
@@ -22,8 +23,9 @@ class TSModel(nn.Module):
         # Set the base model to evaluation mode for Temperature Scaling training
         self.model.eval()
 
-        logits = self.model(batch)
-        scaled_logits = logits / self.temperature
+        atom_logits, bond_logits = self.model(batch)
+        atom_logits_scaled = atom_logits / self.atom_temperature
+        bond_logits_scaled = bond_logits / self.bond_temperature
 
-        return scaled_logits
+        return atom_logits_scaled, bond_logits_scaled
 

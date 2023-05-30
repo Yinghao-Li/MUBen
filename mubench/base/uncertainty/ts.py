@@ -26,4 +26,3 @@ class TSModel(nn.Module):
         scaled_logits = logits / self.temperature
 
         return scaled_logits
-
