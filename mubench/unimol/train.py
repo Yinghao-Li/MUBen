@@ -13,7 +13,7 @@ from .args import Config
 from mubench.utils.macro import UncertaintyMethods
 from mubench.base.train import Trainer as BaseTrainer
 from mubench.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
-from mubench.base.uncertainty.temperature_scaling import TSModel
+from mubench.base.uncertainty.ts import TSModel
 
 logger = logging.getLogger(__name__)
 
