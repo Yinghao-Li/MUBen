@@ -21,6 +21,19 @@
             ]
         },
         {
+            "name": "result-org",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/assist/organize_results.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}",
+                "CUDA_VISIBLE_DEVICES": "3",
+            },
+            "args": ["${workspaceFolder}/scripts/config_organize.json"]
+        },
+        {
             "name": "move-models",
             "type": "python",
             "request": "launch",

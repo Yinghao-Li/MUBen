@@ -173,8 +173,8 @@ def aggregate_seeded_results(results_for_seeds: list[dict[str, float]]):
 
     results_aggr = {metric: [r[metric] for r in results_for_seeds] for metric in list(results_for_seeds[0].keys())}
     for k in results_aggr:
-        mean = np.mean(results_aggr)
-        std = np.std(results_aggr)
+        mean = np.mean(results_aggr[k])
+        std = np.std(results_aggr[k])
         results_aggr[k] = {'mean': mean, 'std': std}
 
     return results_aggr
