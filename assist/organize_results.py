@@ -100,10 +100,10 @@ class Arguments:
 
 def main(args: Arguments):
 
-    uncertainty_results = dict()
-
     for dataset_name in args.dataset_names:
+        logger.info(f"Processing {dataset_name} dataset...")
 
+        uncertainty_results = dict()
         for uncertainty_method in UncertaintyMethods.options():
 
             result_dir = op.join(args.result_folder, dataset_name, args.model_name, uncertainty_method)
@@ -126,7 +126,7 @@ def main(args: Arguments):
 
                     preds, variances, lbs, masks = load_results(test_result_paths)
 
-                    if variances:  # regression
+                    if variances is not None:  # regression
                         metrics = regression_metrics(preds, variances, lbs, masks)
                     else:  # classification
                         metrics = classification_metrics(preds, lbs, masks)
@@ -152,7 +152,7 @@ def main(args: Arguments):
 
                 preds, variances, lbs, masks = load_results(test_result_paths)
 
-                if variances:  # regression
+                if variances is not None:  # regression
                     metrics = regression_metrics(preds, variances, lbs, masks)
                 else:  # classification
                     metrics = classification_metrics(preds, lbs, masks)
