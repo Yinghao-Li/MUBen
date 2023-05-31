@@ -1,0 +1,6 @@
+{
+  "dataset_name": "tox21",
+  "model_name": "DNN",
+  "feature_type": "rdkit",
+  "result_folder": "../output/"
+}
