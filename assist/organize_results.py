@@ -239,80 +239,62 @@ def classification_metrics(preds, lbs, masks):
 
     result_metrics_dict = dict()
 
-    # --- roc-auc ---
     roc_auc_list = list()
+    prc_auc_list = list()
+    ece_list = list()
+    mce_list = list()
+    nll_list = list()
+
     for i in range(lbs.shape[-1]):
         lbs_ = lbs[:, i][masks[:, i].astype(bool)]
         preds_ = preds[:, i][masks[:, i].astype(bool)]
+
+        if len(lbs_) < 1:
+            continue
+        if (lbs_ < 0).any():
+            raise ValueError("Invalid label value encountered!")
+        if (lbs_ == 0).all() or (lbs_ == 1).all():  # skip tasks with only one label type, as Uni-Mol did.
+            continue
+
+        # --- roc-auc ---
         roc_auc = roc_auc_score(lbs_, preds_)
         roc_auc_list.append(roc_auc)
-    roc_auc_avg = np.mean(roc_auc_list)
 
-    result_metrics_dict['roc-auc'] = {
-        'all': roc_auc_list,
-        'macro-avg': roc_auc_avg
-    }
-
-    # --- prc-auc ---
-    prc_auc_list = list()
-    for i in range(lbs.shape[-1]):
-        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
-        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        # --- prc-auc ---
         p, r, _ = precision_recall_curve(lbs_, preds_)
         prc_auc = auc(r, p)
         prc_auc_list.append(prc_auc)
-    prc_auc_avg = np.mean(prc_auc_list)
 
-    result_metrics_dict['prc-auc'] = {
-        'all': prc_auc_list,
-        'macro-avg': prc_auc_avg
-    }
-
-    # --- ece ---
-    ece_list = list()
-    for i in range(lbs.shape[-1]):
-        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
-        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        # --- ece ---
         ece = binary_calibration_error(torch.from_numpy(preds_), torch.from_numpy(lbs_)).item()
         ece_list.append(ece)
-    ece_avg = np.mean(ece_list)
 
-    result_metrics_dict['ece'] = {
-        'all': ece_list,
-        'macro-avg': ece_avg
-    }
-
-    # --- mce ---
-    mce_list = list()
-    for i in range(lbs.shape[-1]):
-        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
-        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        # --- mce ---
         mce = binary_calibration_error(torch.from_numpy(preds_), torch.from_numpy(lbs_), norm='max').item()
         mce_list.append(mce)
-    mce_avg = np.mean(mce_list)
 
-    result_metrics_dict['mce'] = {
-        'all': mce_list,
-        'macro-avg': mce_avg
-    }
-
-    # --- nll ---
-    nll_list = list()
-    for i in range(lbs.shape[-1]):
-        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
-        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        # --- nll ---
         nll = F.binary_cross_entropy(
             input=torch.from_numpy(preds_),
             target=torch.from_numpy(lbs_).to(torch.float),
             reduction='mean'
         ).item()
         nll_list.append(nll)
-    nll_avg = np.mean(nll_list)
 
-    result_metrics_dict['nll'] = {
-        'all': nll_list,
-        'macro-avg': nll_avg
-    }
+    roc_auc_avg = np.mean(roc_auc_list)
+    result_metrics_dict['roc-auc'] = {'all': roc_auc_list, 'macro-avg': roc_auc_avg}
+
+    prc_auc_avg = np.mean(prc_auc_list)
+    result_metrics_dict['prc-auc'] = {'all': prc_auc_list, 'macro-avg': prc_auc_avg}
+
+    ece_avg = np.mean(ece_list)
+    result_metrics_dict['ece'] = {'all': ece_list, 'macro-avg': ece_avg}
+
+    mce_avg = np.mean(mce_list)
+    result_metrics_dict['mce'] = {'all': mce_list, 'macro-avg': mce_avg}
+
+    nll_avg = np.mean(nll_list)
+    result_metrics_dict['nll'] = {'all': nll_list, 'macro-avg': nll_avg}
 
     return result_metrics_dict
 
@@ -329,46 +311,34 @@ def regression_metrics(preds, variances, lbs, masks):
     result_metrics_dict = dict()
 
     rmse_list = list()
+    mae_list = list()
+    nll_list = list()
+
     for i in range(lbs.shape[-1]):
         lbs_ = lbs[:, i][masks[:, i].astype(bool)]
         preds_ = preds[:, i][masks[:, i].astype(bool)]
+
+        # --- rmse ---
         rmse = mean_squared_error(lbs_, preds_, squared=False)
         rmse_list.append(rmse)
-    rmse_avg = np.mean(rmse_list)
 
-    result_metrics_dict['rmse'] = {
-        'all': rmse_list,
-        'macro-avg': rmse_avg
-    }
-
-    # --- mae ---
-    mae_list = list()
-    for i in range(lbs.shape[-1]):
-        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
-        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        # --- mae ---
         mae = mean_absolute_error(lbs_, preds_)
         mae_list.append(mae)
-    mae_avg = np.mean(mae_list)
 
-    result_metrics_dict['mae'] = {
-        'all': mae_list,
-        'macro-avg': mae_avg
-    }
-
-    # --- Gaussian NLL ---
-    nll_list = list()
-    for i in range(lbs.shape[-1]):
-        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
-        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        # --- Gaussian NLL ---
         vars_ = variances[:, i][masks[:, i].astype(bool)]
         nll = F.gaussian_nll_loss(torch.from_numpy(preds_), torch.from_numpy(lbs_), torch.from_numpy(vars_)).item()
         nll_list.append(nll)
-    nll_avg = np.mean(nll_list)
 
-    result_metrics_dict['nll'] = {
-        'all': nll_list,
-        'macro-avg': nll_avg
-    }
+    rmse_avg = np.mean(rmse_list)
+    result_metrics_dict['rmse'] = {'all': rmse_list, 'macro-avg': rmse_avg}
+
+    mae_avg = np.mean(mae_list)
+    result_metrics_dict['mae'] = {'all': mae_list, 'macro-avg': mae_avg}
+
+    nll_avg = np.mean(nll_list)
+    result_metrics_dict['nll'] = {'all': nll_list, 'macro-avg': nll_avg}
 
     return result_metrics_dict
 
