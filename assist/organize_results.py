@@ -44,9 +44,10 @@ class Arguments:
     """
 
     # --- IO arguments ---
-    dataset_name: Optional[str] = field(
+    dataset_names: Optional[str] = field(
         default=None,
         metadata={
+            "nargs": "*",
             "choices": DATASET_NAMES,
             "help": "A list of dataset names."
         }
@@ -85,50 +86,83 @@ class Arguments:
         if self.model_name == "DNN":
             assert self.feature_type != 'none', ValueError("Invalid feature type for DNN!")
             self.model_name = f"{self.model_name}-{self.feature_type}"
+
         if self.result_seeds is None:
             self.result_seeds: list[int] = [0, 1, 2]
         elif isinstance(self.result_seeds, int):
             self.result_seeds: list[int] = [self.result_seeds]
+
+        if self.dataset_names is None:
+            self.dataset_names: list[str] = DATASET_NAMES
+        elif isinstance(self.dataset_names, str):
+            self.dataset_names: list[str] = [self.dataset_names]
 
 
 def main(args: Arguments):
 
     uncertainty_results = dict()
 
-    for uncertainty_method in UncertaintyMethods.options():
+    for dataset_name in args.dataset_names:
 
-        result_dir = op.join(args.result_folder, args.dataset_name, args.model_name, uncertainty_method)
-        results_for_seeds = list()
-        skip_uncertainty = False
+        for uncertainty_method in UncertaintyMethods.options():
 
-        for seed in args.result_seeds:
+            result_dir = op.join(args.result_folder, dataset_name, args.model_name, uncertainty_method)
 
-            seeded_result_dir = op.join(result_dir, f"seed-{seed}")
-            test_result_paths = glob.glob(op.join(seeded_result_dir, "preds", "*.pt"))
+            if uncertainty_method != UncertaintyMethods.ensembles:
 
-            if not test_result_paths:
-                logger.warning(f"Directory {seeded_result_dir} does not contain any model prediction! "
-                               f"Will skip metric logging for {uncertainty_method}")
-                skip_uncertainty = True
-                break
+                results_for_seeds = list()
+                skip_uncertainty = False
 
-            preds, variances, lbs, masks = load_results(test_result_paths)
+                for seed in args.result_seeds:
 
-            if variances:  # regression
-                metrics = regression_metrics(preds, variances, lbs, masks)
-            else:  # classification
-                metrics = classification_metrics(preds, lbs, masks)
+                    seeded_result_dir = op.join(result_dir, f"seed-{seed}")
+                    test_result_paths = glob.glob(op.join(seeded_result_dir, "preds", "*.pt"))
 
-            result_dict = {k: v['macro-avg'] for k, v in metrics.items()}
-            results_for_seeds.append(result_dict)
+                    if not test_result_paths:
+                        logger.warning(f"Directory {seeded_result_dir} does not contain any model prediction! "
+                                       f"Will skip metric logging for {uncertainty_method}")
+                        skip_uncertainty = True
+                        break
 
-        if skip_uncertainty:
-            continue
+                    preds, variances, lbs, masks = load_results(test_result_paths)
 
-        results_aggr = aggregate_seeded_results(results_for_seeds)
-        uncertainty_results[uncertainty_method] = results_aggr
+                    if variances:  # regression
+                        metrics = regression_metrics(preds, variances, lbs, masks)
+                    else:  # classification
+                        metrics = classification_metrics(preds, lbs, masks)
 
-    save_results(uncertainty_results, args.result_folder, args.model_name, args.dataset_name)
+                    result_dict = {k: v['macro-avg'] for k, v in metrics.items()}
+                    results_for_seeds.append(result_dict)
+
+                if skip_uncertainty:
+                    continue
+
+                results_aggr = aggregate_seeded_results(results_for_seeds)
+                uncertainty_results[uncertainty_method] = results_aggr
+
+            else:
+
+                seeded_result_dirs = glob.glob(op.join(result_dir, '*'))
+                test_result_paths = [op.join(sid, "preds", "0.pt") for sid in seeded_result_dirs]
+
+                if not test_result_paths:
+                    logger.warning(f"Directory {result_dir} does not contain any model prediction! "
+                                   f"Will skip metric logging for {uncertainty_method}")
+                    break
+
+                preds, variances, lbs, masks = load_results(test_result_paths)
+
+                if variances:  # regression
+                    metrics = regression_metrics(preds, variances, lbs, masks)
+                else:  # classification
+                    metrics = classification_metrics(preds, lbs, masks)
+
+                result_dict = {k: v['macro-avg'] for k, v in metrics.items()}
+                results_aggr = {k: {"mean": v, "std": np.NaN} for k, v in result_dict.items()}
+
+                uncertainty_results[uncertainty_method] = results_aggr
+
+        save_results(uncertainty_results, args.result_folder, args.model_name, dataset_name)
 
     return None
 
