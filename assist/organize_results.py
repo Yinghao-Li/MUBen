@@ -205,10 +205,10 @@ def load_results(result_paths):
 def aggregate_seeded_results(results_for_seeds: list[dict[str, float]]):
     assert results_for_seeds
 
-    results_aggr = {metric: [r[metric] for r in results_for_seeds] for metric in list(results_for_seeds[0].keys())}
+    results_aggr = {metric: [r.get(metric, np.NaN) for r in results_for_seeds] for metric in list(results_for_seeds[0].keys())}
     for k in results_aggr:
-        mean = np.mean(results_aggr[k])
-        std = np.std(results_aggr[k])
+        mean = np.nanmean(results_aggr[k])
+        std = np.nanstd(results_aggr[k])
         results_aggr[k] = {'mean': mean, 'std': std}
 
     return results_aggr
@@ -226,9 +226,14 @@ def save_results(results, result_dir, model_name, dataset_name):
     columns["method"] = uncertainty_names
     for uncertainty in uncertainty_names:
         metric_dict = results[uncertainty]
-        for metric_name, value in metric_dict.items():
-            columns[f"{metric_name}-mean"].append(value["mean"])
-            columns[f"{metric_name}-std"].append(value["std"])
+        for metric in metrics:
+            value = metric_dict.get(metric, None)
+            if value:
+                columns[f"{metric}-mean"].append(value["mean"])
+                columns[f"{metric}-std"].append(value["std"])
+            else:
+                columns[f"{metric}-mean"].append(np.NaN)
+                columns[f"{metric}-std"].append(np.NaN)
 
     df = pd.DataFrame(columns)
     df.to_csv(op.join(result_dir, f"results-{model_name}-{dataset_name}.csv"))
@@ -245,6 +250,12 @@ def classification_metrics(preds, lbs, masks):
     mce_list = list()
     nll_list = list()
 
+    roc_auc_valid_flag = True
+    prc_auc_valid_flag = True
+    ece_valid_flag = True
+    mce_valid_flag = True
+    nll_valid_flag = True
+
     for i in range(lbs.shape[-1]):
         lbs_ = lbs[:, i][masks[:, i].astype(bool)]
         preds_ = preds[:, i][masks[:, i].astype(bool)]
@@ -257,44 +268,64 @@ def classification_metrics(preds, lbs, masks):
             continue
 
         # --- roc-auc ---
-        roc_auc = roc_auc_score(lbs_, preds_)
-        roc_auc_list.append(roc_auc)
+        try:
+            roc_auc = roc_auc_score(lbs_, preds_)
+            roc_auc_list.append(roc_auc)
+        except:
+            roc_auc_valid_flag = False
 
         # --- prc-auc ---
-        p, r, _ = precision_recall_curve(lbs_, preds_)
-        prc_auc = auc(r, p)
-        prc_auc_list.append(prc_auc)
+        try:
+            p, r, _ = precision_recall_curve(lbs_, preds_)
+            prc_auc = auc(r, p)
+            prc_auc_list.append(prc_auc)
+        except:
+            prc_auc_valid_flag = False
 
         # --- ece ---
-        ece = binary_calibration_error(torch.from_numpy(preds_), torch.from_numpy(lbs_)).item()
-        ece_list.append(ece)
+        try:
+            ece = binary_calibration_error(torch.from_numpy(preds_), torch.from_numpy(lbs_)).item()
+            ece_list.append(ece)
+        except:
+            ece_valid_flag = False
 
         # --- mce ---
-        mce = binary_calibration_error(torch.from_numpy(preds_), torch.from_numpy(lbs_), norm='max').item()
-        mce_list.append(mce)
+        try:
+            mce = binary_calibration_error(torch.from_numpy(preds_), torch.from_numpy(lbs_), norm='max').item()
+            mce_list.append(mce)
+        except:
+            mce_valid_flag = False
 
         # --- nll ---
-        nll = F.binary_cross_entropy(
-            input=torch.from_numpy(preds_),
-            target=torch.from_numpy(lbs_).to(torch.float),
-            reduction='mean'
-        ).item()
-        nll_list.append(nll)
+        try:
+            nll = F.binary_cross_entropy(
+                input=torch.from_numpy(preds_),
+                target=torch.from_numpy(lbs_).to(torch.float),
+                reduction='mean'
+            ).item()
+            nll_list.append(nll)
+        except:
+            nll_valid_flag = False
 
-    roc_auc_avg = np.mean(roc_auc_list)
-    result_metrics_dict['roc-auc'] = {'all': roc_auc_list, 'macro-avg': roc_auc_avg}
+    if roc_auc_valid_flag:
+        roc_auc_avg = np.mean(roc_auc_list)
+        result_metrics_dict['roc-auc'] = {'all': roc_auc_list, 'macro-avg': roc_auc_avg}
 
-    prc_auc_avg = np.mean(prc_auc_list)
-    result_metrics_dict['prc-auc'] = {'all': prc_auc_list, 'macro-avg': prc_auc_avg}
+    if prc_auc_valid_flag:
+        prc_auc_avg = np.mean(prc_auc_list)
+        result_metrics_dict['prc-auc'] = {'all': prc_auc_list, 'macro-avg': prc_auc_avg}
 
-    ece_avg = np.mean(ece_list)
-    result_metrics_dict['ece'] = {'all': ece_list, 'macro-avg': ece_avg}
+    if ece_valid_flag:
+        ece_avg = np.mean(ece_list)
+        result_metrics_dict['ece'] = {'all': ece_list, 'macro-avg': ece_avg}
 
-    mce_avg = np.mean(mce_list)
-    result_metrics_dict['mce'] = {'all': mce_list, 'macro-avg': mce_avg}
+    if mce_valid_flag:
+        mce_avg = np.mean(mce_list)
+        result_metrics_dict['mce'] = {'all': mce_list, 'macro-avg': mce_avg}
 
-    nll_avg = np.mean(nll_list)
-    result_metrics_dict['nll'] = {'all': nll_list, 'macro-avg': nll_avg}
+    if nll_valid_flag:
+        nll_avg = np.mean(nll_list)
+        result_metrics_dict['nll'] = {'all': nll_list, 'macro-avg': nll_avg}
 
     return result_metrics_dict
 
