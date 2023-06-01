@@ -168,7 +168,7 @@ class Trainer(BaseTrainer, ABC):
 
             if self._config.regression_with_variance:
                 mean = logits[..., 0]
-                var = logits[..., 1]
+                var = F.softplus(torch.from_numpy(logits[..., 1])).numpy()
                 return mean, var
             else:
                 preds = logits
