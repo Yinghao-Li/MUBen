@@ -23,7 +23,9 @@ from sklearn.metrics import (
     mean_absolute_error,
     precision_recall_curve,
     auc,
+    brier_score_loss
 )
+from scipy.stats import norm as gaussian
 
 from mubench.utils.io import set_logging, init_dir
 from mubench.utils.macro import (
@@ -250,12 +252,14 @@ def classification_metrics(preds, lbs, masks):
     ece_list = list()
     mce_list = list()
     nll_list = list()
+    brier_list = list()
 
     roc_auc_valid_flag = True
     prc_auc_valid_flag = True
     ece_valid_flag = True
     mce_valid_flag = True
     nll_valid_flag = True
+    brier_valid_flag = True
 
     for i in range(lbs.shape[-1]):
         lbs_ = lbs[:, i][masks[:, i].astype(bool)]
@@ -308,6 +312,13 @@ def classification_metrics(preds, lbs, masks):
         except:
             nll_valid_flag = False
 
+        # --- brier ---
+        try:
+            brier = brier_score_loss(lbs_, preds_)
+            brier_list.append(brier)
+        except:
+            brier_valid_flag = False
+
     if roc_auc_valid_flag:
         roc_auc_avg = np.mean(roc_auc_list)
         result_metrics_dict['roc-auc'] = {'all': roc_auc_list, 'macro-avg': roc_auc_avg}
@@ -328,6 +339,10 @@ def classification_metrics(preds, lbs, masks):
         nll_avg = np.mean(nll_list)
         result_metrics_dict['nll'] = {'all': nll_list, 'macro-avg': nll_avg}
 
+    if brier_valid_flag:
+        brier_avg = np.mean(brier_list)
+        result_metrics_dict['brier'] = {'brier': brier_list, 'macro-avg': brier_avg}
+
     return result_metrics_dict
 
 
@@ -345,10 +360,12 @@ def regression_metrics(preds, variances, lbs, masks):
     rmse_list = list()
     mae_list = list()
     nll_list = list()
+    ce_list = list()
 
     for i in range(lbs.shape[-1]):
         lbs_ = lbs[:, i][masks[:, i].astype(bool)]
         preds_ = preds[:, i][masks[:, i].astype(bool)]
+        vars_ = variances[:, i][masks[:, i].astype(bool)]
 
         # --- rmse ---
         rmse = mean_squared_error(lbs_, preds_, squared=False)
@@ -359,9 +376,12 @@ def regression_metrics(preds, variances, lbs, masks):
         mae_list.append(mae)
 
         # --- Gaussian NLL ---
-        vars_ = variances[:, i][masks[:, i].astype(bool)]
         nll = F.gaussian_nll_loss(torch.from_numpy(preds_), torch.from_numpy(lbs_), torch.from_numpy(vars_)).item()
         nll_list.append(nll)
+
+        # --- calibration error ---
+        ce = regression_calibration_error(lbs_, preds_, vars_)
+        ce_list.append(ce)
 
     rmse_avg = np.mean(rmse_list)
     result_metrics_dict['rmse'] = {'all': rmse_list, 'macro-avg': rmse_avg}
@@ -372,7 +392,25 @@ def regression_metrics(preds, variances, lbs, masks):
     nll_avg = np.mean(nll_list)
     result_metrics_dict['nll'] = {'all': nll_list, 'macro-avg': nll_avg}
 
+    ce_avg = np.mean(ce_list)
+    result_metrics_dict['ce'] = {'all': ce_list, 'macro-avg': ce_avg}
+
     return result_metrics_dict
+
+
+def regression_calibration_error(lbs, preds, variances, n_bins=20):
+    sigma = np.sqrt(variances)
+    phi_lbs = gaussian.cdf(lbs, loc=preds.reshape(-1, 1), scale=sigma.reshape(-1, 1))
+
+    expected_confidence = np.linspace(0, 1, n_bins+1)[1:-1]
+    observed_confidence = np.zeros_like(expected_confidence)
+
+    for i in range(0, len(expected_confidence)):
+        observed_confidence[i] = np.mean(phi_lbs <= expected_confidence[i])
+
+    calibration_error = np.mean((expected_confidence.ravel() - observed_confidence.ravel()) ** 2)
+
+    return calibration_error
 
 
 if __name__ == '__main__':

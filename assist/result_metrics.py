@@ -24,7 +24,9 @@ from sklearn.metrics import (
     mean_absolute_error,
     precision_recall_curve,
     auc,
+    brier_score_loss
 )
+from scipy.stats import norm as gaussian
 
 from mubench.utils.io import set_logging, set_log_path
 from mubench.utils.macro import (
@@ -207,6 +209,20 @@ def classification_metrics(preds, lbs, masks):
         'macro-avg': nll_avg
     }
 
+    # --- brier ---
+    brier_list = list()
+    for i in range(lbs.shape[-1]):
+        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
+        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        brier = brier_score_loss(lbs_, preds_)
+        brier_list.append(brier)
+    brier_avg = np.mean(brier_list)
+
+    result_metrics_dict['brier'] = {
+        'brier': brier_list,
+        'macro-avg': brier_avg
+    }
+
     return result_metrics_dict
 
 
@@ -263,7 +279,37 @@ def regression_metrics(preds, variances, lbs, masks):
         'macro-avg': nll_avg
     }
 
+    # --- calibration error ---
+    ce_list = list()
+    for i in range(lbs.shape[-1]):
+        lbs_ = lbs[:, i][masks[:, i].astype(bool)]
+        preds_ = preds[:, i][masks[:, i].astype(bool)]
+        vars_ = variances[:, i][masks[:, i].astype(bool)]
+        ce = regression_calibration_error(lbs_, preds_, vars_)
+        ce_list.append(ce)
+    ce_avg = np.mean(ce_list)
+
+    result_metrics_dict['ce'] = {
+        'all': ce_list,
+        'macro-avg': ce_avg
+    }
+
     return result_metrics_dict
+
+
+def regression_calibration_error(lbs, preds, variances, n_bins=20):
+    sigma = np.sqrt(variances)
+    phi_lbs = gaussian.cdf(lbs, loc=preds.reshape(-1, 1), scale=sigma.reshape(-1, 1))
+
+    expected_confidence = np.linspace(0, 1, n_bins+1)[1:-1]
+    observed_confidence = np.zeros_like(expected_confidence)
+
+    for i in range(0, len(expected_confidence)):
+        observed_confidence[i] = np.mean(phi_lbs <= expected_confidence[i])
+
+    calibration_error = np.mean((expected_confidence.ravel() - observed_confidence.ravel()) ** 2)
+
+    return calibration_error
 
 
 if __name__ == '__main__':
