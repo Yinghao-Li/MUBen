@@ -25,7 +25,7 @@ from sklearn.metrics import (
     auc,
 )
 
-from mubench.utils.io import set_logging
+from mubench.utils.io import set_logging, init_dir
 from mubench.utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
@@ -223,7 +223,7 @@ def save_results(results, result_dir, model_name, dataset_name):
     metrics = list(list(results.values())[0].keys())
     columns_headers = ["method"] + [f"{metric}-mean" for metric in metrics] + [f"{metric}-std" for metric in metrics]
     columns = {k: list() for k in columns_headers}
-    columns["method"] = uncertainty_names
+    columns["method"] = [f"{model_name}-{un}" for un in uncertainty_names]
     for uncertainty in uncertainty_names:
         metric_dict = results[uncertainty]
         for metric in metrics:
@@ -236,7 +236,8 @@ def save_results(results, result_dir, model_name, dataset_name):
                 columns[f"{metric}-std"].append(np.NaN)
 
     df = pd.DataFrame(columns)
-    df.to_csv(op.join(result_dir, f"results-{model_name}-{dataset_name}.csv"))
+    init_dir(op.join(result_dir, "RESULTS"), clear_original_content=False)
+    df.to_csv(op.join(result_dir, "RESULTS", f"{model_name}-{dataset_name}.csv"))
     return None
 
 
