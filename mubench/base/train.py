@@ -138,7 +138,8 @@ class Trainer:
         """
         Initialize model optimizer
         """
-        self._optimizer = AdamW(self.model.parameters(), lr=self._status.lr)
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        self._optimizer = AdamW(params, lr=self._status.lr)
 
         # for sgld compatibility
         if self._config.uncertainty_method == UncertaintyMethods.sgld:
@@ -1068,6 +1069,6 @@ class Trainer:
             os.makedirs(op.dirname(op.normpath(file_path)), exist_ok=True)
             torch.save(data_dict, file_path)
         else:
-            logger.warning("Results are not saved because of `disable_result_saving` flag is set to `True`.")
+            logger.warning("Results are not saved because `disable_result_saving` flag is set to `True`.")
 
         return None

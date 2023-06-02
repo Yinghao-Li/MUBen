@@ -55,7 +55,8 @@ class Trainer(BaseTrainer, ABC):
     def initialize_optimizer(self):
         # Original implementation seems set weight decay to 0, which is weird.
         # We'll keep it as default here
-        self._optimizer = AdamW(self._model.parameters(), lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        self._optimizer = AdamW(params, lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
 
         # for sgld compatibility
         if self._config.uncertainty_method == UncertaintyMethods.sgld:

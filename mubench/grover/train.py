@@ -42,35 +42,6 @@ class Trainer(BaseTrainer, ABC):
         logger.info(f"Loading GROVER checkpoint from {self._config.checkpoint_path}")
         self._model = load_checkpoint(self._config)
 
-    def initialize_optimizer(self):
-        """
-        Builds an Optimizer, copied from GROVER original implementation.
-        """
-
-        # Only adjust the learning rate for the GroverFinetuneTask.
-        ffn_param_ids = [id(x[1]) for x in self._model.named_parameters()
-                         if "grover" not in x[0] and ("ffn" in x or "output_layer" in x[0])]
-        base_params = filter(lambda p: id(p) not in ffn_param_ids, self._model.parameters())
-        output_params = filter(lambda p: id(p) in ffn_param_ids, self._model.parameters())
-        if self._config.fine_tune_coff == 0:
-            for param in base_params:
-                param.requires_grad = False
-
-        # for sgld compatibility
-        if self._config.uncertainty_method != UncertaintyMethods.sgld:
-            self._optimizer = AdamW([
-                {'params': base_params, 'lr': self._status.lr * self._config.fine_tune_coff},
-                {'params': output_params, 'lr': self._status.lr}
-            ], lr=self._status.lr, weight_decay=self._config.weight_decay)
-        else:
-            self._optimizer = AdamW(base_params, lr=self._status.lr, weight_decay=self._config.weight_decay)
-            sgld_optimizer = PSGLDOptimizer if self._config.apply_preconditioned_sgld else SGLDOptimizer
-            self._sgld_optimizer = sgld_optimizer(
-                output_params, lr=self._status.lr, norm_sigma=self._config.sgld_prior_sigma
-            )
-
-        return self
-
     def ts_session(self):
         # update hyper parameters
         self._status.lr = self._config.ts_lr
