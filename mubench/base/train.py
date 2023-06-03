@@ -209,8 +209,6 @@ class Trainer:
         """
         Convert the label distribution in the training dataset to standard Gaussian.
         Notice that this function only works for regression tasks
-
-        TODO: check whether this function behaves properly on multi-task regression
         """
         if self._config.task_type == 'classification':
             return self

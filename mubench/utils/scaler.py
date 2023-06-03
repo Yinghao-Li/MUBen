@@ -94,7 +94,6 @@ class StandardScaler:
         if var is None:
             return transformed_x
 
-        # TODO: should double check if this is correct
         transformed_var = var * self.stds ** 2
         transformed_var = np.where(
             np.isnan(transformed_var), self.replace_nan_token, transformed_var
