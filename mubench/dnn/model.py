@@ -47,7 +47,7 @@ class DNN(nn.Module):
         ) for i in range(n_hidden_layers)]
         self.hidden_layers = nn.Sequential(*hidden_layers)
 
-        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, apply_bbp)
+        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, apply_bbp, **kwargs)
 
         self.initialize()
 

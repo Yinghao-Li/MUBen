@@ -22,11 +22,11 @@ class BBPOutputLayer(nn.Module):
     Only works with gaussian priors.
     """
 
-    def __init__(self, last_hidden_dim, n_output_heads, prior_sig=0.1, **kwargs):
+    def __init__(self, last_hidden_dim, n_output_heads, bbp_prior_sigma=0.1, **kwargs):
         super(BBPOutputLayer, self).__init__()
         self.n_in = last_hidden_dim
         self.n_out = n_output_heads
-        self.prior_sig = prior_sig
+        self.prior_sigma = bbp_prior_sigma
 
         # Learnable parameters
         self.weight_mu = nn.Parameter(torch.empty(self.n_in, self.n_out))
@@ -58,7 +58,7 @@ class BBPOutputLayer(nn.Module):
 
         logits = act_w_out + act_b_out.unsqueeze(0).expand(x.shape[0], -1)
 
-        kld = kld_cost(mu_p=0, sig_p=self.prior_sig, mu_q=self.weight_mu, sig_q=std_weight) + \
-            kld_cost(mu_p=0, sig_p=0.1, mu_q=self.bias_mu, sig_q=std_bias)
+        kld = kld_cost(mu_p=0, sig_p=self.prior_sigma, mu_q=self.weight_mu, sig_q=std_weight) + \
+              kld_cost(mu_p=0, sig_p=0.1, mu_q=self.bias_mu, sig_q=std_bias)
 
         return logits, kld

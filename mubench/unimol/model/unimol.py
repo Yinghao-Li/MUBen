@@ -68,8 +68,9 @@ class UniMol(nn.Module):
         self.output_layer = OutputLayer(
             config.encoder_embed_dim,
             config.n_lbs * config.n_tasks,
-            config.uncertainty_method == UncertaintyMethods.bbp
-        ).initialize()
+            config.uncertainty_method == UncertaintyMethods.bbp,
+            bbp_prior_sigma=config.bbp_prior_sigma
+        )
 
     def forward(self, batch, **kwargs):
         src_tokens, src_distance, src_edge_type = batch.atoms, batch.distances, batch.edge_types

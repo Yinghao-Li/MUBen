@@ -35,6 +35,7 @@ class OutputLayer(nn.Module):
             self.output_layer = BBPOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
 
         self.kld = None
+        self.initialize()
 
     def initialize(self):
         if not self._apply_bbp:

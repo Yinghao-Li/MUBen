@@ -174,6 +174,11 @@ class Arguments:
         default=False, metadata={"help": "Whether to apply temperature scaling after training model with focal loss."}
     )
 
+    # --- BBP Arguments ---
+    bbp_prior_sigma: Optional[float] = field(
+        default=0.1, metadata={"help": "Sigma value for BBP prior."}
+    )
+
     # --- SGLD Arguments ---
     apply_preconditioned_sgld: Optional[bool] = field(
         default=False, metadata={"help": "Whether to apply pre-conditioned SGLD instead of the vanilla one."}

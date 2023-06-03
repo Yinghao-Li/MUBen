@@ -42,5 +42,6 @@ class Trainer(BaseTrainer):
             n_hidden_layers=self._config.n_dnn_hidden_layers,
             d_hidden=self._config.d_dnn_hidden,
             p_dropout=self._config.dropout,
-            apply_bbp=self._config.uncertainty_method == UncertaintyMethods.bbp
+            apply_bbp=self._config.uncertainty_method == UncertaintyMethods.bbp,
+            bbp_prior_sigma=self._config.bbp_prior_sigma
         )
