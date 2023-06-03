@@ -112,6 +112,7 @@ class GROVERFinetuneModel(nn.Module):
 
         self.mol_atom_from_atom_ffn = create_ffn(config)
         self.mol_atom_from_bond_ffn = create_ffn(config)
+        self.init_backbone_weights()
 
         self.atom_output_layer = OutputLayer(
             config.ffn_hidden_size,
@@ -125,6 +126,14 @@ class GROVERFinetuneModel(nn.Module):
             config.uncertainty_method == UncertaintyMethods.bbp,
             bbp_prior_sigma=config.bbp_prior_sigma
         )
+
+    def init_backbone_weights(self):
+        for param in self.parameters():
+            if param.dim() == 1:
+                nn.init.constant_(param, 0)
+            else:
+                nn.init.xavier_normal_(param)
+        return self
 
     def forward(self, batch, **kwargs):
         molecule_components = batch.molecule_graphs.components
@@ -142,30 +151,6 @@ class GROVERFinetuneModel(nn.Module):
         bond_ffn_output = self.bond_output_layer(bond_ffn_output)
 
         return atom_ffn_output, bond_ffn_output
-
-
-def build_model(config):
-    """
-    Builds a MPNN, which is a message passing neural network + feed-forward layers.
-
-    Parameters
-    ----------
-    config: Arguments.
-
-    Returns
-    -------
-    A MPNN containing the MPN encoder along with final linear layers with parameters initialized.
-    """
-    model = GROVERFinetuneModel(config)
-
-    # Initializes the weights of a model in place.
-    for param in model.parameters():
-        if param.dim() == 1:
-            nn.init.constant_(param, 0)
-        else:
-            nn.init.xavier_normal_(param)
-
-    return model
 
 
 def load_checkpoint(config):
@@ -187,7 +172,7 @@ def load_checkpoint(config):
                 setattr(config, key, value)
 
     # Build model
-    model = build_model(config)
+    model = GROVERFinetuneModel(config)
     model_state_dict = model.state_dict()
 
     # Skip missing parameters and parameters of mismatched size

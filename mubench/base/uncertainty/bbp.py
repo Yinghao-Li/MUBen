@@ -35,6 +35,8 @@ class BBPOutputLayer(nn.Module):
         self.bias_mu = nn.Parameter(torch.empty(self.n_out))
         self.bias_rho = nn.Parameter(torch.empty(self.n_out))
 
+        self.initialize()
+
     def initialize(self):
         nn.init.uniform_(self.weight_mu, -0.1, 0.1)
         nn.init.uniform_(self.bias_mu, -0.1, 0.1)
