@@ -1,6 +1,6 @@
 {
   "dataset_names": null,
-  "model_name": "ChemBERTa",
+  "model_name": "Uni-Mol",
   "feature_type": "rdkit",
   "result_folder": "./output/"
 }
