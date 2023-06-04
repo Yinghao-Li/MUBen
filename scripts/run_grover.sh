@@ -12,7 +12,7 @@ train_on_esol=true
 train_on_freesolv=true
 train_on_lipo=true
 train_on_qm7=true
-# train_on_qm8=true
+train_on_qm8=true
 # train_on_qm9=true
 
 # -- single-task classification --
@@ -42,14 +42,15 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=false
 
-uncertainty_method="FocalLoss"  # this is subject to change
+uncertainty_method="BBP"  # this is subject to change
 retrain_model=false
+ignore_uncertainty_output=true
 
 regression_with_variance=true
 
 lr=0.0001
-batch_size=64
-n_epochs=150
+batch_size=256
+n_epochs=100
 valid_tolerance=40
 
 seed=0
@@ -57,6 +58,7 @@ seed=0
 # Uncertainty arguments
 n_test=30
 n_ensembles=10
+sgld_sampling_interval=1
 
 # --- universal arguments region ends ---
 
@@ -96,6 +98,7 @@ do
       --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
       --uncertainty_method $uncertainty_method \
       --retrain_model $retrain_model \
+      --ignore_uncertainty_output $ignore_uncertainty_output \
       --regression_with_variance $regression_with_variance \
       --lr $lr \
       --n_epochs $n_epochs \
@@ -103,6 +106,7 @@ do
       --batch_size $batch_size \
       --seed $seed \
       --n_test $n_test \
-      --n_ensembles $n_ensembles
+      --n_ensembles $n_ensembles \
+      --sgld_sampling_interval $sgld_sampling_interval
   done
 done

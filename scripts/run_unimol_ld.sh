@@ -11,8 +11,8 @@ set -e
 # train_on_freesolv=true
 # train_on_lipo=true
 # train_on_qm7=true
-train_on_qm8=true
-train_on_qm9=true
+# train_on_qm8=true
+# train_on_qm9=true
 
 # -- single-task classification --
 # train_on_bbbp=true
@@ -42,8 +42,9 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="BBP"  # this is subject to change
+uncertainty_method="TemperatureScaling"  # this is subject to change
 retrain_model=false
+ignore_uncertainty_output=true
 
 regression_with_variance=true
 
@@ -57,6 +58,7 @@ valid_tolerance=40
 # Uncertainty arguments
 n_test=30
 n_ensembles=3
+sgld_sampling_interval=1
 
 # --- universal arguments region ends ---
 
@@ -103,27 +105,29 @@ do
   fi
   for seed in 0 1 2
   do
-  CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
-    --wandb_api_key $wandb_api_key \
-    --disable_wandb $disable_wandb \
-    --data_folder $data_folder \
-    --unimol_feature_folder $unimol_feature_folder \
-    --dataset_name "$dataset_name" \
-    --checkpoint_path ./models/unimol_base.pt \
-    --num_workers $num_workers \
-    --num_preprocess_workers $num_preprocess_workers \
-    --pin_memory $pin_memory \
-    --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
-    --uncertainty_method $uncertainty_method \
-    --retrain_model $retrain_model \
-    --regression_with_variance $regression_with_variance \
-    --lr $lr \
-    --n_epochs $n_epochs \
-    --valid_tolerance $valid_tolerance \
-    --batch_size $batch_size \
-    --batch_size_inference $batch_size_inference \
-    --seed $seed \
-    --n_test $n_test \
-    --n_ensembles $n_ensembles
+    CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
+      --wandb_api_key $wandb_api_key \
+      --disable_wandb $disable_wandb \
+      --data_folder $data_folder \
+      --unimol_feature_folder $unimol_feature_folder \
+      --dataset_name "$dataset_name" \
+      --checkpoint_path ./models/unimol_base.pt \
+      --num_workers $num_workers \
+      --num_preprocess_workers $num_preprocess_workers \
+      --pin_memory $pin_memory \
+      --ignore_preprocessed_dataset $ignore_preprocessed_dataset \
+      --uncertainty_method $uncertainty_method \
+      --ignore_uncertainty_output $ignore_uncertainty_output \
+      --retrain_model $retrain_model \
+      --regression_with_variance $regression_with_variance \
+      --lr $lr \
+      --n_epochs $n_epochs \
+      --valid_tolerance $valid_tolerance \
+      --batch_size $batch_size \
+      --batch_size_inference $batch_size_inference \
+      --seed $seed \
+      --n_test $n_test \
+      --n_ensembles $n_ensembles \
+      --sgld_sampling_interval $sgld_sampling_interval
   done
 done
