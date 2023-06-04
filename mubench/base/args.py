@@ -97,6 +97,9 @@ class Arguments:
     batch_size: Optional[int] = field(
         default=32, metadata={'help': "Batch size."}
     )
+    batch_size_inference: Optional[int] = field(
+        default=None, metadata={'help': 'Inference batch size.'}
+    )
     n_epochs: Optional[int] = field(
         default=50, metadata={'help': "How many epochs to train the model."}
     )

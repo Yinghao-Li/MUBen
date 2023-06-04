@@ -675,21 +675,20 @@ class Trainer:
             loss += self.model.output_layer.kld / n_steps_per_epoch / len(batch)
         return loss
 
-    def inference(self, dataset, batch_size: Optional[int] = 0):
+    def inference(self, dataset, **kwargs):
         """
         Run the forward inference for an entire dataset.
 
         Parameters
         ----------
         dataset: dataset
-        batch_size: batch size
 
         Returns
         -------
         model outputs (logits or tuple of logits)
         """
 
-        dataloader = self.get_dataloader(dataset, batch_size=batch_size, shuffle=False)
+        dataloader = self.get_dataloader(dataset, batch_size=self._config.batch_size_inference, shuffle=False)
         self.model.to(self._device)
         self.eval_mode()
 

@@ -51,11 +51,6 @@ class Arguments(BaseArguments):
         default=32, metadata={'help': 'Batch size'}
     )
 
-    batch_size_inference: Optional[int] = field(
-        default=32, metadata={'help': 'Validation Batch size, should be a smaller value than `batch_size` since '
-                                      'we append the conformation dimension (11) to batch size during inference.'}
-    )
-
     max_atoms: Optional[int] = field(
         default=256, metadata={'help': 'the maximum number of atoms in the input molecules.'}
     )

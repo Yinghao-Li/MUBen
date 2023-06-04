@@ -95,11 +95,11 @@ class Trainer(BaseTrainer, ABC):
         loss = torch.sum(loss * batch.masks) / batch.masks.sum()
         return loss
 
-    def inference(self, dataset, batch_size: Optional[int] = None):
+    def inference(self, dataset, **kwargs):
 
         dataloader = self.get_dataloader(
             dataset,
-            batch_size=batch_size if batch_size else self._config.batch_size,
+            batch_size=self._config.batch_size_inference,
             shuffle=False
         )
         self.model.to(self._device)
