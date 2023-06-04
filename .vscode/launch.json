@@ -34,6 +34,19 @@
             "args": ["${workspaceFolder}/scripts/config_organize.json"]
         },
         {
+            "name": "result-metrics",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/assist/result_metrics.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}",
+                "CUDA_VISIBLE_DEVICES": "3",
+            },
+            "args": ["${workspaceFolder}/scripts/config_metrics.json"]
+        },
+        {
             "name": "move-models",
             "type": "python",
             "request": "launch",

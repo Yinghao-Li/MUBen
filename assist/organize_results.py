@@ -238,8 +238,8 @@ def save_results(results, result_dir, model_name, dataset_name):
                 columns[f"{metric}-std"].append(np.NaN)
 
     df = pd.DataFrame(columns)
-    init_dir(op.join(result_dir, "RESULTS"), clear_original_content=False)
-    df.to_csv(op.join(result_dir, "RESULTS", f"{model_name}-{dataset_name}.csv"))
+    init_dir(op.join(result_dir, "RESULTS", "scores"), clear_original_content=False)
+    df.to_csv(op.join(result_dir, "RESULTS", "scores", f"{model_name}-{dataset_name}.csv"))
     return None
 
 

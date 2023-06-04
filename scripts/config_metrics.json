@@ -1,7 +1,7 @@
 {
-  "dataset_name": "tox21",
-  "model_name": "DNN",
+  "dataset_name": "qm9",
+  "model_name": "Uni-Mol",
   "feature_type": "rdkit",
-  "uncertainty_method": "BBP",
-  "result_folder": "../output/"
+  "uncertainty_method": "MCDropout",
+  "result_folder": "./output/"
 }

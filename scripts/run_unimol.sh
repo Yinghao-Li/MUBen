@@ -12,18 +12,18 @@ set -e
 # train_on_lipo=true
 # train_on_qm7=true
 # train_on_qm8=true
-# train_on_qm9=true
+train_on_qm9=true
 
 # -- single-task classification --
-train_on_bbbp=true
-train_on_bace=true
-train_on_hiv=true
+# train_on_bbbp=true
+# train_on_bace=true
+# train_on_hiv=true
 
 # -- multi-task classification --
-train_on_tox21=true
-train_on_toxcast=true
-train_on_clintox=true
-train_on_sider=true
+# train_on_tox21=true
+# train_on_toxcast=true
+# train_on_clintox=true
+# train_on_sider=true
 #train_on_muv=true
 # train_on_pcba=true
 
@@ -37,12 +37,12 @@ disable_wandb=false
 
 data_folder="./data/files"
 unimol_feature_folder="./data/UniMol"
-num_workers=16
+num_workers=32
 num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="TemperatureScaling"  # this is subject to change
+uncertainty_method="MCDropout"  # this is subject to change
 retrain_model=false
 ignore_uncertainty_output=true
 
@@ -50,9 +50,9 @@ regression_with_variance=true
 
 # default hyper-parameters
 lr=0.00005
-batch_size=32
-batch_size_inference=16
-n_epochs=100
+batch_size=128
+batch_size_inference=64
+n_epochs=60
 valid_tolerance=40
 
 # Uncertainty arguments
@@ -104,7 +104,7 @@ do
     n_epochs=40
   fi
 
-  for seed in 0 1 2
+  for seed in 0
   do
     CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
       --wandb_api_key $wandb_api_key \
