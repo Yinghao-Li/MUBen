@@ -7,23 +7,23 @@ set -e
 # --- the argument values do not matter ---
 
 # -- regression tasks --
-train_on_esol=true
-train_on_freesolv=true
-train_on_lipo=true
-train_on_qm7=true
-train_on_qm8=true
-train_on_qm9=true
+# train_on_esol=true
+# train_on_freesolv=true
+# train_on_lipo=true
+# train_on_qm7=true
+# train_on_qm8=true
+# train_on_qm9=true
 
 # -- single-task classification --
-train_on_bbbp=true
-train_on_bace=true
-train_on_hiv=true
+# train_on_bbbp=true
+# train_on_bace=true
+# train_on_hiv=true
 
 # -- multi-task classification --
-train_on_tox21=true
-train_on_toxcast=true
-train_on_clintox=true
-train_on_sider=true
+# train_on_tox21=true
+# train_on_toxcast=true
+# train_on_clintox=true
+# train_on_sider=true
 train_on_muv=true
 
 # --- dataset choosing region ends ---
@@ -41,14 +41,14 @@ num_preprocess_workers=24
 pin_memory=false
 ignore_preprocessed_dataset=false
 
-uncertainty_method="SWAG"  # this is subject to change
+uncertainty_method="BBP"  # this is subject to change
 retrain_model=false
 
 regression_with_variance=true
 
 lr=0.0002
 batch_size=256
-n_epochs=400
+n_epochs=50
 valid_tolerance=200
 
 # Uncertainty arguments
@@ -79,7 +79,7 @@ if [ -z ${train_on_qm9+x} ]; then echo "skip qm9"; else dataset_names+=" qm9"; f
 # --- training scripts ---
 for dataset_name in $dataset_names
 do
-  for seed in 0 1 2
+  for seed in 0 1
   do
     CUDA_VISIBLE_DEVICES=$cuda_device python run_dnn.py \
       --wandb_api_key $wandb_api_key \
