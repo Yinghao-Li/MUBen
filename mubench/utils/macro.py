@@ -23,7 +23,6 @@ DATASET_NAMES = [
     "esol",
     "freesolv",
     "lipo",
-    "pcba",
     "muv",
     "hiv",
     "bace",
@@ -42,7 +41,6 @@ CLASSIFICATION_DATASET = [
     'clintox',
     'hiv',
     'muv',
-    'pcba',
     'sider',
     'tox21',
     'toxcast'
