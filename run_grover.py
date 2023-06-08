@@ -88,9 +88,10 @@ if __name__ == '__main__':
 
     set_seed(arguments.seed)
 
-    try:
+    if arguments.deploy:
+        try:
+            main(args=arguments)
+        except Exception as e:
+            logger.exception(e)
+    else:
         main(args=arguments)
-    except Exception as e:
-        logger.exception(e)
-    # main(args=arguments)
-

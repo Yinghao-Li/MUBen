@@ -125,6 +125,9 @@ class Arguments:
     debug: Optional[bool] = field(
         default=False, metadata={"help": "Debugging mode with fewer training data"}
     )
+    deploy: Optional[bool] = field(
+        default=False, metadata={"help": "Deploy mode that does not throw run-time errors when bugs are encountered"}
+    )
 
     # --- Evaluation Arguments ---
     valid_epoch_interval: Optional[int] = field(
@@ -336,6 +339,10 @@ class Config(Arguments):
         """
 
         assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
+
+        if self.debug and self.deploy:
+            logger.warning("`DEBUG` mode is not allowed when the program is in `DEPLOY`! Setting debug=False.")
+            self.debug = False
 
         if self.uncertainty_method in [UncertaintyMethods.none, UncertaintyMethods.ensembles,
                                        UncertaintyMethods.focal, UncertaintyMethods.temperature]:

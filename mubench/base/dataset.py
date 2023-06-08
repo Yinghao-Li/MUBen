@@ -80,13 +80,7 @@ class Dataset(TorchDataset):
             self.load(preprocessed_path)
         # else, load dataset from csv and generate features
         else:
-            file_path = os.path.normpath(os.path.join(config.data_dir, f"{partition}.csv"))
-            logger.info(f"Loading dataset {file_path}")
-
-            if file_path and os.path.exists(file_path):
-                self.read_csv(file_path)
-            else:
-                raise FileNotFoundError(f"File {file_path} does not exist!")
+            self.read_csv(config.data_dir, partition)
 
             logger.info("Creating features")
             self.create_features(config)
@@ -154,10 +148,15 @@ class Dataset(TorchDataset):
 
         return self
 
-    def read_csv(self, file_path: str):
+    def read_csv(self, data_dir: str, partition: str):
         """
         Load data
         """
+        file_path = os.path.normpath(os.path.join(data_dir, f"{partition}.csv"))
+        logger.info(f"Loading dataset {file_path}")
+
+        if not (file_path and os.path.exists(file_path)):
+            raise FileNotFoundError(f"File {file_path} does not exist!")
 
         df = pd.read_csv(file_path)
         self._smiles = df.smiles.tolist()
