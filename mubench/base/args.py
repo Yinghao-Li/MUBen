@@ -128,6 +128,9 @@ class Arguments:
     deploy: Optional[bool] = field(
         default=False, metadata={"help": "Deploy mode that does not throw run-time errors when bugs are encountered"}
     )
+    time_training: Optional[bool] = field(
+        default=False, metadata={"help": "Measure training time in terms of training step."}
+    )
 
     # --- Evaluation Arguments ---
     valid_epoch_interval: Optional[int] = field(

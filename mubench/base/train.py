@@ -7,6 +7,7 @@ Base trainer function.
 import os
 import os.path as op
 import copy
+import time
 import torch
 import torch.nn.functional as F
 import wandb
@@ -14,7 +15,6 @@ import logging
 import numpy as np
 import torch.nn as nn
 
-from tqdm.auto import tqdm
 from typing import Optional, Union, Tuple
 
 from scipy.special import expit
@@ -110,12 +110,18 @@ class Trainer:
         # initialize training modules
         self.initialize()
 
+        logger.info(f"Trainer initialized. The model contains {self.n_model_parameters} parameters")
+
     @property
     def model(self):
         # return the scaled model if it exits
         if self._ts_model:
             return self._ts_model
         return self._model
+
+    @property
+    def n_model_parameters(self):
+        return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
     def initialize(self):
         """
@@ -556,44 +562,41 @@ class Trainer:
             batch_size=self._config.batch_size
         )
 
-        with tqdm(total=self.n_training_steps if not use_valid_dataset else self.n_valid_steps) as pbar:
-            pbar.set_description(f'[Epoch 0] Loss: {np.inf:.4f}')
+        for epoch_idx in range(self._status.n_epochs):
 
-            for epoch_idx in range(self._status.n_epochs):
+            logger.info(f"[Training Epoch {self._status.train_log_idx}]")
+            training_loss, avg_time_per_step = self.training_epoch(data_loader)
 
-                training_loss = self.training_epoch(data_loader, pbar)
+            # Print the averaged training loss.
+            self.log_results({'Training Loss': training_loss, 'Average Time per Step': avg_time_per_step})
+            wandb.log(data={'train/loss': training_loss}, step=self._status.train_log_idx)
 
-                # Print the averaged training loss so far.
-                pbar.set_description(f'[Epoch {self._status.train_log_idx}] Loss: {training_loss:.4f}')
-                wandb.log(data={'train/loss': training_loss}, step=self._status.train_log_idx)
+            # Compatibility with SWAG
+            if self._swa_model:
+                self._swa_model.update_parameters(self.model)
 
-                # Compatibility with SWAG
-                if self._swa_model:
-                    self._swa_model.update_parameters(self.model)
+            if self._sgld_model_buffer is not None and (epoch_idx + 1) % self._config.sgld_sampling_interval == 0:
+                self.model.to('cpu')
+                self._sgld_model_buffer.append(copy.deepcopy(self.model.state_dict()))
+                self.model.to(self._device)
 
-                if self._sgld_model_buffer is not None and (epoch_idx + 1) % self._config.sgld_sampling_interval == 0:
-                    self.model.to('cpu')
-                    self._sgld_model_buffer.append(copy.deepcopy(self.model.state_dict()))
-                    self.model.to(self._device)
+            if self._status.valid_epoch_interval and (epoch_idx + 1) % self._status.valid_epoch_interval == 0:
+                self.eval_and_save()
 
-                if self._status.valid_epoch_interval and (epoch_idx + 1) % self._status.valid_epoch_interval == 0:
-                    self.eval_and_save()
-
-                if self._status.n_eval_no_improve > self._config.valid_tolerance:
-                    logger.warning("Quit training because of exceeding valid tolerance!")
-                    self._status.n_eval_no_improve = 0
-                    break
+            if self._status.n_eval_no_improve > self._config.valid_tolerance:
+                logger.warning("Quit training because of exceeding valid tolerance!")
+                self._status.n_eval_no_improve = 0
+                break
 
         return None
 
-    def training_epoch(self, data_loader, pbar):
+    def training_epoch(self, data_loader):
         """
         Train the model for one epoch
 
         Parameters
         ----------
         data_loader: data loader
-        pbar: progress bar
 
         Returns
         -------
@@ -605,12 +608,18 @@ class Trainer:
 
         total_loss = 0.
         num_items = 0
+        time_per_step_list = list()
+
         for batch in data_loader:
             batch.to(self._config.device)
 
             self._optimizer.zero_grad()
             if self._sgld_optimizer is not None:  # for sgld compatibility
                 self._sgld_optimizer.zero_grad()
+
+            # measuring training time for a full batch
+            if self._config.time_training and len(batch) == self._config.batch_size:
+                self.on_time_measurement_start()
 
             logits = self.model(batch)
             loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
@@ -623,17 +632,20 @@ class Trainer:
             self._optimizer.step()
             if self._sgld_optimizer is not None:  # for sgld compatibility
                 self._sgld_optimizer.step()
-
             self._scheduler.step()
+
+            time_per_step = self.on_time_measurement_end()
+            if time_per_step:
+                time_per_step_list.append(time_per_step)
 
             total_loss += loss.detach().cpu().item() * len(batch)
             num_items += len(batch)
 
-            pbar.update()
-
         self._status.train_log_idx += 1
         avg_loss = total_loss / num_items
-        return avg_loss
+        avg_time_per_step = None if not time_per_step_list else np.mean(time_per_step_list)
+
+        return avg_loss, avg_time_per_step
 
     def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
         """
@@ -767,8 +779,8 @@ class Trainer:
         # Multiple test runs
         preds_list = list()
         vars_list = list()
-        for test_run_idx in (pbar := tqdm(range(n_run))):
-            pbar.set_description(f'[Test {test_run_idx + 1}]')
+        for test_run_idx in range(n_run):
+            logger.info(f'[Test {test_run_idx + 1}]')
 
             individual_seed = self._config.seed + test_run_idx
             set_seed(individual_seed)
@@ -814,13 +826,13 @@ class Trainer:
         result_dict = {f"valid/{k}": v for k, v in valid_results.items()}
         wandb.log(data=result_dict, step=self._status.eval_log_idx)
 
-        logger.debug(f"[Valid step {self._status.eval_log_idx}] results:")
-        self.log_results(valid_results, logging_func=logger.debug)
+        logger.info(f"[Valid step {self._status.eval_log_idx}] results:")
+        self.log_results(valid_results, logging_func=logger.info)
 
         # ----- check model performance and update buffer -----
         if self._model_container.check_and_update(self.model, valid_results[self._valid_metric]):
             self._status.n_eval_no_improve = 0
-            logger.debug("Model buffer is updated!")
+            logger.info("Model buffer is updated!")
         else:
             self._status.n_eval_no_improve += 1
 
@@ -874,6 +886,31 @@ class Trainer:
             metrics = calculate_regression_metrics(lbs, preds, bool_masks, self._valid_metric)
 
         return metrics
+
+    def on_time_measurement_start(self):
+        if 'cuda' in self._device:
+            self._status.start = torch.cuda.Event(enable_timing=True)
+            self._status.end = torch.cuda.Event(enable_timing=True)
+            self._status.start.record()
+        else:
+            self._status.start = time.time()
+            self._status.end = None
+        self._status.time_measurement_flag = True
+        return self
+
+    def on_time_measurement_end(self):
+        if not getattr(self._status, "time_measurement_flag", False):
+            return None
+
+        if 'cuda' in self._device:
+            self._status.end.record()
+            torch.cuda.synchronize()
+            time_elapsed = self._status.start.elapsed_time(self._status.end)
+        else:
+            time_elapsed = time.time() - self._status.start
+
+        self._status.time_measurement_flag = False
+        return time_elapsed
 
     @staticmethod
     def log_results(metrics, logging_func=logger.info):
