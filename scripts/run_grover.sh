@@ -42,7 +42,7 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=false
 
-uncertainty_method="BBP"  # this is subject to change
+uncertainty_method="none"  # this is subject to change
 retrain_model=false
 ignore_uncertainty_output=true
 

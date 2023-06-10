@@ -42,7 +42,7 @@ num_preprocess_workers=16
 pin_memory=false
 ignore_preprocessed_dataset=true
 
-uncertainty_method="MCDropout"  # this is subject to change
+uncertainty_method="none"  # this is subject to change
 retrain_model=false
 ignore_uncertainty_output=true
 
@@ -51,8 +51,8 @@ regression_with_variance=true
 # default hyper-parameters
 lr=0.00005
 batch_size=128
-batch_size_inference=64
-n_epochs=60
+batch_size_inference=32
+n_epochs=100
 valid_tolerance=40
 
 # Uncertainty arguments

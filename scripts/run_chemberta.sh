@@ -41,7 +41,7 @@ num_preprocess_workers=24
 pin_memory=false
 ignore_preprocessed_dataset=false
 
-uncertainty_method="SWAG"  # this is subject to change
+uncertainty_method="none"  # this is subject to change
 retrain_model=false
 
 regression_with_variance=true

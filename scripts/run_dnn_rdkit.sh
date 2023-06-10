@@ -41,15 +41,15 @@ num_preprocess_workers=24
 pin_memory=false
 ignore_preprocessed_dataset=false
 
-uncertainty_method="BBP"  # this is subject to change
+uncertainty_method="none"  # this is subject to change
 retrain_model=false
 
 regression_with_variance=true
 
 lr=0.0002
 batch_size=256
-n_epochs=50
-valid_tolerance=200
+n_epochs=400
+valid_tolerance=50
 
 # Uncertainty arguments
 n_test=30
