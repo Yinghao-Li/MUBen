@@ -918,7 +918,10 @@ class Trainer:
         Print evaluation metrics to the logging destination
         """
         for k, v in metrics.items():
-            logging_func(f"  {k}: {v:.4f}.")
+            try:
+                logging_func(f"  {k}: {v:.4f}.")
+            except:
+                pass
         return None
 
     def freeze(self):

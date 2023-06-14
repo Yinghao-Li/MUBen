@@ -100,7 +100,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "2",
+                "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
                 "${workspaceFolder}/scripts/config_grover.json"
@@ -114,7 +114,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
                 "${workspaceFolder}/scripts/config_unimol.json"

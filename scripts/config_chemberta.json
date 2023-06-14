@@ -2,11 +2,12 @@
   "disable_wandb": true,
   "disable_result_saving": true,
   "retrain_model": true,
-  "dataset_name": "clintox",
+  "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": true,
-  "n_epochs": 30,
-  "binary_classification_with_softmax": false,
+  "n_epochs": 6,
+  "batch_size": 128,
   "regression_with_variance": true,
-  "seed": 0
+  "seed": 0,
+  "time_training": true
 }
