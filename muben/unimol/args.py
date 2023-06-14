@@ -43,7 +43,7 @@ class Arguments(BaseArguments):
 
     # --- update model parameters from Uni-Mol ---
     checkpoint_path: Optional[str] = field(
-        default='', metadata={'help': "Path to the pre-trained model"}
+        default='./models/unimol_base.pt', metadata={'help': "Path to the pre-trained model"}
     )
 
     # --- Arguments from Uni-Mol original implementation ---

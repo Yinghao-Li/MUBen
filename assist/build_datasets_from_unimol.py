@@ -35,12 +35,12 @@ class Arguments:
             "help": "The name of the dataset to construct."
         }
     )
-    unimol_data_path: Optional[str] = field(
-        default='./UniMol/',
+    unimol_data_dir: Optional[str] = field(
+        default='./data/UniMol/',
         metadata={"help": "Path to the pre-processed UniMol dataset."}
     )
     output_dir: Optional[str] = field(
-        default=".", metadata={"help": "where to save constructed dataset."}
+        default="./data/files/", metadata={"help": "where to save constructed dataset."}
     )
     log_path: Optional[str] = field(
         default=None, metadata={"help": "Path to save the log file."}
@@ -80,7 +80,7 @@ def main(args: Arguments):
             logger.info(partition)
 
             # read data points
-            lmdb_path = os.path.join(args.unimol_data_path, dataset_name, f"{partition}.lmdb")
+            lmdb_path = os.path.join(args.unimol_data_dir, dataset_name, f"{partition}.lmdb")
             if not os.path.exists(lmdb_path):
                 logger.warning(f"Path {lmdb_path} does not exist!")
                 skip_dataset = True

@@ -26,7 +26,7 @@ class Arguments(BaseArguments):
     )
 
     checkpoint_path: Optional[str] = field(
-        default=None,
+        default='./models/grover_base.pt',
         metadata={'help': 'Path to model checkpoint (.pt file)'}
     )
 

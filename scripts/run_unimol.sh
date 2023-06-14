@@ -104,7 +104,7 @@ do
     n_epochs=40
   fi
 
-  for seed in 0
+  for seed in 0 1 2
   do
     CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
       --wandb_api_key $wandb_api_key \
