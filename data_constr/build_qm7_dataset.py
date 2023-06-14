@@ -26,8 +26,8 @@ from dgllife.data import MoleculeCSVDataset
 
 from transformers import HfArgumentParser
 
-from mubench.utils.io import set_logging, logging_args, init_dir, save_json
-from mubench.utils.macro import SPLITTING
+from muben.utils.io import set_logging, logging_args, init_dir, save_json
+from muben.utils.macro import SPLITTING
 
 logger = logging.getLogger(__name__)
 

@@ -15,8 +15,8 @@ from tqdm.auto import tqdm
 
 from transformers import HfArgumentParser
 
-from mubench.utils.macro import DATASET_NAMES, CLASSIFICATION_DATASET, REGRESSION_DATASET
-from mubench.utils.io import set_logging, logging_args, save_json, init_dir
+from muben.utils.macro import DATASET_NAMES, CLASSIFICATION_DATASET, REGRESSION_DATASET
+from muben.utils.io import set_logging, logging_args, save_json, init_dir
 
 logger = logging.getLogger(__name__)
 

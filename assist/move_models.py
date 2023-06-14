@@ -12,8 +12,8 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from transformers import HfArgumentParser
 
-from mubench.utils.io import set_logging, set_log_path, init_dir
-from mubench.utils.macro import (
+from muben.utils.io import set_logging, set_log_path, init_dir
+from muben.utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
     UncertaintyMethods,

@@ -13,10 +13,10 @@ from transformers import (
     set_seed,
 )
 
-from mubench.utils.io import set_logging, set_log_path
-from mubench.chemberta.dataset import Dataset
-from mubench.chemberta.args import Arguments, Config
-from mubench.chemberta.train import Trainer
+from muben.utils.io import set_logging, set_log_path
+from muben.chemberta.dataset import Dataset
+from muben.chemberta.args import Arguments, Config
+from muben.chemberta.train import Trainer
 
 
 logger = logging.getLogger(__name__)

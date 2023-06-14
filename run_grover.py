@@ -14,11 +14,11 @@ from transformers import (
     set_seed,
 )
 
-from mubench.utils.io import set_logging, set_log_path
+from muben.utils.io import set_logging, set_log_path
 
-from mubench.grover.dataset import Dataset
-from mubench.grover.args import Arguments, Config
-from mubench.grover.train import Trainer
+from muben.grover.dataset import Dataset
+from muben.grover.args import Arguments, Config
+from muben.grover.train import Trainer
 
 
 logger = logging.getLogger(__name__)

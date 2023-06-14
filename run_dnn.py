@@ -10,11 +10,11 @@ from datetime import datetime
 
 from transformers import HfArgumentParser
 
-from mubench.utils.io import set_logging, set_log_path
-from mubench.utils.data import set_seed
-from mubench.dnn.dataset import Dataset
-from mubench.dnn.args import Arguments, Config
-from mubench.dnn.train import Trainer
+from muben.utils.io import set_logging, set_log_path
+from muben.utils.data import set_seed
+from muben.dnn.dataset import Dataset
+from muben.dnn.args import Arguments, Config
+from muben.dnn.train import Trainer
 
 
 logger = logging.getLogger(__name__)

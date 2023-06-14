@@ -18,8 +18,8 @@ from dgllife.utils import (
 )
 from transformers import HfArgumentParser
 
-from mubench.utils.io import set_logging, logging_args, init_dir, save_json
-from mubench.utils.macro import DATASET_NAMES, SPLITTING
+from muben.utils.io import set_logging, logging_args, init_dir, save_json
+from muben.utils.macro import DATASET_NAMES, SPLITTING
 
 logger = logging.getLogger(__name__)
 

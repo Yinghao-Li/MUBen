@@ -27,8 +27,8 @@ from sklearn.metrics import (
 )
 from scipy.stats import norm as gaussian
 
-from mubench.utils.io import set_logging, init_dir
-from mubench.utils.macro import (
+from muben.utils.io import set_logging, init_dir
+from muben.utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
     UncertaintyMethods,
