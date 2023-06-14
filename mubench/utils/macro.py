@@ -39,20 +39,20 @@ CLASSIFICATION_DATASET = [
     'bace',
     'bbbp',
     'clintox',
-    'hiv',
-    'muv',
-    'sider',
     'tox21',
-    'toxcast'
+    'toxcast',
+    'sider',
+    'hiv',
+    'muv'
 ]
 
 REGRESSION_DATASET = [
-    'qm7',
-    'qm8',
-    'qm9',
     'esol',
     'freesolv',
     'lipo',
+    'qm7',
+    'qm8',
+    'qm9'
 ]
 
 EVAL_METRICS = {
