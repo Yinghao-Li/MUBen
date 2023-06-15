@@ -38,6 +38,7 @@ from muben.utils.macro import EVAL_METRICS, UncertaintyMethods
 from muben.utils.container import ModelContainer, UpdateCriteria
 from muben.utils.scaler import StandardScaler
 from muben.utils.data import set_seed, Status
+from muben.utils.io import save_results
 
 logger = logging.getLogger(__name__)
 
@@ -853,16 +854,20 @@ class Trainer:
                 preds = tuple([p.reshape(1, *p.shape) for p in preds])
         
         if isinstance(preds, np.ndarray):
-            preds = [{"preds": p} for p in preds]
+            variances = None
         elif isinstance(preds, tuple) and len(preds) == 2:
-            preds = [{"preds": p, "vars": v} for p, v in zip(*preds)]
+            preds, variances = preds
         else:
             raise ValueError("Unrecognized type or shape of `preds`.")
 
-        for idx, pred in enumerate(preds):
+        for idx, (pred, variance) in enumerate(zip(preds, variances)):
             file_path = op.join(self._status.result_dir, "preds", f"{idx}.pt")
             self.save_preds_to_pt(
-                lbs=self._test_dataset.lbs, preds=pred, masks=self.test_dataset.masks, file_path=file_path
+                path=file_path,
+                preds=pred,
+                variances=variance,
+                lbs=self._test_dataset.lbs,
+                masks=self.test_dataset.masks
             )
 
         return metrics
@@ -1088,23 +1093,13 @@ class Trainer:
                 logger.warning("Scheduler file does not exist!")
         return self
 
-    def save_preds_to_pt(self, lbs, preds, masks, file_path: str):
+    def save_preds_to_pt(self, path, preds, variances, lbs, masks):
         """
         Save results to disk as csv files
         """
 
         if not self._config.disable_result_saving:
-            if not file_path.endswith('.pt'):
-                file_path = f"{file_path}.pt"
-
-            data_dict = {
-                "lbs": lbs,
-                "preds": preds,
-                "masks": masks
-            }
-
-            os.makedirs(op.dirname(op.normpath(file_path)), exist_ok=True)
-            torch.save(data_dict, file_path)
+            save_results(path, preds, variances, lbs, masks)
         else:
             logger.warning("Results are not saved because `disable_result_saving` flag is set to `True`.")
 

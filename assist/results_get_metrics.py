@@ -27,7 +27,7 @@ from sklearn.metrics import (
 )
 from scipy.stats import norm as gaussian
 
-from muben.utils.io import set_logging, init_dir
+from muben.utils.io import set_logging, init_dir, load_results
 from muben.utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
@@ -167,41 +167,6 @@ def main(args: Arguments):
         save_results(uncertainty_results, args.result_folder, args.model_name, dataset_name)
 
     return None
-
-
-def load_results(result_paths):
-    lbs = masks = None
-    preds_list = list()
-    variances_list = list()
-
-    for test_result_path in result_paths:
-        results = torch.load(test_result_path)
-
-        if lbs is not None:
-            assert (lbs == results['lbs']).all()
-        else:
-            lbs: np.ndarray = results['lbs']
-
-        if masks is not None:
-            assert (masks == results['masks']).all()
-        else:
-            masks: np.ndarray = results['masks']
-
-        preds_list.append(results['preds']['preds'])
-        try:
-            variances_list.append(results['preds']['vars'])
-        except KeyError:
-            pass
-
-    # aggregate mean and variance
-    preds = np.stack(preds_list).mean(axis=0)
-    if variances_list:  # regression
-        # variances = np.mean(np.stack(preds_list) ** 2 + np.stack(variances_list), axis=0) - preds ** 2
-        variances = np.stack(variances_list).mean(axis=0)
-    else:
-        variances = None
-
-    return preds, variances, lbs, masks
 
 
 def aggregate_seeded_results(results_for_seeds: list[dict[str, float]]):

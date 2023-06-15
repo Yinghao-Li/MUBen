@@ -3,7 +3,8 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['DATASET_NAMES', 'CLASSIFICATION_DATASET', 'REGRESSION_DATASET', 'EVAL_METRICS',
+__all__ = ['DATASET_NAMES', 'CLASSIFICATION_DATASET', 'REGRESSION_DATASET', 'dataset_mapping',
+           'EVAL_METRICS', 'CLASSIFICATION_METRICS', 'REGRESSION_METRICS', 'metrics_mapping',
            'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES',
            'StrEnum']
 
@@ -55,6 +56,24 @@ REGRESSION_DATASET = [
     'qm9'
 ]
 
+
+dataset_mapping = {
+    "tox21": "Tox21",
+    "esol": "ESOL",
+    "freesolv": "FreeSolv",
+    "lipo": "Lipophilicity",
+    "muv": "MUV",
+    "hiv": "HIV",
+    "bace": "BACE",
+    "bbbp": "BBBP",
+    "toxcast": "ToxCast",
+    "sider": "SIDER",
+    "clintox": "ClinTox",
+    "qm7": "QM7",
+    "qm8": "QM8",
+    "qm9": "QM9"
+}
+
 EVAL_METRICS = {
     "esol": "rmse",
     "freesolv": "rmse",
@@ -79,6 +98,18 @@ MODEL_NAMES = [
     "GROVER",
     "Uni-Mol"
 ]
+
+CLASSIFICATION_METRICS = ['roc-auc', 'ece', 'nll', 'brier']
+REGRESSION_METRICS = ['rmse', 'mae', 'nll', 'ce']
+metrics_mapping = {
+    'roc-auc': 'ROC-AUC',
+    'ece': 'ECE',
+    'nll': 'NLL',
+    'brier': 'BS',
+    'rmse': 'RMSE',
+    'mae': 'MAE',
+    'ce': 'CE'
+}
 
 
 class UncertaintyMethods(StrEnum):

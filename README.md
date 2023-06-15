@@ -13,7 +13,7 @@ For convenience, you are suggested to rename the `qm7dft`, `qm8dft`, and `qm9dft
 
 Afterwards, you can transfer the dataset format into ours by running
 ```bash
-PYTHONPATH="." python ./assist/build_dataset_from_unimol.py
+PYTHONPATH="." python ./assist/dataset_build_from_unimol.py
 ``` 
 suppose you are at the project root directory.
 You can specify the input (Uni-Mol) and output data directories with `--unimol_data_dir` and `--output_dir` arguments.

@@ -1,18 +1,21 @@
 import os
-import re
+import os.path as op
+import regex
 import json
 import shutil
+import torch
 import logging
+import numpy as np
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["set_log_path", "set_logging", "logging_args", "init_dir", "save_json"]
+__all__ = ["set_log_path", "set_logging", "logging_args", "init_dir", "save_json",  "save_results", "load_results"]
 
 
 def set_log_path(args, time):
-    log_path = os.path.join(
+    log_path = op.join(
         'logs', 
         args.dataset_name,
         args.model_name if args.feature_type == 'none' else f'{args.model_name}-{args.feature_type}',
@@ -39,10 +42,10 @@ def set_logging(log_path: Optional[str] = None):
     stream_handler.setLevel(logging.INFO)
 
     if log_path:
-        log_path = os.path.abspath(log_path)
-        if not os.path.isdir(os.path.split(log_path)[0]):
-            os.makedirs(os.path.abspath(os.path.normpath(os.path.split(log_path)[0])))
-        if os.path.isfile(log_path):
+        log_path = op.abspath(log_path)
+        if not op.isdir(op.split(log_path)[0]):
+            os.makedirs(op.abspath(op.normpath(op.split(log_path)[0])))
+        if op.isfile(log_path):
             os.remove(log_path)
 
         file_handler = logging.FileHandler(filename=log_path)
@@ -107,7 +110,7 @@ def init_dir(directory: str, clear_original_content: Optional[bool] = True):
 
     if clear_original_content:
         remove_dir(directory)
-    os.makedirs(os.path.normpath(directory), exist_ok=True)
+    os.makedirs(op.normpath(directory), exist_ok=True)
     return None
 
 
@@ -126,7 +129,7 @@ def save_json(obj, path: str, collapse_level: Optional[int] = None):
     -------
     None
     """
-    file_dir = os.path.dirname(os.path.normpath(path))
+    file_dir = op.dirname(op.normpath(path))
     if file_dir:
         os.makedirs(file_dir, exist_ok=True)
 
@@ -161,10 +164,10 @@ def prettify_json(text, indent=2, collapse_level=4):
     ```
     """
     pattern = r"[\r\n]+ {%d,}" % (indent * collapse_level)
-    text = re.sub(pattern, ' ', text)
-    text = re.sub(r'([\[({])+ +', r'\g<1>', text)
-    text = re.sub(r'[\r\n]+ {%d}([])}])' % (indent * (collapse_level - 1)), r'\g<1>', text)
-    text = re.sub(r'(\S) +([])}])', r'\g<1>\g<2>', text)
+    text = regex.sub(pattern, ' ', text)
+    text = regex.sub(r'([\[({])+ +', r'\g<1>', text)
+    text = regex.sub(r'[\r\n]+ {%d}([])}])' % (indent * (collapse_level - 1)), r'\g<1>', text)
+    text = regex.sub(r'(\S) +([])}])', r'\g<1>\g<2>', text)
     return text
 
 
@@ -189,3 +192,64 @@ def convert_arguments_from_argparse(args):
         arg_str += f")\n\n"
         args_string += arg_str
     return args_string
+
+
+def save_results(path, preds, variances, lbs, masks):
+    if not path.endswith('.pt'):
+        path = f"{path}.pt"
+
+    data_dict = {
+        "version": 2,
+        "preds": preds,
+        "vars": variances,
+        "lbs": lbs,
+        "masks": masks
+    }
+
+    os.makedirs(op.dirname(op.normpath(path)), exist_ok=True)
+    torch.save(data_dict, path)
+    return None
+
+
+def load_results(result_paths):
+    lbs = masks = np.nan
+    preds_list = list()
+    variances_list = list()
+
+    for test_result_path in result_paths:
+        results = torch.load(test_result_path)
+
+        if lbs is not None:
+            assert (lbs == results['lbs']).all()
+        else:
+            lbs: np.ndarray = results['lbs']
+
+        if masks is not None:
+            assert (masks == results['masks']).all()
+        else:
+            masks: np.ndarray = results['masks']
+
+        if results.get('version', 1) == 1:
+            preds_list.append(results['preds']['preds'])
+            try:
+                variances_list.append(results['preds']['vars'])
+            except KeyError:
+                pass
+        elif results.get('version', 1) == 2:
+            preds_list.append(results['preds'])
+            try:
+                variances_list.append(results['vars'])
+            except KeyError:
+                pass
+        else:
+            raise ValueError(f"Undefined result version: {results.get('version', 1)}")
+
+    # aggregate mean and variance
+    preds = np.stack(preds_list).mean(axis=0)
+    if variances_list:  # regression
+        # variances = np.mean(np.stack(preds_list) ** 2 + np.stack(variances_list), axis=0) - preds ** 2
+        variances = np.stack(variances_list).mean(axis=0)
+    else:
+        variances = None
+
+    return preds, variances, lbs, masks
