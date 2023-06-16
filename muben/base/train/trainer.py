@@ -338,7 +338,7 @@ class Trainer:
         """
 
         set_seed(self.config.seed)
-        if not self.load_best_model():
+        if not self.load_checkpoint():
             logger.info("Training model")
             self.train()
 
@@ -351,7 +351,7 @@ class Trainer:
             for k, v in test_metrics.items():
                 wandb.run.summary[f"test-single_shot/{k}"] = v
 
-        self.save_best_model()
+        self.save_checkpoint()
 
         return self
 
@@ -375,7 +375,7 @@ class Trainer:
             self._status.result_dir_no_uncertainty = \
                 op.join(op.dirname(op.normpath(self._status.result_dir_no_uncertainty)), f"seed-{individual_seed}")
 
-            if not self.load_best_model():
+            if not self.load_checkpoint():
                 logger.info("Training model")
                 self.train()
 
@@ -387,7 +387,7 @@ class Trainer:
             for k, v in test_metrics.items():
                 wandb.run.summary[f"test-ensemble_{ensemble_idx}/{k}"] = v
 
-            self.save_best_model()
+            self.save_checkpoint()
 
         return self
 
@@ -920,7 +920,7 @@ class Trainer:
         self._model_frozen = False
         return self
 
-    def save_best_model(self):
+    def save_checkpoint(self):
 
         if not self.config.disable_result_saving:
             init_dir(self._status.result_dir, clear_original_content=False)
@@ -939,7 +939,7 @@ class Trainer:
         self._model.to(self._device)
         return True
 
-    def load_best_model(self):
+    def load_checkpoint(self):
         if self.config.retrain_model:
             return False
 

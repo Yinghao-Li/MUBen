@@ -13,7 +13,7 @@ train_on_freesolv=true
 train_on_lipo=true
 train_on_qm7=true
 train_on_qm8=true
-# train_on_qm9=true
+train_on_qm9=true
 
 # -- single-task classification --
 train_on_bbbp=true
@@ -25,15 +25,13 @@ train_on_tox21=true
 train_on_toxcast=true
 train_on_clintox=true
 train_on_sider=true
-#train_on_muv=true
-# train_on_pcba=true
+train_on_muv=true
 
 # --- dataset choosing region ends ---
 
 # --- universal arguments ---
 cuda_device=$1
 
-wandb_api_key="86efcc8aa38a82bd8128db4c1cee3acde0f33920"
 disable_wandb=false
 
 data_folder="./data/files"
@@ -87,7 +85,6 @@ do
   for seed in 0 1 2
   do
     CUDA_VISIBLE_DEVICES=$cuda_device python run_grover.py \
-      --wandb_api_key $wandb_api_key \
       --disable_wandb $disable_wandb \
       --data_folder $data_folder \
       --dataset_name "$dataset_name" \
