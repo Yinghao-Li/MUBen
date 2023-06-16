@@ -1,7 +1,7 @@
 import torch.nn as nn
 from transformers import AutoModel
 
-from muben.utils.data import Batch
+from muben.base.dataset import Batch
 from muben.base.model import OutputLayer
 
 

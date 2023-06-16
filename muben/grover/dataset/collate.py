@@ -2,7 +2,7 @@ import torch
 import logging
 import numpy as np
 
-from muben.utils.data import (
+from muben.base.dataset import (
     Batch,
     unpack_instances
 )

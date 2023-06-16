@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class Trainer(BaseTrainer):
     def __init__(self,
-                 config: Config,
+                 config,
                  training_dataset=None,
                  valid_dataset=None,
                  test_dataset=None,
@@ -34,14 +34,18 @@ class Trainer(BaseTrainer):
             collate_fn=collate_fn,
         )
 
+    @property
+    def config(self) -> Config:
+        return self._config
+
     def initialize_model(self, *args, **kwargs):
         self._model = DNN(
-            d_feature=self._config.d_feature,
-            n_lbs=self._config.n_lbs,
-            n_tasks=self._config.n_tasks,
-            n_hidden_layers=self._config.n_dnn_hidden_layers,
-            d_hidden=self._config.d_dnn_hidden,
-            p_dropout=self._config.dropout,
-            apply_bbp=self._config.uncertainty_method == UncertaintyMethods.bbp,
-            bbp_prior_sigma=self._config.bbp_prior_sigma
+            d_feature=self.config.d_feature,
+            n_lbs=self.config.n_lbs,
+            n_tasks=self.config.n_tasks,
+            n_hidden_layers=self.config.n_dnn_hidden_layers,
+            d_hidden=self.config.d_dnn_hidden,
+            p_dropout=self.config.dropout,
+            apply_bbp=self.config.uncertainty_method == UncertaintyMethods.bbp,
+            bbp_prior_sigma=self.config.bbp_prior_sigma
         )

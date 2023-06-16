@@ -5,11 +5,11 @@ import logging
 import numpy as np
 from typing import Optional, Union
 
-from .macro import StrEnum
+from muben.utils.macro import StrEnum
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['UpdateCriteria', 'ModelContainer']
+__all__ = ['UpdateCriteria', 'CheckpointContainer']
 
 
 class UpdateCriteria(StrEnum):
@@ -18,7 +18,7 @@ class UpdateCriteria(StrEnum):
     always = 'always'
 
 
-class ModelContainer:
+class CheckpointContainer:
     def __init__(self, update_criteria: Optional[Union[str, UpdateCriteria]] = 'always'):
         """
         Parameters

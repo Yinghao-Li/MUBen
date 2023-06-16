@@ -9,7 +9,7 @@ import logging
 import torch
 from dataclasses import dataclass
 from rdkit import Chem
-from muben.utils.data import Batch
+from muben.base.dataset import Batch
 
 logger = logging.getLogger(__name__)
 

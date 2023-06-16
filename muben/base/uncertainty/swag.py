@@ -13,6 +13,8 @@ from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["SWAModel", "update_bn"]
+
 
 class SWAModel(Module):
     r"""Implements averaged model for Stochastic Weight Averaging (SWA).

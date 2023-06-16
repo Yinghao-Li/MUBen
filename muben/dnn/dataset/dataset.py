@@ -4,8 +4,10 @@ import numpy as np
 from tqdm.auto import tqdm
 from multiprocessing import get_context
 
-from muben.base.dataset import Dataset as BaseDataset
-from muben.utils.data import pack_instances
+from muben.base.dataset import (
+    pack_instances,
+    Dataset as BaseDataset
+)
 from .features import (
     rdkit_2d_features_normalized_generator,
     morgan_binary_features_generator

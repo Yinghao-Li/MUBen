@@ -4,41 +4,42 @@ Yinghao Li @ Georgia Tech
 Base trainer function.
 """
 
-import os
-import os.path as op
 import copy
-import time
-import torch
-import torch.nn.functional as F
 import wandb
 import logging
 import numpy as np
+import os.path as op
+import torch
+import torch.nn.functional as F
 import torch.nn as nn
-
-from typing import Optional, Union, Tuple
-
-from scipy.special import expit
-from transformers import get_scheduler
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
-from .model import (
-    GaussianNLLLoss,
+from typing import Optional, Union, Tuple
+from scipy.special import expit
+from transformers import get_scheduler, set_seed
+
+from .scaler import StandardScaler
+from .loss import GaussianNLLLoss
+from .metric import (
     calculate_classification_metrics,
     calculate_regression_metrics
 )
-from .args import Config
-from .uncertainty.swag import SWAModel, update_bn
-from .uncertainty.ts import TSModel
-from .uncertainty.focal_loss import SigmoidFocalLoss
-from .uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
-from .uncertainty.iso import IsotonicCalibration
+from .state import TrainerState
+from .timer import Timer
+
+from ..args import Config
+from ..model import CheckpointContainer, UpdateCriteria
+from ..uncertainty import (
+    SWAModel, update_bn,
+    TSModel,
+    SigmoidFocalLoss,
+    SGLDOptimizer, PSGLDOptimizer,
+    IsotonicCalibration
+)
 
 from muben.utils.macro import EVAL_METRICS, UncertaintyMethods
-from muben.utils.container import ModelContainer, UpdateCriteria
-from muben.utils.scaler import StandardScaler
-from muben.utils.data import set_seed, Status
-from muben.utils.io import save_results
+from muben.utils.io import save_results, init_dir
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ __all__ = ["Trainer"]
 
 class Trainer:
     def __init__(self,
-                 config: Config,
+                 config,
                  training_dataset=None,
                  valid_dataset=None,
                  test_dataset=None,
@@ -59,13 +60,14 @@ class Trainer:
         self._valid_dataset = valid_dataset
         self._test_dataset = test_dataset
         self._collate_fn = collate_fn
-        self._scalar = scalar
+        self._scaler = scalar
         self._device = getattr(config, "device", "cpu")
 
         self._model = None
         self._optimizer = None
         self._scheduler = None
         self._loss_fn = None
+        self._timer = Timer(device=self._device)
 
         # Validation variables and flags
         self._valid_metric = EVAL_METRICS[config.dataset_name].replace('-', '_')
@@ -76,15 +78,12 @@ class Trainer:
         else:
             update_criteria = UpdateCriteria.metric_smaller
         self._update_criteria = update_criteria
-        self._model_container = ModelContainer(self._update_criteria)
+        self._checkpoint_container = CheckpointContainer(self._update_criteria)
 
         self._model_name = 'model_best.ckpt'
 
         # mutable class attributes
-        self._status = Status(
-            train_log_idx=0,  # will increase by 1 each time you call `train_epoch`
-            eval_log_idx=0,  # will increase by 1 each time you call `eval_and_save`
-            n_eval_no_improve=0,  # counts how many evaluation steps in total the model performance has not improved
+        self._status = TrainerState(
             lr=config.lr,
             lr_scheduler_type=config.lr_scheduler_type,
             n_epochs=config.n_epochs,
@@ -99,8 +98,8 @@ class Trainer:
         # uncertainty-specific variables
         self._swa_model = None  # SWAG
         self._ts_model = None  # Temperature Scaling
-        self._sgld_optimizer = None  # sgld
-        self._sgld_model_buffer = None  # sgld
+        self._sgld_optimizer = None  # SGLD
+        self._sgld_model_buffer = None  # SGLD
 
         # flags
         self._model_frozen = False
@@ -121,6 +120,10 @@ class Trainer:
         return self._model
 
     @property
+    def config(self) -> Config:
+        return self._config
+
+    @property
     def n_model_parameters(self):
         return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
@@ -132,10 +135,9 @@ class Trainer:
         self.initialize_optimizer()
         self.initialize_scheduler()
         self.initialize_loss()
-        self._status.train_log_idx = 0  # will increase by 1 each time you call `train_epoch`
-        self._status.eval_log_idx = 0  # will increase by 1 each time you call `eval_and_save`
-        self._status.n_eval_no_improve = 0
-        self._model_container = ModelContainer(self._update_criteria)
+        self._timer.init()
+        self._status.init()
+        self._checkpoint_container = CheckpointContainer(self._update_criteria)
         return self
 
     def initialize_model(self, *args, **kwargs):
@@ -149,15 +151,15 @@ class Trainer:
         self._optimizer = AdamW(params, lr=self._status.lr)
 
         # for sgld compatibility
-        if self._config.uncertainty_method == UncertaintyMethods.sgld:
+        if self.config.uncertainty_method == UncertaintyMethods.sgld:
             output_param_ids = [id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]]
             base_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
             output_params = filter(lambda p: id(p) in output_param_ids, self._model.parameters())
 
             self._optimizer = AdamW(base_params, lr=self._status.lr)
-            sgld_optimizer = PSGLDOptimizer if self._config.apply_preconditioned_sgld else SGLDOptimizer
+            sgld_optimizer = PSGLDOptimizer if self.config.apply_preconditioned_sgld else SGLDOptimizer
             self._sgld_optimizer = sgld_optimizer(
-                output_params, lr=self._status.lr, norm_sigma=self._config.sgld_prior_sigma
+                output_params, lr=self._status.lr, norm_sigma=self.config.sgld_prior_sigma
             )
 
         return self
@@ -167,10 +169,10 @@ class Trainer:
         Initialize learning rate scheduler
         """
         num_update_steps_per_epoch = int(np.ceil(
-            len(self._training_dataset) / self._config.batch_size
+            len(self._training_dataset) / self.config.batch_size
         ))
         num_warmup_steps = int(np.ceil(
-            num_update_steps_per_epoch * self._config.warmup_ratio * self._status.n_epochs
+            num_update_steps_per_epoch * self.config.warmup_ratio * self._status.n_epochs
         ))
         num_training_steps = int(np.ceil(num_update_steps_per_epoch * self._status.n_epochs))
 
@@ -186,14 +188,14 @@ class Trainer:
 
         # Notice that the reduction should always be 'none' here to facilitate
         # the following masking operation
-        if self._config.task_type == 'classification':
+        if self.config.task_type == 'classification':
             # for compatibility with focal loss
-            if self._config.uncertainty_method == UncertaintyMethods.focal and not disable_focal_loss:
+            if self.config.uncertainty_method == UncertaintyMethods.focal and not disable_focal_loss:
                 self._loss_fn = SigmoidFocalLoss(reduction='none')
             else:
                 self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         else:
-            if self._config.regression_with_variance:
+            if self.config.regression_with_variance:
                 self._loss_fn = GaussianNLLLoss(reduction='none')
             else:
                 self._loss_fn = nn.MSELoss(reduction='none')
@@ -217,18 +219,18 @@ class Trainer:
         Convert the label distribution in the training dataset to standard Gaussian.
         Notice that this function only works for regression tasks
         """
-        if self._config.task_type == 'classification':
+        if self.config.task_type == 'classification':
             return self
-        if self._training_dataset is None and self._scalar is None:
+        if self._training_dataset is None and self._scaler is None:
             logger.warning("Encounter regression task with no training dataset specified and label scaling disabled! "
                            "This may create inconsistency between training and inference label scales.")
             return self
 
         lbs = copy.deepcopy(self._training_dataset.lbs)
         lbs[~self._training_dataset.masks.astype(bool)] = np.nan
-        self._scalar = StandardScaler(replace_nan_token=0).fit(lbs)
+        self._scaler = StandardScaler(replace_nan_token=0).fit(lbs)
 
-        self._training_dataset.update_lbs(self._scalar.transform(self._training_dataset.lbs))
+        self._training_dataset.update_lbs(self._scaler.transform(self._training_dataset.lbs))
 
         return self
 
@@ -237,7 +239,7 @@ class Trainer:
         """
         The number of total training steps
         """
-        n_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self._config.batch_size))
+        n_steps_per_epoch = int(np.ceil(len(self._training_dataset) / self.config.batch_size))
         return n_steps_per_epoch * self._status.n_epochs
 
     @property
@@ -245,7 +247,7 @@ class Trainer:
         """
         The number of total validation steps
         """
-        n_steps_per_epoch = int(np.ceil(len(self._valid_dataset) / self._config.batch_size))
+        n_steps_per_epoch = int(np.ceil(len(self._valid_dataset) / self.config.batch_size))
         return n_steps_per_epoch * self._status.n_epochs
 
     def train_mode(self):
@@ -262,7 +264,7 @@ class Trainer:
 
         self.model.eval()
 
-        if self._config.uncertainty_method == UncertaintyMethods.mc_dropout:
+        if self.config.uncertainty_method == UncertaintyMethods.mc_dropout:
             # activate the dropout layers during evaluation for MC Dropout
             for m in self.model.modules():
                 if m.__class__.__name__.startswith('Dropout'):
@@ -295,22 +297,22 @@ class Trainer:
         """
 
         # deep ensembles
-        if self._config.uncertainty_method == UncertaintyMethods.ensembles:
+        if self.config.uncertainty_method == UncertaintyMethods.ensembles:
             self.run_ensembles()
         # swag
-        elif self._config.uncertainty_method == UncertaintyMethods.swag:
+        elif self.config.uncertainty_method == UncertaintyMethods.swag:
             self.run_swag()
         # temperature scaling
-        elif self._config.uncertainty_method == UncertaintyMethods.temperature:
+        elif self.config.uncertainty_method == UncertaintyMethods.temperature:
             self.run_temperature_scaling()
         # isotonic calibration
-        elif self._config.uncertainty_method == UncertaintyMethods.iso:
+        elif self.config.uncertainty_method == UncertaintyMethods.iso:
             self.run_iso_calibration()
         # focal loss
-        elif self._config.uncertainty_method == UncertaintyMethods.focal:
+        elif self.config.uncertainty_method == UncertaintyMethods.focal:
             self.run_focal_loss()
         # sgld
-        elif self._config.uncertainty_method == UncertaintyMethods.sgld:
+        elif self.config.uncertainty_method == UncertaintyMethods.sgld:
             self.run_sgld()
         # none & MC Dropout & BBP
         else:
@@ -335,7 +337,7 @@ class Trainer:
         self
         """
 
-        set_seed(self._config.seed)
+        set_seed(self.config.seed)
         if not self.load_best_model():
             logger.info("Training model")
             self.train()
@@ -358,9 +360,9 @@ class Trainer:
         Run an ensemble of models. Used as the implementation of the Model Ensembles for uncertainty estimation.
         """
 
-        for ensemble_idx in range(self._config.n_ensembles):
+        for ensemble_idx in range(self.config.n_ensembles):
             # update random seed and re-initialize training status
-            individual_seed = self._config.seed + ensemble_idx
+            individual_seed = self.config.seed + ensemble_idx
 
             del self._model
             set_seed(individual_seed)
@@ -396,7 +398,7 @@ class Trainer:
 
         # Train the model with early stopping.
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._model_container.state_dict)
+        self._model.load_state_dict(self._checkpoint_container.state_dict)
 
         logger.info("SWA session start")
         self.swa_session()
@@ -413,9 +415,9 @@ class Trainer:
 
     def swa_session(self):
         # update hyper parameters
-        self._status.lr *= self._config.swa_lr_decay
+        self._status.lr *= self.config.swa_lr_decay
         self._status.lr_scheduler_type = 'constant'
-        self._status.n_epochs = self._config.n_swa_epochs
+        self._status.n_epochs = self.config.n_swa_epochs
         self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         self.initialize_optimizer()
@@ -424,7 +426,7 @@ class Trainer:
         self._model.to(self._device)
         self._swa_model = SWAModel(
             model=self.model,
-            k_models=self._config.k_swa_checkpoints,
+            k_models=self.config.k_swa_checkpoints,
             device=self._device
         )
 
@@ -439,7 +441,7 @@ class Trainer:
 
         # Train the model with early stopping.
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._model_container.state_dict)
+        self._model.load_state_dict(self._checkpoint_container.state_dict)
 
         logger.info("Temperature Scaling session start.")
         self.ts_session()
@@ -456,14 +458,14 @@ class Trainer:
 
     def ts_session(self):
         # update hyper parameters
-        self._status.lr = self._config.ts_lr
+        self._status.lr = self.config.ts_lr
         self._status.lr_scheduler_type = 'constant'
-        self._status.n_epochs = self._config.n_ts_epochs
+        self._status.n_epochs = self.config.n_ts_epochs
         self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         self.model.to(self._device)
         self.freeze()
-        self._ts_model = TSModel(self._model, self._config.n_tasks)
+        self._ts_model = TSModel(self._model, self.config.n_tasks)
 
         self.initialize_optimizer()
         self.initialize_scheduler()
@@ -481,14 +483,14 @@ class Trainer:
         """
         # Train the model with early stopping.
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._model_container.state_dict)
+        self._model.load_state_dict(self._checkpoint_container.state_dict)
 
         logger.info("Isotonic calibration session start.")
 
         # get validation predictions
         mean_cal, var_cal = self.inverse_standardize_preds(self.process_logits(self.inference(self.valid_dataset)))
 
-        iso_calibrator = IsotonicCalibration(self._config.n_tasks)
+        iso_calibrator = IsotonicCalibration(self.config.n_tasks)
         iso_calibrator.fit(mean_cal, var_cal, self.valid_dataset.lbs, self.valid_dataset.masks)
 
         mean_test, var_test = self.inverse_standardize_preds(self.process_logits(self.inference(self.test_dataset)))
@@ -503,7 +505,7 @@ class Trainer:
         # Train the model with early stopping. Do not need to load state dict as it is done during test
         self.run_single_shot()
 
-        if self._config.apply_temperature_scaling_after_focal_loss:
+        if self.config.apply_temperature_scaling_after_focal_loss:
             logger.info("[Focal Loss] Temperature Scaling session start.")
             self.ts_session()
 
@@ -522,11 +524,11 @@ class Trainer:
         Run the training and evaluation steps with stochastic gradient Langevin Dynamics
         """
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._model_container.state_dict)
+        self._model.load_state_dict(self._checkpoint_container.state_dict)
 
         logger.info("Langevin Dynamics session start.")
         self._sgld_model_buffer = list()
-        self._status.n_epochs = self._config.n_langevin_samples * self._config.sgld_sampling_interval
+        self._status.n_epochs = self.config.n_langevin_samples * self.config.sgld_sampling_interval
         self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         logger.info("Training model")
@@ -560,7 +562,7 @@ class Trainer:
         data_loader = self.get_dataloader(
             self.training_dataset if not use_valid_dataset else self.valid_dataset,
             shuffle=True,
-            batch_size=self._config.batch_size
+            batch_size=self.config.batch_size
         )
 
         for epoch_idx in range(self._status.n_epochs):
@@ -576,7 +578,7 @@ class Trainer:
             if self._swa_model:
                 self._swa_model.update_parameters(self.model)
 
-            if self._sgld_model_buffer is not None and (epoch_idx + 1) % self._config.sgld_sampling_interval == 0:
+            if self._sgld_model_buffer is not None and (epoch_idx + 1) % self.config.sgld_sampling_interval == 0:
                 self.model.to('cpu')
                 self._sgld_model_buffer.append(copy.deepcopy(self.model.state_dict()))
                 self.model.to(self._device)
@@ -584,7 +586,7 @@ class Trainer:
             if self._status.valid_epoch_interval and (epoch_idx + 1) % self._status.valid_epoch_interval == 0:
                 self.eval_and_save()
 
-            if self._status.n_eval_no_improve > self._config.valid_tolerance:
+            if self._status.n_eval_no_improve > self.config.valid_tolerance:
                 logger.warning("Quit training because of exceeding valid tolerance!")
                 self._status.n_eval_no_improve = 0
                 break
@@ -612,30 +614,30 @@ class Trainer:
         time_per_step_list = list()
 
         for batch in data_loader:
-            batch.to(self._config.device)
+            batch.to(self._device)
 
             self._optimizer.zero_grad()
             if self._sgld_optimizer is not None:  # for sgld compatibility
                 self._sgld_optimizer.zero_grad()
 
             # measuring training time for a full batch
-            if self._config.time_training and len(batch) == self._config.batch_size:
-                self.on_time_measurement_start()
+            if self.config.time_training and len(batch) == self.config.batch_size:
+                self._timer.on_measurement_start()
 
             logits = self.model(batch)
             loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
 
             loss.backward()
 
-            if self._config.grad_norm > 0:
-                nn.utils.clip_grad_norm_(self.model.parameters(), self._config.grad_norm)
+            if self.config.grad_norm > 0:
+                nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_norm)
 
             self._optimizer.step()
             if self._sgld_optimizer is not None:  # for sgld compatibility
                 self._sgld_optimizer.step()
             self._scheduler.step()
 
-            time_per_step = self.on_time_measurement_end()
+            time_per_step = self._timer.on_measurement_end()
             if time_per_step:
                 time_per_step_list.append(time_per_step)
 
@@ -669,13 +671,13 @@ class Trainer:
         bool_masks = masks.to(torch.bool)
         masked_lbs = lbs[bool_masks]
 
-        if self._config.task_type == 'classification':
+        if self.config.task_type == 'classification':
             masked_logits = logits[bool_masks]
 
-        elif self._config.task_type == 'regression':
-            assert self._config.regression_with_variance, NotImplementedError
+        elif self.config.task_type == 'regression':
+            assert self.config.regression_with_variance, NotImplementedError
 
-            masked_logits = logits.view(-1, self._config.n_tasks, 2)[bool_masks]  # mean and var for the last dimension
+            masked_logits = logits.view(-1, self.config.n_tasks, 2)[bool_masks]  # mean and var for the last dimension
 
         else:
             raise NotImplementedError
@@ -684,7 +686,7 @@ class Trainer:
         loss = torch.sum(loss) / masks.sum()
 
         # for compatability with bbp
-        if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
+        if self.config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
             loss += self.model.output_layer.kld / n_steps_per_epoch / len(batch)
         return loss
 
@@ -701,7 +703,7 @@ class Trainer:
         model outputs (logits or tuple of logits)
         """
 
-        dataloader = self.get_dataloader(dataset, batch_size=self._config.batch_size_inference, shuffle=False)
+        dataloader = self.get_dataloader(dataset, batch_size=self.config.batch_size_inference, shuffle=False)
         self.model.to(self._device)
         self.eval_mode()
 
@@ -709,7 +711,7 @@ class Trainer:
 
         with torch.no_grad():
             for batch in dataloader:
-                batch.to(self._config.device)
+                batch.to(self._device)
 
                 logits = self.model(batch)
                 logits_list.append(logits.detach().cpu())
@@ -731,34 +733,34 @@ class Trainer:
         processed model output logits
         """
 
-        if self._config.task_type == 'classification':
-            preds = expit(logits)  # sigmoid function
+        if self.config.task_type == 'classification':
+            return expit(logits)  # sigmoid function
 
-        elif self._config.task_type == 'regression':
-            if self._config.n_tasks > 1:
-                logits = logits.reshape((-1, self._config.n_tasks, 2))
+        elif self.config.task_type == 'regression':
+            if self.config.n_tasks > 1:
+                logits = logits.reshape((-1, self.config.n_tasks, 2))
 
             # get the mean of the preds
-            if self._config.regression_with_variance:
+            if self.config.regression_with_variance:
                 mean = logits[..., 0]
                 var = F.softplus(torch.from_numpy(logits[..., 1])).numpy()
                 return mean, var
             else:
-                preds = logits
+                return logits
         else:
-            raise ValueError(f"Unrecognized task type: {self._config.task_type}")
-
-        return preds
+            raise ValueError(f"Unrecognized task type: {self.config.task_type}")
 
     def inverse_standardize_preds(
             self, preds: Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
     ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-        if self._scalar is None:
+
+        if self._scaler is None:
             return preds
+
         if isinstance(preds, np.ndarray):
-            return self._scalar.inverse_transform(preds)
+            return self._scaler.inverse_transform(preds)
         elif isinstance(preds, tuple):
-            mean, var = self._scalar.inverse_transform(*preds)
+            mean, var = self._scaler.inverse_transform(*preds)
             return mean, var
         else:
             raise TypeError(f"Unsupported prediction type: {type(preds)}!")
@@ -783,7 +785,7 @@ class Trainer:
         for test_run_idx in range(n_run):
             logger.info(f'[Test {test_run_idx + 1}]')
 
-            individual_seed = self._config.seed + test_run_idx
+            individual_seed = self.config.seed + test_run_idx
             set_seed(individual_seed)
 
             if self._sgld_model_buffer:
@@ -795,7 +797,7 @@ class Trainer:
                 update_bn(
                     model=self.model,
                     training_loader=self.get_dataloader(self.training_dataset, shuffle=True),
-                    device=self._config.device,
+                    device=self.config.device,
                 )
 
             preds = self.inverse_standardize_preds(self.process_logits(self.inference(dataset)))
@@ -828,10 +830,10 @@ class Trainer:
         wandb.log(data=result_dict, step=self._status.eval_log_idx)
 
         logger.info(f"[Valid step {self._status.eval_log_idx}] results:")
-        self.log_results(valid_results, logging_func=logger.info)
+        self.log_results(valid_results)
 
         # ----- check model performance and update buffer -----
-        if self._model_container.check_and_update(self.model, valid_results[self._valid_metric]):
+        if self._checkpoint_container.check_and_update(self.model, valid_results[self._valid_metric]):
             self._status.n_eval_no_improve = 0
             logger.info("Model buffer is updated!")
         else:
@@ -841,13 +843,13 @@ class Trainer:
 
     def test(self, load_best_model=True):
 
-        if load_best_model and self._model_container.state_dict:
-            self._model.load_state_dict(self._model_container.state_dict)
+        if load_best_model and self._checkpoint_container.state_dict:
+            self._model.load_state_dict(self._checkpoint_container.state_dict)
 
-        metrics, preds = self.evaluate(self._test_dataset, n_run=self._config.n_test, return_preds=True)
+        metrics, preds = self.evaluate(self._test_dataset, n_run=self.config.n_test, return_preds=True)
 
         # save preds
-        if self._config.n_test == 1:
+        if self.config.n_test == 1:
             if isinstance(preds, np.ndarray):
                 preds = preds.reshape(1, *preds.shape)
             else:
@@ -862,7 +864,7 @@ class Trainer:
 
         for idx, (pred, variance) in enumerate(zip(preds, variances)):
             file_path = op.join(self._status.result_dir, "preds", f"{idx}.pt")
-            self.save_preds_to_pt(
+            self.save_results(
                 path=file_path,
                 preds=pred,
                 variances=variance,
@@ -880,52 +882,27 @@ class Trainer:
         if lbs.shape[-1] == 1 and len(lbs.shape) > 1:
             lbs = lbs.squeeze(-1)
 
-        if self._config.task_type == 'classification' and self._config.n_tasks > 1:
-            preds = preds.reshape(-1, self._config.n_tasks, self._config.n_lbs)
+        if self.config.task_type == 'classification' and self.config.n_tasks > 1:
+            preds = preds.reshape(-1, self.config.n_tasks, self.config.n_lbs)
         if preds.shape[-1] == 1 and len(preds.shape) > 1:  # remove tailing axis
             preds = preds.squeeze(-1)
 
-        if self._config.task_type == 'classification':
+        if self.config.task_type == 'classification':
             metrics = calculate_classification_metrics(lbs, preds, bool_masks, self._valid_metric)
         else:
             metrics = calculate_regression_metrics(lbs, preds, bool_masks, self._valid_metric)
 
         return metrics
 
-    def on_time_measurement_start(self):
-        if 'cuda' in self._device:
-            self._status.start = torch.cuda.Event(enable_timing=True)
-            self._status.end = torch.cuda.Event(enable_timing=True)
-            self._status.start.record()
-        else:
-            self._status.start = time.time()
-            self._status.end = None
-        self._status.time_measurement_flag = True
-        return self
-
-    def on_time_measurement_end(self):
-        if not getattr(self._status, "time_measurement_flag", False):
-            return None
-
-        if 'cuda' in self._device:
-            self._status.end.record()
-            torch.cuda.synchronize()
-            time_elapsed = self._status.start.elapsed_time(self._status.end)
-        else:
-            time_elapsed = time.time() - self._status.start
-
-        self._status.time_measurement_flag = False
-        return time_elapsed
-
     @staticmethod
-    def log_results(metrics, logging_func=logger.info):
+    def log_results(metrics: dict, logging_func=logger.info):
         """
         Print evaluation metrics to the logging destination
         """
         for k, v in metrics.items():
             try:
                 logging_func(f"  {k}: {v:.4f}.")
-            except:
+            except TypeError:
                 pass
         return None
 
@@ -945,9 +922,9 @@ class Trainer:
 
     def save_best_model(self):
 
-        if not self._config.disable_result_saving:
-            os.makedirs(self._status.result_dir, exist_ok=True)
-            self._model_container.save(op.join(self._status.result_dir, self._status.model_name))
+        if not self.config.disable_result_saving:
+            init_dir(self._status.result_dir, clear_original_content=False)
+            self._checkpoint_container.save(op.join(self._status.result_dir, self._status.model_name))
         else:
             logger.warning("Model is not saved because of `disable_result_saving` flag is set to `True`.")
 
@@ -957,21 +934,21 @@ class Trainer:
         if not op.exists(model_path):
             return False
         logger.info(f"Loading trained model from {model_path}.")
-        self._model_container.load(model_path)
-        self._model.load_state_dict(self._model_container.state_dict)
+        self._checkpoint_container.load(model_path)
+        self._model.load_state_dict(self._checkpoint_container.state_dict)
         self._model.to(self._device)
         return True
 
     def load_best_model(self):
-        if self._config.retrain_model:
+        if self.config.retrain_model:
             return False
 
-        if not self._config.ignore_uncertainty_output:
+        if not self.config.ignore_uncertainty_output:
             model_path = op.join(self._status.result_dir, self._status.model_name)
             if self._load_from_container(model_path):
                 return True
 
-        if not self._config.ignore_no_uncertainty_output:
+        if not self.config.ignore_no_uncertainty_output:
             model_path = op.join(self._status.result_dir_no_uncertainty, self._status.model_name)
             if self._load_from_container(model_path):
                 return True
@@ -986,9 +963,9 @@ class Trainer:
             dataloader = DataLoader(
                 dataset=dataset,
                 collate_fn=self._collate_fn,
-                batch_size=batch_size if batch_size else self._config.batch_size,
-                num_workers=getattr(self._config, "num_workers", 0),
-                pin_memory=getattr(self._config, "pin_memory", False),
+                batch_size=batch_size if batch_size else self.config.batch_size,
+                num_workers=getattr(self.config, "num_workers", 0),
+                pin_memory=getattr(self.config, "pin_memory", False),
                 shuffle=shuffle,
                 drop_last=False
             )
@@ -1026,7 +1003,7 @@ class Trainer:
         model_state_dict = self._model.state_dict()
         torch.save(model_state_dict, op.join(output_dir, model_name))
 
-        self._config.save(output_dir)
+        self.config.save(output_dir)
 
         if save_optimizer:
             torch.save(self._optimizer.state_dict(), op.join(output_dir, optimizer_name))
@@ -1093,12 +1070,12 @@ class Trainer:
                 logger.warning("Scheduler file does not exist!")
         return self
 
-    def save_preds_to_pt(self, path, preds, variances, lbs, masks):
+    def save_results(self, path, preds, variances, lbs, masks):
         """
         Save results to disk as csv files
         """
 
-        if not self._config.disable_result_saving:
+        if not self.config.disable_result_saving:
             save_results(path, preds, variances, lbs, masks)
         else:
             logger.warning("Results are not saved because `disable_result_saving` flag is set to `True`.")

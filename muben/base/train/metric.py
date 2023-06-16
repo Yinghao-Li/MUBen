@@ -9,6 +9,8 @@ from sklearn.metrics import (
 )
 from typing import Union, List
 
+__all__ = ["calculate_classification_metrics", "calculate_regression_metrics"]
+
 
 def calculate_classification_metrics(lbs: np.ndarray,
                                      probs: np.ndarray,

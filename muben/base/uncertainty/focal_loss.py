@@ -5,6 +5,8 @@ Focal loss with adaptive gamma, as proposed in https://arxiv.org/pdf/2006.15607.
 import torch.nn as nn
 from torchvision.ops.focal_loss import sigmoid_focal_loss
 
+__all__ = ["SigmoidFocalLoss"]
+
 
 class SigmoidFocalLoss(nn.Module):
 

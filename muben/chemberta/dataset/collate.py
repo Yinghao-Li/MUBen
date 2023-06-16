@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from transformers import AutoTokenizer
 
-from muben.utils.data import Batch, unpack_instances
+from muben.base.dataset import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
 

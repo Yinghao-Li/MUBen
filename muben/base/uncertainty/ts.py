@@ -6,6 +6,8 @@ ethen8181.github.io/machine-learning/model_selection/prob_calibration/deeplearni
 import torch
 import torch.nn as nn
 
+__all__ = ["TSModel"]
+
 
 # Temperature scaling model
 class TSModel(nn.Module):

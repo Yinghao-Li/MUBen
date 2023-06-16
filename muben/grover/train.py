@@ -4,9 +4,7 @@ import torch
 import logging
 import numpy as np
 import torch.nn.functional as F
-from torch.optim import AdamW
 from scipy.special import expit
-from typing import Optional, Tuple
 
 from .dataset import Collator
 from .args import Config
@@ -14,7 +12,6 @@ from .model import load_checkpoint
 from .uncertainty.ts import TSModel
 from muben.utils.macro import UncertaintyMethods
 from muben.base.train import Trainer as BaseTrainer
-from muben.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -38,21 +35,25 @@ class Trainer(BaseTrainer, ABC):
             collate_fn=collate_fn
         )
 
+    @property
+    def config(self) -> Config:
+        return self._config
+
     def initialize_model(self):
-        logger.info(f"Loading GROVER checkpoint from {self._config.checkpoint_path}")
-        self._model = load_checkpoint(self._config)
+        logger.info(f"Loading GROVER checkpoint from {self.config.checkpoint_path}")
+        self._model = load_checkpoint(self.config)
 
     def ts_session(self):
         # update hyper parameters
-        self._status.lr = self._config.ts_lr
+        self._status.lr = self.config.ts_lr
         self._status.lr_scheduler_type = 'constant'
-        self._status.n_epochs = self._config.n_ts_epochs
+        self._status.n_epochs = self.config.n_ts_epochs
         self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         self.model.to(self._device)
         self.freeze()
         # notice that here TS model is different from the base one
-        self._ts_model = TSModel(self._model, self._config.n_tasks)
+        self._ts_model = TSModel(self._model, self.config.n_tasks)
 
         self.initialize_optimizer()
         self.initialize_scheduler()
@@ -76,10 +77,10 @@ class Trainer(BaseTrainer, ABC):
 
         if self._ts_model is None:
             dist = self.get_distance_loss(atom_logits, bond_logits, batch)
-            loss += self._config.dist_coff * dist
+            loss += self.config.dist_coff * dist
 
         # for compatability with bbp
-        if self._config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
+        if self.config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
             kld = (self.model.atom_output_layer.kld + self.model.bond_output_layer.kld) / n_steps_per_epoch / len(batch)
             loss += kld
         return loss
@@ -87,9 +88,9 @@ class Trainer(BaseTrainer, ABC):
     def get_distance_loss(self, atom_logits, bond_logits, batch):
 
         # modify data shapes to accommodate different tasks
-        if self._config.task_type == 'regression' and self._config.regression_with_variance:
-            atom_logits = atom_logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
-            bond_logits = bond_logits.view(-1, self._config.n_tasks, 2)  # mean and var for the last dimension
+        if self.config.task_type == 'regression' and self.config.regression_with_variance:
+            atom_logits = atom_logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
+            bond_logits = bond_logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
 
         loss = F.mse_loss(atom_logits, bond_logits)
         loss = torch.sum(loss * batch.masks) / batch.masks.sum()
@@ -99,7 +100,7 @@ class Trainer(BaseTrainer, ABC):
 
         dataloader = self.get_dataloader(
             dataset,
-            batch_size=self._config.batch_size_inference,
+            batch_size=self.config.batch_size_inference,
             shuffle=False
         )
         self.model.to(self._device)
@@ -110,7 +111,7 @@ class Trainer(BaseTrainer, ABC):
 
         with torch.no_grad():
             for batch in dataloader:
-                batch.to(self._config.device)
+                batch.to(self.config.device)
                 atom_logits, bond_logits = self.model(batch)
 
                 atom_logits_list.append(atom_logits.to(torch.float).detach().cpu())
@@ -121,29 +122,27 @@ class Trainer(BaseTrainer, ABC):
 
         return atom_logits, bond_logits
 
-    def process_logits(self, logits: Tuple[np.ndarray, np.ndarray]):
+    def process_logits(self, logits: tuple[np.ndarray, np.ndarray]):
 
         atom_logits, bond_logits = logits
 
-        if self._config.task_type == 'classification':
+        if self.config.task_type == 'classification':
 
             atom_preds = expit(atom_logits)  # sigmoid function
             bond_preds = expit(bond_logits)  # sigmoid function
-            preds = (atom_preds + bond_preds) / 2
+            return (atom_preds + bond_preds) / 2
 
-        elif self._config.task_type == 'regression':
+        elif self.config.task_type == 'regression':
             logits = (atom_logits + bond_logits) / 2
 
-            if self._config.n_tasks > 1:
-                logits = logits.reshape(-1, self._config.n_tasks, 2)
+            if self.config.n_tasks > 1:
+                logits = logits.reshape(-1, self.config.n_tasks, 2)
 
-            if self._config.regression_with_variance:
+            if self.config.regression_with_variance:
                 mean = logits[..., 0]
                 var = F.softplus(torch.from_numpy(logits[..., 1])).numpy()
                 return mean, var
             else:
-                preds = logits
+                return logits
         else:
-            raise ValueError(f"Unrecognized task type: {self._config.task_type}")
-
-        return preds
+            raise ValueError(f"Unrecognized task type: {self.config.task_type}")

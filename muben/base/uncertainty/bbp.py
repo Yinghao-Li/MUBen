@@ -5,6 +5,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+__all__ = ["BBPOutputLayer"]
+
 
 def kld_cost(mu_p, sig_p, mu_q, sig_q):
     # https://arxiv.org/abs/1312.6114 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)

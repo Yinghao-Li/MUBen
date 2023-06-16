@@ -6,6 +6,8 @@ import torch
 import numpy as np
 from torch.optim.optimizer import Optimizer
 
+__all__ = ["SGLDOptimizer", "PSGLDOptimizer"]
+
 
 class SGLDOptimizer(Optimizer):
     """

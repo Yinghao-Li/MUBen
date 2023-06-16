@@ -2,8 +2,10 @@
 from tqdm.auto import tqdm
 from multiprocessing import get_context
 
-from muben.utils.data import pack_instances
-from muben.base.dataset import Dataset as BaseDataset
+from muben.base.dataset import (
+    pack_instances,
+    Dataset as BaseDataset
+)
 from .molgraph import MolGraph, MolGraphAttrs
 
 

@@ -8,6 +8,7 @@ import scipy.integrate
 import scipy.optimize
 from sklearn.isotonic import IsotonicRegression
 
+__all__ = ["IsotonicCalibration"]
 
 eps = np.finfo(np.random.randn(1).dtype).eps
 

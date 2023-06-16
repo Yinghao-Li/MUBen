@@ -3,6 +3,8 @@ from torch import Tensor
 from torch.nn import GaussianNLLLoss as GaussianNLLLossBase
 from torch.nn import functional as F
 
+__all__ = ["GaussianNLLLoss"]
+
 
 # noinspection PyShadowingBuiltins
 class GaussianNLLLoss(GaussianNLLLossBase):

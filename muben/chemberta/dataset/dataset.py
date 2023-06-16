@@ -1,8 +1,10 @@
 import logging
 
 from transformers import AutoTokenizer
-from muben.utils.data import pack_instances
-from muben.base.dataset import Dataset as BaseDataset
+from muben.base.dataset import (
+    pack_instances,
+    Dataset as BaseDataset
+)
 
 logger = logging.getLogger(__name__)
 

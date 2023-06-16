@@ -8,10 +8,9 @@ import wandb
 import logging
 from datetime import datetime
 
-from transformers import HfArgumentParser
+from transformers import HfArgumentParser, set_seed
 
 from muben.utils.io import set_logging, set_log_path
-from muben.utils.data import set_seed
 from muben.dnn.dataset import Dataset
 from muben.dnn.args import Arguments, Config
 from muben.dnn.train import Trainer
