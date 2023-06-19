@@ -64,6 +64,9 @@ class Arguments:
     overwrite_results: Optional[bool] = field(
         default=False, metadata={'help': 'Whether overwrite existing outputs.'}
     )
+    log_path: Optional[str] = field(
+        default=None, metadata={"help": "Path to the logging file. Set to `disabled` to disable log saving."}
+    )
 
     # --- Model Arguments ---
     model_name: Optional[str] = field(
@@ -241,7 +244,7 @@ class Arguments:
             self.wandb_name = f"{self.model_name}{'' if self.feature_type == 'none' else f'-{self.feature_type}'}" \
                               f"-{self.uncertainty_method}"
         if not self.wandb_project:
-            self.wandb_project = f"MUBench-{self.dataset_name}"
+            self.wandb_project = f"MUBen-{self.dataset_name}"
 
     @cached_property
     def device(self) -> str:

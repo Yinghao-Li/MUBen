@@ -856,7 +856,7 @@ class Trainer:
                 preds = tuple([p.reshape(1, *p.shape) for p in preds])
         
         if isinstance(preds, np.ndarray):
-            variances = None
+            variances = [None] * len(preds)
         elif isinstance(preds, tuple) and len(preds) == 2:
             preds, variances = preds
         else:

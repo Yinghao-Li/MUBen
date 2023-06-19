@@ -7,24 +7,24 @@ set -e
 # --- the argument values do not matter ---
 
 # -- regression tasks --
-train_on_esol=true
-train_on_freesolv=true
-train_on_lipo=true
-train_on_qm7=true
-train_on_qm8=true
-train_on_qm9=true
+#train_on_esol=true
+#train_on_freesolv=true
+#train_on_lipo=true
+#train_on_qm7=true
+#train_on_qm8=true
+#train_on_qm9=true
 
 # -- single-task classification --
 train_on_bbbp=true
-train_on_bace=true
-train_on_hiv=true
+#train_on_bace=true
+#train_on_hiv=true
 
 # -- multi-task classification --
-train_on_tox21=true
-train_on_toxcast=true
-train_on_clintox=true
-train_on_sider=true
-train_on_muv=true
+#train_on_tox21=true
+#train_on_toxcast=true
+#train_on_clintox=true
+#train_on_sider=true
+#train_on_muv=true
 
 # --- dataset choosing region ends ---
 
@@ -80,7 +80,9 @@ for dataset_name in $dataset_names
 do
   for seed in 0 1 2
   do
-    CUDA_VISIBLE_DEVICES=$cuda_device python run_dnn.py \
+    CUDA_VISIBLE_DEVICES=$cuda_device \
+    PYTHONPATH="." \
+    python ./run/dnn.py \
       --disable_wandb $disable_wandb \
       --data_folder $data_folder \
       --dataset_name "$dataset_name" \
@@ -99,6 +101,7 @@ do
       --seed $seed \
       --n_test $n_test \
       --n_ensembles $n_ensembles \
-      --n_ts_epochs $n_ts_epochs
+      --n_ts_epochs $n_ts_epochs \
+      --deploy
   done
 done

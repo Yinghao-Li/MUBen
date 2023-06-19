@@ -82,21 +82,21 @@ if [ -z ${train_on_pcab+x} ]; then echo "skip pcab"; else dataset_names+=" pcab"
 # --- training scripts ---
 for dataset_name in $dataset_names
 do
-  if [ $dataset_name == "bbbp" ]
+  if [ "$dataset_name" == "bbbp" ]
   then
     lr=0.0001
     n_epochs=20
   fi
-  if [ $dataset_name == "sider" ]
+  if [ "$dataset_name" == "sider" ]
   then
     lr=0.0001
   fi
-  if [ $dataset_name == "hiv" ]
+  if [ "$dataset_name" == "hiv" ]
   then
     batch_size=64
     n_epochs=20
   fi
-  if [ $dataset_name == "muv" ]
+  if [ "$dataset_name" == "muv" ]
   then
     batch_size=64
     n_epochs=40
@@ -104,7 +104,9 @@ do
 
   for seed in 0 1 2
   do
-    CUDA_VISIBLE_DEVICES=$cuda_device python run_unimol.py \
+    CUDA_VISIBLE_DEVICES=$cuda_device \
+    PYTHONPATH="." \
+    python ./run/unimol.py \
       --disable_wandb $disable_wandb \
       --data_folder $data_folder \
       --unimol_feature_folder $unimol_feature_folder \
@@ -126,6 +128,7 @@ do
       --seed $seed \
       --n_test $n_test \
       --n_ensembles $n_ensembles \
-      --sgld_sampling_interval $sgld_sampling_interval
+      --sgld_sampling_interval $sgld_sampling_interval \
+      --deploy
   done
 done

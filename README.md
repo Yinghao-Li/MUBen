@@ -31,7 +31,7 @@ Notice that this may result in training/validation/test partitions different fro
 ## 2. REQUIREMENTS
 
 Please find the required packages in `requirements.txt`.
-Our code is developed with `Python 3.10` and may not work with Python versions earlier than `3.9`.
+Our code is developed with `Python 3.10` and does not work with Python versions earlier than `3.9`.
 It is recommended to create a new `conda` environment with
 
 ```bash
@@ -58,11 +58,30 @@ You can use them through
 ./scripts/run_dnn_rdkit.sh <CUDA_VISIBLE_DEVICES>
 ```
 as an example.
-
-To get a detailed description of each argument, you can use the `--help` argument:
+Another way of specifying arguments is through the `.json` scripts, for example:
 ```bash
-python run_dnn.py --help
+PYTHONPATH="." CUDA_VISIBLE_DEVICES=0 python ./run/dnn.py ./scripts/config_dnn.json
 ```
+This approach could be helpful for debugging the code through vscode.
+
+To get a detailed description of each argument, you can use `--help`:
+```bash
+PYTHONPATH="." python ./run/dnn.py --help
+```
+
+### Logging and WandB
+
+By default, this project uses local logging files (`*.log`) and [WandB](https://wandb.ai/site) to track training status.
+
+The log files are stored as `<workspaceFolder>/logs/<dataset>/<model>/<uncertainty>/<running_time>.log`.
+You can change the file path by specifying the `--log_path` argument, or disable log saving by setting `--log_path="disabled"`.
+
+To use WandB, you first need to register an account and sign in on your machine with `wandb login`.
+If you are running your code on a public device, you can instead use program-wise signing in by specifying the `--wandb_api_key` argument while running our code.
+You can find your API key in your browser here: https://wandb.ai/authorize.
+To disable WandB, use `--disable_wandb [true]`.
+By default, we use `MUBen-<dataset>` as WandB project name and `<model>-<uncertainty>` as the model name.
+You can change this behavior by specifying the `--wandb_project` and `--wandb_name` arguments.
 
 ## 4. CITATION
 

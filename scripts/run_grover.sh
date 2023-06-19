@@ -84,7 +84,9 @@ for dataset_name in $dataset_names
 do
   for seed in 0 1 2
   do
-    CUDA_VISIBLE_DEVICES=$cuda_device python run_grover.py \
+    CUDA_VISIBLE_DEVICES=$cuda_device \
+    PYTHONPATH="." \
+    python ./run/grover.py \
       --disable_wandb $disable_wandb \
       --data_folder $data_folder \
       --dataset_name "$dataset_name" \
@@ -104,6 +106,7 @@ do
       --seed $seed \
       --n_test $n_test \
       --n_ensembles $n_ensembles \
-      --sgld_sampling_interval $sgld_sampling_interval
+      --sgld_sampling_interval $sgld_sampling_interval \
+      --deploy
   done
 done

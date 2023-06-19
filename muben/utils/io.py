@@ -41,7 +41,7 @@ def set_logging(log_path: Optional[str] = None):
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)
 
-    if log_path:
+    if log_path and log_path != "disabled":
         log_path = op.abspath(log_path)
         if not op.isdir(op.split(log_path)[0]):
             os.makedirs(op.abspath(op.normpath(op.split(log_path)[0])))
