@@ -58,6 +58,9 @@ You can use them through
 ./scripts/run_dnn_rdkit.sh <CUDA_VISIBLE_DEVICES>
 ```
 as an example.
+Notice that we need to comment out the variables `train_on_<dataset name>` in the `.sh` files to skip training on the corresponding datasets.
+Setting their value to `false` **does not work**.
+
 Another way of specifying arguments is through the `.json` scripts, for example:
 ```bash
 PYTHONPATH="." CUDA_VISIBLE_DEVICES=0 python ./run/dnn.py ./scripts/config_dnn.json
