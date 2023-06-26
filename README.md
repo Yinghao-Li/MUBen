@@ -20,7 +20,7 @@ You can specify the input (Uni-Mol) and output data directories with `--unimol_d
 The script will convert *all* datasets by default (excluding PCBA).
 If you want to specify a subset of datasets, you can specify the argument `--dataset_names` with the target dataset names with lowercase letters.
 
-**Notice**: If you would like to run the Uni-Mol model, you need to keep the original `UniMol` data as we will use the pre-defined molecule conformations.
+**Notice**: If you would like to run the Uni-Mol model, you are suggested to keep the original `UniMol` data as we will use the pre-defined molecule conformations.
 Otherwise, it is safe to remove the original data.
 
 ### Options
@@ -83,6 +83,25 @@ To disable WandB, use `--disable_wandb [true]`.
 By default, we use `MUBen-<dataset>` as WandB project name and `<model>-<uncertainty>` as the model name.
 You can change this behavior by specifying the `--wandb_project` and `--wandb_name` arguments.
 
+### Data Loading
+
+The progress will automatically create the necessary features (molecular descriptors) required by backbone models from the SMILES strings if they are loaded properly.
+The processed features are stored in the `<bottom-level data folder>/processed/` directory as `<train/valid/test>.pt` files by default, and will be automatically loaded the next time you apply the same backbone model on the same dataset.
+You can change this behavior with `--disable_dataset_saving` for disabling dataset saving or `--ignore_preprocessed_dataset` for not loading from the saved (processed) dataset.
+
+Constructing Morgan fingerprint, RDKit features or 3D conformations for Uni-Mol may take a while.
+You can accelerate this process by utilizing multiple threads `--num_preprocess_workers=n>1` (default is 8).
+For 3D conformations, we directly take advantage of the results from Uni-Mol but still keep the choice of generating them by ourselves if the Uni-Mol data files are not found.
+
 ## 4. CITATION
 
-Coming soon.
+```latex
+@misc{li2023muben,
+    title={MUBen: Benchmarking the Uncertainty of Pre-Trained Models for Molecular Property Prediction},
+    author={Yinghao Li and Lingkai Kong and Yuanqi Du and Yue Yu and Yuchen Zhuang and Wenhao Mu and Chao Zhang},
+    year={2023},
+    eprint={2306.10060},
+    archivePrefix={arXiv},
+    primaryClass={physics.chem-ph}
+}
+```
