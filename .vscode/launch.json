@@ -8,7 +8,7 @@
             "name": "data-constr",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/data_constr/build_datasets_from_unimol.py",
+            "program": "${workspaceFolder}/assist/dataset_build_from_unimol.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
@@ -16,7 +16,7 @@
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "--unimol_data_path", "./data/UniMol",
+                "--unimol_data_dir", "./data/UniMol",
                 "--output_dir", "./data/files"
             ]
         },
@@ -68,24 +68,26 @@
             "name": "run-dnn",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/run_dnn.py",
+            "program": "${workspaceFolder}/run/dnn.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
+                "PYTHONPATH": ".",
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/config_dnn.json"
+                "${workspaceFolder}/scripts/config/dnn.json"
             ]
         },
         {
             "name": "run-chemberta",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/run_chemberta.py",
+            "program": "${workspaceFolder}/run/chemberta.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
+                "PYTHONPATH": ".",
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
@@ -96,11 +98,12 @@
             "name": "run-grover",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/run_grover.py",
+            "program": "${workspaceFolder}/run/grover.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "3",
+                "PYTHONPATH": ".",
+                "CUDA_VISIBLE_DEVICES": "1",
             },
             "args": [
                 "${workspaceFolder}/scripts/config_grover.json"
@@ -110,11 +113,12 @@
             "name": "run-unimol",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/run_unimol.py",
+            "program": "${workspaceFolder}/run/unimol.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "3",
+                "PYTHONPATH": ".",
+                "CUDA_VISIBLE_DEVICES": "1",
             },
             "args": [
                 "${workspaceFolder}/scripts/config_unimol.json"
