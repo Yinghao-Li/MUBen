@@ -42,6 +42,7 @@ save_csv(test_data, op.join(result_dir, 'test.csv'))
 meta_dict = {
     'task_type': 'regression',
     'n_tasks': 1,
-    'classes': None
+    'classes': None,
+    'eval_metric': 'rmse'
 }
 save_json(meta_dict, op.join(result_dir, "meta.json"), collapse_level=2)

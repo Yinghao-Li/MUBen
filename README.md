@@ -8,7 +8,7 @@ Questions and suggestions are welcome if you find it hard to use our code.
 
 We utilize the datasets prepared by [Uni-Mol](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol).
 You find the data [here](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol#:~:text=pockets.tar.gz-,molecular%20property,-3.506GB) or directly download it through [this link](https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz).
-We place the unzipped files into `<workspaceFolder>/data/UniMol` by default.
+We place the unzipped files into `<project root>/data/UniMol` by default.
 For convenience, you are suggested to rename the `qm7dft`, `qm8dft`, and `qm9dft` folders to `qm7`, `qm8`, and `qm9`.
 
 Afterwards, you can transfer the dataset format into ours by running
@@ -23,10 +23,30 @@ If you want to specify a subset of datasets, you can specify the argument `--dat
 **Notice**: If you would like to run the Uni-Mol model, you are suggested to keep the original `UniMol` data as we will use the pre-defined molecule conformations.
 Otherwise, it is safe to remove the original data.
 
-### Options
+### Other Options
 
 If you do not want to use Uni-Mol data, you can try the scripts within the `legacy` folder, including `build_dgllife_datasets.py`, and `build_qm[7,8,9]_dataset.py`.
 Notice that this may result in training/validation/test partitions different from what is being used in our experiments.
+
+### Using Customized Datasets
+
+If you want to test the UQ methods on your own dataset, you can use `pandas.DataFrame` structure with the following keys:
+```
+{
+  "smiles": list of `str`,
+  "labels": list of list of int/float,
+  "masks": list of list of int/float (with values within {0,1})
+}
+```
+and store them as `train.csv`, `valid.csv`, and `test.csv` files.
+`mask=1` indicates the existence informative label at the position and `mask=0` indicates missing label.
+You can check the prepared datasets included in our program for reference.
+You are recommended to put the dataset files in the `<project root>/data/file/<dataset name>` directory, but you can of course choose your favorite location and specify the `--data_folder` argument.
+
+The `.csv` files should be accompanied by a `meta.json` file within the same directory.
+It stores some constant dataset properties, *e.g.*, `task_type` (classification or regression), `n_tasks`, or `classes` (`[0,1]` for all our classification datasets).
+For the customized dataset, one **required** property is the `eval_metric` for validation and test (*e.g.*, roc-auc, rmse, *etc.*) since it is not specified in the macro file.
+Please refer to `./assist/dataset_build_roe.py` for an example (unfortunately, we are not allowed to release the dataset).
 
 ## 2. REQUIREMENTS
 
