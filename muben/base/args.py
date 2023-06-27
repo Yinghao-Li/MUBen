@@ -273,6 +273,7 @@ class Config(Arguments):
     classes = None
     task_type = "classification"
     n_tasks = None
+    eval_metric = None
 
     @cached_property
     def n_lbs(self):

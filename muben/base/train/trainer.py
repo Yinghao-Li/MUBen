@@ -70,7 +70,8 @@ class Trainer:
         self._timer = Timer(device=self._device)
 
         # Validation variables and flags
-        self._valid_metric = EVAL_METRICS[config.dataset_name].replace('-', '_')
+        self._valid_metric = EVAL_METRICS[config.dataset_name].replace('-', '_') \
+            if not config.eval_metric else config.eval_metric
         if config.valid_epoch_interval == 0:
             update_criteria = UpdateCriteria.always
         elif config.task_type == 'classification':

@@ -144,5 +144,6 @@ __MACOSX/
 *.tar.gz
 *.npz
 *.lmdb
-meta.json
-config.json
+*.json
+*.sh
+
