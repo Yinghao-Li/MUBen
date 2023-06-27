@@ -1,5 +1,10 @@
 """
-Train and test Uni-Mol
+# Author: Yinghao Li
+# Created: June 15th, 2023
+# Modified: June 27th, 2023
+# ---------------------------------------
+# Description: Run the uncertainty quantification experiments
+  with Uni-Mol backbone model.
 """
 
 import os

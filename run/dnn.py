@@ -1,5 +1,10 @@
 """
-Run the basic model and training process
+# Author: Yinghao Li
+# Created: June 15th, 2023
+# Modified: June 27th, 2023
+# ---------------------------------------
+# Description: Run the uncertainty quantification experiments
+  with DNN backbone model.
 """
 
 import os
