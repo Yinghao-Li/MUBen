@@ -1,7 +1,6 @@
 {
-  "dataset_name": "qm9",
+  "dataset_names": "roe",
   "model_name": "Uni-Mol",
   "feature_type": "rdkit",
-  "uncertainty_method": "MCDropout",
   "result_folder": "./output/"
 }

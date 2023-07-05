@@ -37,7 +37,7 @@
             "name": "result-metrics",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/assist/result_metrics.py",
+            "program": "${workspaceFolder}/assist/results_get_metrics.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {

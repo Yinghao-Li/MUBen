@@ -50,7 +50,6 @@ class Arguments:
         default=None,
         metadata={
             "nargs": "*",
-            "choices": DATASET_NAMES,
             "help": "A list of dataset names."
         }
     )

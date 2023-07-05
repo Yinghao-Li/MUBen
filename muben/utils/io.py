@@ -219,12 +219,12 @@ def load_results(result_paths):
     for test_result_path in result_paths:
         results = torch.load(test_result_path)
 
-        if lbs is not None:
+        if lbs is not np.nan:
             assert (lbs == results['lbs']).all()
         else:
             lbs: np.ndarray = results['lbs']
 
-        if masks is not None:
+        if masks is not np.nan:
             assert (masks == results['masks']).all()
         else:
             masks: np.ndarray = results['masks']
