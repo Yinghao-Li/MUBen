@@ -6,11 +6,7 @@ from typing import Optional
 from dataclasses import dataclass, field, asdict
 from functools import cached_property
 
-from muben.utils.macro import (
-    DATASET_NAMES,
-    MODEL_NAMES,
-    UncertaintyMethods,
-)
+from muben.utils.macro import MODEL_NAMES, UncertaintyMethods
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +37,7 @@ class Arguments:
 
     # --- IO arguments ---
     dataset_name: Optional[str] = field(
-        default='', metadata={
-            "help": "Dataset Name.",
-            "choices": DATASET_NAMES
-        }
+        default='', metadata={"help": "Dataset Name."}
     )
     data_folder: Optional[str] = field(
         default='', metadata={'help': 'The folder containing all datasets.'}
@@ -70,10 +63,7 @@ class Arguments:
 
     # --- Model Arguments ---
     model_name: Optional[str] = field(
-        default='DNN', metadata={
-            'help': "Name of the model",
-            "choices": MODEL_NAMES
-        }
+        default='DNN', metadata={'help': "Name of the model", "choices": MODEL_NAMES}
     )
     dropout: Optional[float] = field(
         default=0.1, metadata={'help': "Dropout ratio."}
