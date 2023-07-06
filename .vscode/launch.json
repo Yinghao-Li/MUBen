@@ -76,7 +76,7 @@
                 "CUDA_VISIBLE_DEVICES": "3",
             },
             "args": [
-                "${workspaceFolder}/scripts/config/dnn.json"
+                "${workspaceFolder}/scripts/config_dnn.json"
             ]
         },
         {
