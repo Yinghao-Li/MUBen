@@ -1,6 +1,11 @@
 """
-Construct dataset from raw data files
+# Author: Yinghao Li
+# Created: June 17th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: construct dataset from the Uni-Mol datasets.
 """
+
 import os
 import sys
 import logging

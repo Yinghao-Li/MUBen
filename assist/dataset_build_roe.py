@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Created: July 6th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: Build the ROE dataset (not included).
+"""
+
 import os.path as op
 import pandas as pd
 from muben.utils.io import save_json

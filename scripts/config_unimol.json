@@ -1,7 +1,7 @@
 {
   "disable_wandb": true,
   "disable_result_saving": true,
-  "dataset_name": "roe",
+  "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "unimol_feature_folder": "./data/UniMol",
   "ignore_preprocessed_dataset": false,

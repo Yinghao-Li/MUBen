@@ -1,5 +1,9 @@
 """
-Run the basic model and training process
+# Author: Yinghao Li
+# Created: June 17th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: move the models from Deep Ensembles to the `none` folders.
 """
 
 import sys

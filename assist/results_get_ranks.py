@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Created: June 17th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: compute and save the ranks of UQ methods
+"""
+
 import sys
 import glob
 import os.path as op

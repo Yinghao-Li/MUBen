@@ -1,5 +1,9 @@
 """
-Run the basic model and training process
+# Author: Yinghao Li
+# Created: July 6th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: Calculate metrics of UQ methods from the saved results.
 """
 
 import sys
