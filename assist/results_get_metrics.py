@@ -1,7 +1,7 @@
 """
 # Author: Yinghao Li
 # Created: July 6th, 2023
-# Modified: July 6th, 2023
+# Modified: July 14th, 2023
 # ---------------------------------------
 # Description: Calculate metrics of UQ methods from the saved results.
 """
@@ -83,7 +83,7 @@ class Arguments:
     result_seeds: Optional[int] = field(
         default=None, metadata={
             "nargs": "*",
-            "help": "the seeds the models are trained with."
+            "help": "the seeds the models are trained with. This argument is used to locate results."
         }
     )
 

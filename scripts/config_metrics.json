@@ -2,5 +2,6 @@
   "dataset_names": "bbbp",
   "model_name": "Uni-Mol",
   "feature_type": "rdkit",
-  "result_folder": "./output/"
+  "result_folder": "./output/",
+  "result_seeds": [0, 1, 2]
 }
