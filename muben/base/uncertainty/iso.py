@@ -17,7 +17,7 @@ class IsotonicCalibration:
     def __init__(self, n_task):
         super().__init__()
         self._n_task = n_task
-        self._isotonic_regressors = [IsotonicRegression(out_of_bounds='clip') for _ in n_task]
+        self._isotonic_regressors = [IsotonicRegression(out_of_bounds='clip') for _ in range(n_task)]
 
     def fit(self, means, variances, lbs, masks) -> "IsotonicCalibration":
         """
@@ -42,7 +42,7 @@ class IsotonicCalibration:
             lbs = lbs.cpu().numpy()
         if isinstance(masks, torch.Tensor):
             masks = masks.cpu().numpy()
-        bool_masks = masks.to(torch.bool)
+        bool_masks = masks.astype(bool)
 
         if len(means.shape) == 1:
             means = means.reshape(-1, 1)
@@ -59,7 +59,7 @@ class IsotonicCalibration:
             task_vars = task_vars[task_masks]
             task_lbs = task_lbs[task_masks]
 
-            q, q_hat = get_iso_cal_table(task_lbs, task_means, task_vars.sqrt())
+            q, q_hat = get_iso_cal_table(task_lbs, task_means, np.sqrt(task_vars))
 
             regressor.fit(q, q_hat)
 
@@ -76,7 +76,7 @@ class IsotonicCalibration:
             lbs = lbs.cpu().numpy()
         if isinstance(masks, torch.Tensor):
             masks = masks.cpu().numpy()
-        bool_masks = masks.to(torch.bool)
+        bool_masks = masks.astype(bool)
 
         if len(means.shape) == 1:
             means = means.reshape(-1, 1)
@@ -92,7 +92,7 @@ class IsotonicCalibration:
 
             task_means = task_means[task_masks]
             task_vars = task_vars[task_masks]
-            task_stds = task_vars.sqrt()
+            task_stds = np.sqrt(task_vars)
             task_lbs = task_lbs[task_masks]
 
             t_list_test = np.linspace(np.min(task_means) - 16.0 * np.max(task_stds),
