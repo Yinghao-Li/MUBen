@@ -2,7 +2,7 @@
   "disable_wandb": true,
   "disable_result_saving": true,
   "retrain_model": true,
-  "dataset_name": "roe",
+  "dataset_name": "bbbp",
   "data_folder": "./data/files",
   "uncertainty_method": "none",
   "ignore_preprocessed_dataset": true,

@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Created: June 17th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: Generate the plots of the difference between the predicted and true labels
+               against the predicted standard deviation.
+"""
 
 import sys
 import glob

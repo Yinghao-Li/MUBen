@@ -2,11 +2,14 @@
 Modified from https://github.com/kage08/DistCal/tree/master
 """
 import torch
+import logging
 import numpy as np
 import scipy.stats
 import scipy.integrate
 import scipy.optimize
 from sklearn.isotonic import IsotonicRegression
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["IsotonicCalibration"]
 
@@ -87,6 +90,8 @@ class IsotonicCalibration:
         if len(bool_masks.shape) == 1:
             bool_masks = bool_masks.reshape(-1, 1)
 
+        nll_list = list()
+        rmse_list = list()
         for task_means, task_vars, task_lbs, task_masks, regressor in \
                 zip(means.T, variances.T, lbs.T, bool_masks.T, self._isotonic_regressors):
 
@@ -99,8 +104,6 @@ class IsotonicCalibration:
                                       np.max(task_means) + 16.0 * np.max(task_stds),
                                       n_t_test).reshape(1, -1)
 
-            y_base = task_means.ravel()
-
             q_base, s_base = get_norm_q(task_means.ravel(), task_stds.ravel(), t_list_test.ravel())
             q_iso = regressor.predict(q_base.ravel()).reshape(np.shape(q_base))
 
@@ -110,16 +113,15 @@ class IsotonicCalibration:
             y_iso = get_y_hat(t_list_test.ravel(), s_iso)
 
             # NLL
-            ll_base = - scipy.stats.norm.logpdf(task_lbs.reshape(-1, 1),
-                                                loc=task_means.reshape(-1, 1),
-                                                scale=task_stds.reshape(-1, 1)).ravel()
-            ll_iso = get_log_loss(task_lbs, t_list_test.ravel(), s_iso)
-            print([np.mean(ll_base), np.mean(ll_iso)])
-
+            nll_iso = get_log_loss(task_lbs, t_list_test.ravel(), s_iso)
             # MSE
-            se_base = get_se(y_base, task_lbs)
             se_iso = get_se(y_iso, task_lbs)
-            print([np.mean(se_base), np.mean(se_iso)])
+
+            nll_list.append(np.mean(nll_iso))
+            rmse_list.append(np.sqrt(np.mean(se_iso)))
+
+        logger.info(f"[ISO calibration] RMSE: {np.mean(rmse_list):.4f}")
+        logger.info(f"[ISO calibration] NLL: {np.mean(nll_list):.4f}")
 
 
 def get_iso_cal_table(y, mu, sigma):

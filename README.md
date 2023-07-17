@@ -96,7 +96,7 @@ PYTHONPATH="." python ./run/dnn.py --help
 
 By default, this project uses local logging files (`*.log`) and [WandB](https://wandb.ai/site) to track training status.
 
-The log files are stored as `<workspaceFolder>/logs/<dataset>/<model>/<uncertainty>/<running_time>.log`.
+The log files are stored as `<project root>/logs/<dataset>/<model>/<uncertainty>/<running_time>.log`.
 You can change the file path by specifying the `--log_path` argument, or disable log saving by setting `--log_path="disabled"`.
 
 To use WandB, you first need to register an account and sign in on your machine with `wandb login`.
@@ -116,8 +116,26 @@ Constructing Morgan fingerprint, RDKit features or 3D conformations for Uni-Mol 
 You can accelerate this process by utilizing multiple threads `--num_preprocess_workers=n>1` (default is 8).
 For 3D conformations, we directly take advantage of the results from Uni-Mol but still keep the choice of generating them by ourselves if the Uni-Mol data files are not found.
 
+### Calculating Metrics
+
+During training, we only calculate metrics necessary for early stopping and simple prediction performance evaluation.
+To get other metrics, you need to use the `<project root>/assist/results_get_metrics.py` file.
+
+Specifically, you need to save the model predictions by **not** setting `--disable_dataset_saving`.
+The results are saved as `<project root>/<result_folder>/<dataset_name>/<model_name>/<uncertainty_method>/seed-<seed>/preds/<test_idx>.pt` files.
+When the training is finished, you can run the `<project root>/assist/results_get_metrics.py` file to generate all metrics for your model predictions.
+For example:
+```bash
+PYTHONPATH="." python ./assist/results_get_metrics.py ./scripts/config_metrics.json
+```
+Make sure the hyper-parameters in the configuration file are updated to your need.
+
+The metrics will be saved in the `<project root>/<result_folder>/RESULTS/<model_name>-<dataset_name>.csv` files.
+Notice that these files already exist in the repo if you keep the default `--result_folder=./output` argument and you need to check whether it is updated to reveal your experiment results.
+
 ## 4. CITATION
 
+If you find our work helpful, please consider citing it as
 ```latex
 @misc{li2023muben,
     title={MUBen: Benchmarking the Uncertainty of Pre-Trained Models for Molecular Property Prediction},

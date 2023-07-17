@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Created: June 17th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: calculate the imbalance ratio of the datasets.
+"""
+
 import sys
 import logging
 import os.path as op

@@ -1,5 +1,9 @@
 """
-Automatically generate the result tables in the appendix.
+# Author: Yinghao Li
+# Created: June 17th, 2023
+# Modified: July 6th, 2023
+# ---------------------------------------
+# Description: automatically generate the result tables in the appendix.
 """
 
 import sys
