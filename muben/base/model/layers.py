@@ -6,6 +6,8 @@ Contains Linear and Bayesian output Layer
 
 import torch.nn as nn
 from ..uncertainty.bbp import BBPOutputLayer
+from ..uncertainty.evidential import NIGOutputLayer
+from muben.utils.macro import UncertaintyMethods
 
 
 class OutputLayer(nn.Module):
@@ -13,7 +15,7 @@ class OutputLayer(nn.Module):
     def __init__(self,
                  last_hidden_dim,
                  n_output_heads,
-                 apply_bbp=False,
+                 uncertainty_method=UncertaintyMethods.none,
                  **kwargs):
         """
         Initialize the model output layer
@@ -28,28 +30,32 @@ class OutputLayer(nn.Module):
 
         super().__init__()
 
-        self._apply_bbp = apply_bbp
-        if not apply_bbp:
-            self.output_layer = nn.Linear(last_hidden_dim, n_output_heads)
-        else:
+        self._uncertainty_method = uncertainty_method
+        if uncertainty_method == UncertaintyMethods.bbp:
             self.output_layer = BBPOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
+        elif uncertainty_method == UncertaintyMethods.evidential:
+            self.output_layer = NIGOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
+        else:
+            self.output_layer = nn.Linear(last_hidden_dim, n_output_heads)
 
         self.kld = None
         self.initialize()
 
     def initialize(self):
-        if not self._apply_bbp:
-            nn.init.xavier_uniform_(self.output_layer.weight)
-            self.output_layer.bias.data.fill_(0.01)
-        else:
+        if self._uncertainty_method == UncertaintyMethods.bbp:
             self.output_layer.initialize()
             self.kld = None
+        elif self._uncertainty_method == UncertaintyMethods.evidential:
+            self.output_layer.initialize()
+        else:
+            nn.init.xavier_uniform_(self.output_layer.weight)
+            self.output_layer.bias.data.fill_(0.01)
         return self
 
     def forward(self, x, **kwargs):
-        if not self._apply_bbp:
-            logits = self.output_layer(x)
-        else:
+        if self._uncertainty_method == UncertaintyMethods.bbp:
             logits, self.kld = self.output_layer(x)
+        else:
+            logits = self.output_layer(x)
 
         return logits

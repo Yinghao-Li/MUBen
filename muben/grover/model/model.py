@@ -117,13 +117,13 @@ class GROVERFinetuneModel(nn.Module):
         self.atom_output_layer = OutputLayer(
             config.ffn_hidden_size,
             config.n_lbs*config.n_tasks,
-            config.uncertainty_method == UncertaintyMethods.bbp,
+            config.uncertainty_method,
             bbp_prior_sigma=config.bbp_prior_sigma
         )
         self.bond_output_layer = OutputLayer(
             config.ffn_hidden_size,
             config.n_lbs*config.n_tasks,
-            config.uncertainty_method == UncertaintyMethods.bbp,
+            config.uncertainty_method,
             bbp_prior_sigma=config.bbp_prior_sigma
         )
 

@@ -11,7 +11,7 @@ class ChemBERTa(nn.Module):
                  bert_model_name_or_path: str,
                  n_lbs: int,
                  n_tasks: int,
-                 apply_bbp: bool = False,
+                 uncertainty_method: str,
                  **kwargs):
 
         super().__init__()
@@ -22,7 +22,7 @@ class ChemBERTa(nn.Module):
         self.output_layer = OutputLayer(
             dim_bert_last_hidden,
             n_lbs * n_tasks,
-            apply_bbp,
+            uncertainty_method,
             **kwargs
         ).initialize()
 

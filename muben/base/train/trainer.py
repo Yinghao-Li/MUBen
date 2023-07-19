@@ -35,7 +35,8 @@ from ..uncertainty import (
     TSModel,
     SigmoidFocalLoss,
     SGLDOptimizer, PSGLDOptimizer,
-    IsotonicCalibration
+    IsotonicCalibration,
+    EvidentialRegressionLoss
 )
 
 from muben.utils.macro import EVAL_METRICS, UncertaintyMethods
@@ -196,7 +197,9 @@ class Trainer:
             else:
                 self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         else:
-            if self.config.regression_with_variance:
+            if self.config.uncertainty_method == UncertaintyMethods.evidential:
+                self._loss_fn = EvidentialRegressionLoss(coeff=self.config.evidential_loss_weight, reduction='none')
+            elif self.config.regression_with_variance:
                 self._loss_fn = GaussianNLLLoss(reduction='none')
             else:
                 self._loss_fn = nn.MSELoss(reduction='none')
@@ -315,7 +318,7 @@ class Trainer:
         # sgld
         elif self.config.uncertainty_method == UncertaintyMethods.sgld:
             self.run_sgld()
-        # none & MC Dropout & BBP
+        # none & MC Dropout & BBP & Evidential
         else:
             self.run_single_shot()
 
@@ -678,10 +681,15 @@ class Trainer:
         elif self.config.task_type == 'regression':
             assert self.config.regression_with_variance, NotImplementedError
 
-            masked_logits = logits.view(-1, self.config.n_tasks, 2)[bool_masks]  # mean and var for the last dimension
+            if self.config.uncertainty_method == UncertaintyMethods.evidential:
+                # gamma, nu, alpha, beta
+                masked_logits = logits[bool_masks]
+            else:
+                # mean and var for the last dimension
+                masked_logits = logits.view(-1, self.config.n_tasks, 2)[bool_masks]
 
         else:
-            raise NotImplementedError
+            raise ValueError
 
         loss = self._loss_fn(masked_logits, masked_lbs)
         loss = torch.sum(loss) / masks.sum()

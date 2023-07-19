@@ -68,7 +68,7 @@ class UniMol(nn.Module):
         self.output_layer = OutputLayer(
             config.encoder_embed_dim,
             config.n_lbs * config.n_tasks,
-            config.uncertainty_method == UncertaintyMethods.bbp,
+            config.uncertainty_method,
             bbp_prior_sigma=config.bbp_prior_sigma
         )
 

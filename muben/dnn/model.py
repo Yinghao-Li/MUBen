@@ -24,7 +24,7 @@ class DNN(nn.Module):
                  p_dropout: Optional[float] = 0.1,
                  hidden_dims: Optional[list] = None,
                  activation: Optional[str] = 'ReLU',
-                 apply_bbp: Optional[bool] = False,
+                 uncertainty_method: Optional[int] = 'none',
                  **kwargs):
 
         super().__init__()
@@ -47,7 +47,7 @@ class DNN(nn.Module):
         ) for i in range(n_hidden_layers)]
         self.hidden_layers = nn.Sequential(*hidden_layers)
 
-        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, apply_bbp, **kwargs)
+        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, uncertainty_method, **kwargs)
 
         self.initialize()
 

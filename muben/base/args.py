@@ -195,6 +195,11 @@ class Arguments:
         default=2, metadata={"help": "The number of epochs per sampling operation."}
     )
 
+    # --- Evidential Networks Arguments ---
+    evidential_loss_weight: Optional[float] = field(
+        default=1, metadata={"help": "The weight of evidential loss."}
+    )
+
     # --- Device Arguments ---
     no_cuda: Optional[bool] = field(
         default=False, metadata={"help": "Disable CUDA even when it is available."}
@@ -273,7 +278,12 @@ class Config(Arguments):
             else:
                 return len(self.classes)
         elif self.task_type == 'regression':
-            return 2 if self.regression_with_variance else 1
+            if self.uncertainty_method == UncertaintyMethods.evidential:
+                return 4
+            elif self.regression_with_variance:
+                return 2
+            else:
+                return 1
         else:
             ValueError(f"Unrecognized task type: {self.task_type}")
 
@@ -345,16 +355,18 @@ class Config(Arguments):
                                        UncertaintyMethods.focal, UncertaintyMethods.temperature]:
             self.n_test = 1
 
-        if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag, UncertaintyMethods.bbp] \
+        if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag,
+                                       UncertaintyMethods.bbp, UncertaintyMethods.evidential] \
                 and self.n_test == 1:
             logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
-                           f"multiple test runs! Setting `n_test` to the default value 20.")
+                           f"multiple test runs! Setting `n_test` to the default value 30.")
             self.n_test = 30
 
         assert not (self.uncertainty_method in [UncertaintyMethods.temperature, UncertaintyMethods.focal]
                     and self.task_type == 'regression'), \
             f"{self.uncertainty_method} is not compatible with regression tasks!"
-        assert not (self.uncertainty_method in [UncertaintyMethods.iso]
+        # temporary for evidential networks
+        assert not (self.uncertainty_method in [UncertaintyMethods.iso, UncertaintyMethods.evidential]
                     and self.task_type == 'classification'), \
             f"{self.uncertainty_method} is not compatible with classification tasks!"
 

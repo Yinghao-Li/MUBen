@@ -39,6 +39,6 @@ class Trainer(BaseTrainer, ABC):
             bert_model_name_or_path=self.config.pretrained_model_name_or_path,
             n_lbs=self.config.n_lbs,
             n_tasks=self.config.n_tasks,
-            apply_bbp=self.config.uncertainty_method == UncertaintyMethods.bbp,
+            uncertainty_method=self.config.uncertainty_method,
             bbp_prior_sigma=self.config.bbp_prior_sigma
         )
