@@ -1,11 +1,7 @@
 {
   "disable_wandb": true,
   "disable_result_saving": true,
-<<<<<<< HEAD
-  "dataset_name": "esol",
-=======
   "dataset_name": "bbbp",
->>>>>>> ca6d2b2fd988558c5a1663b546e731dd8923516c
   "data_folder": "./data/files",
   "ignore_preprocessed_dataset": false,
   "retrain_model": true,
@@ -15,7 +11,7 @@
   "binary_classification_with_softmax": false,
   "regression_with_variance": true,
   "feature_type": "rdkit",
-  "uncertainty_method": "IsotonicCalibration",
+  "uncertainty_method": "none",
   "n_test": 30,
   "n_ensembles": 5,
   "lr": 0.0001,
