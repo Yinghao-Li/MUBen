@@ -254,41 +254,32 @@ class Trainer:
         n_steps_per_epoch = int(np.ceil(len(self._valid_dataset) / self.config.batch_size))
         return n_steps_per_epoch * self._status.n_epochs
 
-    def train_mode(self):
-        """
-        Set the PyTorch model to train mode
-        """
-        self.model.train()
-        return self
-
-    def eval_mode(self):
-        """
-        Set the PyTorch model to evaluation mode
-        """
-
-        self.model.eval()
-
-        if self.config.uncertainty_method == UncertaintyMethods.mc_dropout:
-            # activate the dropout layers during evaluation for MC Dropout
-            for m in self.model.modules():
-                if m.__class__.__name__.startswith('Dropout'):
-                    m.train()
-
-        return self
-
     def set_mode(self, mode: str):
         """
-        Specify training mode using string. Currently not used.
+        Specify training mode using string.
 
         Parameters
         ----------
         mode: train or valid
         """
-        assert mode in ('train', 'eval'), ValueError(f"Argument `mode` should be 'train' or 'eval'.")
+
         if mode == 'train':
-            self.train_mode()
+            self.model.train()
+
+        elif mode == 'eval':
+            self.model.eval()
+
+        elif mode == 'test':
+            self.model.eval()
+
+            if self.config.uncertainty_method == UncertaintyMethods.mc_dropout:
+                # activate the dropout layers during evaluation for MC Dropout
+                for m in self.model.modules():
+                    if m.__class__.__name__.startswith('Dropout'):
+                        m.train()
         else:
-            self.eval_mode()
+            raise ValueError(f"Argument `mode` should be 'train', 'eval' or 'test'.")
+
         return self
 
     def run(self):
@@ -612,11 +603,11 @@ class Trainer:
         averaged training loss
         """
 
-        self.train_mode()
+        self.set_mode('train')
         self.model.to(self._device)
 
         total_loss = 0.
-        num_items = 0
+        n_instances = 0
 
         for batch in data_loader:
             batch.to(self._device)
@@ -646,10 +637,10 @@ class Trainer:
             self._timer.on_measurement_end()
 
             total_loss += loss.detach().cpu().item() * len(batch)
-            num_items += len(batch)
+            n_instances += len(batch)
 
         self._status.train_log_idx += 1
-        avg_loss = total_loss / num_items
+        avg_loss = total_loss / n_instances
 
         return avg_loss
 
@@ -678,12 +669,12 @@ class Trainer:
             masked_logits = logits[bool_masks]
 
         elif self.config.task_type == 'regression':
-            assert self.config.regression_with_variance, NotImplementedError
 
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
                 # gamma, nu, alpha, beta
                 masked_logits = logits[bool_masks]
             else:
+                assert self.config.regression_with_variance, NotImplementedError
                 # mean and var for the last dimension
                 masked_logits = logits.view(-1, self.config.n_tasks, 2)[bool_masks]
 
@@ -713,7 +704,6 @@ class Trainer:
 
         dataloader = self.get_dataloader(dataset, batch_size=self.config.batch_size_inference, shuffle=False)
         self.model.to(self._device)
-        self.eval_mode()
 
         logits_list = list()
 
@@ -745,14 +735,24 @@ class Trainer:
             return expit(logits)  # sigmoid function
 
         elif self.config.task_type == 'regression':
-            if self.config.n_tasks > 1:
-                logits = logits.reshape((-1, self.config.n_tasks, 2))
+            # reshape the logits if the task and output-lbs (with shape config.n_lbs) dimensions are tangled
+            if self.config.n_tasks > 1 and len(logits.shape) == 2:
+                logits = logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
 
-            # get the mean of the preds
-            if self.config.regression_with_variance:
+            # get the mean and variance of the preds
+            if self.config.uncertainty_method == UncertaintyMethods.evidential:
+
+                gamma, _, alpha, beta = np.split(logits, 4, axis=-1)
+                mean = gamma.squeeze(-1)
+                var = (beta / (alpha - 1)).squeeze(-1)
+                return mean, var
+
+            # get the mean and variance of the preds
+            elif self.config.regression_with_variance:
                 mean = logits[..., 0]
                 var = F.softplus(torch.from_numpy(logits[..., 1])).numpy()
                 return mean, var
+
             else:
                 return logits
         else:
@@ -830,6 +830,7 @@ class Trainer:
         """
         Evaluate the model and save it if its performance exceeds the previous highest
         """
+        self.set_mode('eval')
         self._status.eval_log_idx += 1
 
         valid_results = self.evaluate(self.valid_dataset)
@@ -850,6 +851,7 @@ class Trainer:
         return None
 
     def test(self, load_best_model=True):
+        self.set_mode('test')
 
         if load_best_model and self._checkpoint_container.state_dict:
             self._model.load_state_dict(self._checkpoint_container.state_dict)

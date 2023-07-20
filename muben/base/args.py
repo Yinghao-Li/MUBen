@@ -352,11 +352,13 @@ class Config(Arguments):
             self.debug = False
 
         if self.uncertainty_method in [UncertaintyMethods.none, UncertaintyMethods.ensembles,
-                                       UncertaintyMethods.focal, UncertaintyMethods.temperature]:
+                                       UncertaintyMethods.focal, UncertaintyMethods.temperature,
+                                       UncertaintyMethods.evidential] and self.n_test > 1:
+            logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
+                           f"only single test run! Setting `n_test` to 1.")
             self.n_test = 1
 
-        if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag,
-                                       UncertaintyMethods.bbp, UncertaintyMethods.evidential] \
+        if self.uncertainty_method in [UncertaintyMethods.mc_dropout, UncertaintyMethods.swag, UncertaintyMethods.bbp] \
                 and self.n_test == 1:
             logger.warning(f"The specified uncertainty estimation method {self.uncertainty_method} requires "
                            f"multiple test runs! Setting `n_test` to the default value 30.")
@@ -381,6 +383,9 @@ class Config(Arguments):
         if self.uncertainty_method == UncertaintyMethods.sgld and not self.lr_scheduler_type == "constant":
             logger.warning("SGLD currently only works with constant lr scheduler. The argument will be modified")
             self.lr_scheduler_type = "constant"
+
+        if self.uncertainty_method == UncertaintyMethods.evidential:
+            self.regression_with_variance = False
 
         return self
 

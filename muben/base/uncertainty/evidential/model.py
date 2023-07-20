@@ -37,43 +37,6 @@ class NIGOutputLayer(Module):
         return torch.cat((gamma, nu, alpha, beta), dim=-1)
 
 
-class EvidentialRegressionModel(Module):
-    def __init__(self, config, return_tensor=False):
-        super(EvidentialRegressionModel, self).__init__()
-        self.return_tensor = return_tensor
-
-        self.input_layer = nn.Linear(config.d_feature, config.hidden_dims[0])
-
-        self.hidden_layers = nn.ModuleList()
-        for i in range(config.n_hidden_layers - 1):
-            self.hidden_layers.append(nn.Linear(config.hidden_dims[i], config.hidden_dims[i+1]))
-
-        self.nig_layer = NIGOutputLayer(d_input=config.hidden_dims[-1])
-
-        self.dropout = nn.Dropout(config.dropout)
-        self.activate = nn.ReLU()
-
-    def forward(self, features: torch.Tensor, **kwargs):
-
-        x = self.input_layer(features)
-
-        for hidden_layer in self.hidden_layers:
-            x = self.activate(x)
-            x = self.dropout(x)
-            x = hidden_layer(x)
-
-        x = self.activate(x)
-        x = self.dropout(x)
-
-        nig_outs = self.nig_layer(x)
-
-        results = [r.squeeze() for r in nig_outs]
-        if not results[0].shape:
-            results = [result.unsqueeze(-1) for result in results]
-
-        return torch.stack(results).to(x.device)
-
-
 class Conv2DNormal(Module):
     def __init__(self, in_channels, out_tasks, kernel_size, **kwargs):
         super(Conv2DNormal, self).__init__()

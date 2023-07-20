@@ -104,7 +104,6 @@ class Trainer(BaseTrainer, ABC):
             shuffle=False
         )
         self.model.to(self._device)
-        self.eval_mode()
 
         atom_logits_list = list()
         bond_logits_list = list()
@@ -138,10 +137,19 @@ class Trainer(BaseTrainer, ABC):
             if self.config.n_tasks > 1:
                 logits = logits.reshape(-1, self.config.n_tasks, 2)
 
-            if self.config.regression_with_variance:
+            if self.config.uncertainty_method == UncertaintyMethods.evidential:
+
+                gamma, _, alpha, beta = np.split(logits, 4, axis=-1)
+                mean = gamma.squeeze(-1)
+                var = (beta / (alpha - 1)).squeeze(-1)
+                return mean, var
+
+            elif self.config.regression_with_variance:
+
                 mean = logits[..., 0]
                 var = F.softplus(torch.from_numpy(logits[..., 1])).numpy()
                 return mean, var
+
             else:
                 return logits
         else:
