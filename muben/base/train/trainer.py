@@ -572,10 +572,12 @@ class Trainer:
         for epoch_idx in range(self._status.n_epochs):
 
             logger.info(f"[Training Epoch {self._status.train_log_idx}]")
-            training_loss, avg_time_per_step = self.training_epoch(data_loader)
+
+            self._timer.clean_cache()
+            training_loss = self.training_epoch(data_loader)
 
             # Print the averaged training loss.
-            self.log_results({'Training Loss': training_loss, 'Average Time per Step': avg_time_per_step})
+            self.log_results({'Training Loss': training_loss, 'Average Time per Step': self._timer.time_elapsed_avg})
             wandb.log(data={'train/loss': training_loss}, step=self._status.train_log_idx)
 
             # Compatibility with SWAG
@@ -615,7 +617,6 @@ class Trainer:
 
         total_loss = 0.
         num_items = 0
-        time_per_step_list = list()
 
         for batch in data_loader:
             batch.to(self._device)
@@ -624,7 +625,7 @@ class Trainer:
             if self._sgld_optimizer is not None:  # for sgld compatibility
                 self._sgld_optimizer.zero_grad()
 
-            # measuring training time for a full batch
+            # measure training time for a full batch
             if self.config.time_training and len(batch) == self.config.batch_size:
                 self._timer.on_measurement_start()
 
@@ -641,18 +642,16 @@ class Trainer:
                 self._sgld_optimizer.step()
             self._scheduler.step()
 
-            time_per_step = self._timer.on_measurement_end()
-            if time_per_step:
-                time_per_step_list.append(time_per_step)
+            # end training time measurement
+            self._timer.on_measurement_end()
 
             total_loss += loss.detach().cpu().item() * len(batch)
             num_items += len(batch)
 
         self._status.train_log_idx += 1
         avg_loss = total_loss / num_items
-        avg_time_per_step = None if not time_per_step_list else np.mean(time_per_step_list)
 
-        return avg_loss, avg_time_per_step
+        return avg_loss
 
     def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
         """
