@@ -4,7 +4,7 @@ from .iso import IsotonicCalibration
 from .sgld import SGLDOptimizer, PSGLDOptimizer
 from .swag import SWAModel, update_bn
 from .ts import TSModel
-from .evidential import NIGOutputLayer, EvidentialRegressionLoss
+from .evidential import NIGOutputLayer, EvidentialRegressionLoss, EvidentialClassificationLoss
 
 __all__ = ["BBPOutputLayer",
            "SigmoidFocalLoss",
@@ -12,4 +12,4 @@ __all__ = ["BBPOutputLayer",
            "SGLDOptimizer", "PSGLDOptimizer",
            "SWAModel", "update_bn",
            "TSModel",
-           "NIGOutputLayer", "EvidentialRegressionLoss"]
+           "NIGOutputLayer", "EvidentialRegressionLoss", "EvidentialClassificationLoss"]

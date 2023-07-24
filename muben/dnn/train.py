@@ -47,5 +47,6 @@ class Trainer(BaseTrainer):
             d_hidden=self.config.d_dnn_hidden,
             p_dropout=self.config.dropout,
             uncertainty_method=self.config.uncertainty_method,
+            task_type=self.config.task_type,
             bbp_prior_sigma=self.config.bbp_prior_sigma
         )

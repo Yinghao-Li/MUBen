@@ -40,5 +40,6 @@ class Trainer(BaseTrainer, ABC):
             n_lbs=self.config.n_lbs,
             n_tasks=self.config.n_tasks,
             uncertainty_method=self.config.uncertainty_method,
+            task_type=self.config.task_type,
             bbp_prior_sigma=self.config.bbp_prior_sigma
         )

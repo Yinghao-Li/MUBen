@@ -69,6 +69,7 @@ class UniMol(nn.Module):
             config.encoder_embed_dim,
             config.n_lbs * config.n_tasks,
             config.uncertainty_method,
+            task_type=config.task_type,
             bbp_prior_sigma=config.bbp_prior_sigma
         )
 

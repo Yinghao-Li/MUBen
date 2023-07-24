@@ -8,8 +8,8 @@ __all__ = ["GaussianNLLLoss"]
 
 # noinspection PyShadowingBuiltins
 class GaussianNLLLoss(GaussianNLLLossBase):
-    def __init__(self, full: bool = False, eps: float = 1e-6, reduction: str = 'mean') -> None:
-        super().__init__(full=full, eps=eps, reduction=reduction)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
     def forward(self, input: Tensor, target: Tensor, *args, **kwargs):
         mean = input[..., 0]

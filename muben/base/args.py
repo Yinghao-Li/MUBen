@@ -196,8 +196,11 @@ class Arguments:
     )
 
     # --- Evidential Networks Arguments ---
-    evidential_loss_weight: Optional[float] = field(
+    evidential_reg_loss_weight: Optional[float] = field(
         default=1, metadata={"help": "The weight of evidential loss."}
+    )
+    evidential_clx_loss_annealing_epochs: Optional[int] = field(
+        default=10, metadata={"help": "How many epochs before evidential loss weight increase to 1."}
     )
 
     # --- Device Arguments ---
@@ -273,7 +276,7 @@ class Config(Arguments):
     @cached_property
     def n_lbs(self):
         if self.task_type == 'classification':
-            if len(self.classes) == 2:
+            if len(self.classes) == 2 and not self.uncertainty_method == UncertaintyMethods.evidential:
                 return 1
             else:
                 return len(self.classes)

@@ -10,37 +10,19 @@
 import torch
 import numpy as np
 
-import torch.nn as nn
 import torch.nn.functional as F
-
-mse = nn.MSELoss(reduction='mean')
-bce_loss = torch.nn.BCEWithLogitsLoss()
 
 
 # --- continuous (regression) ---
-
-def reduce(val, reduction):
-    if reduction == 'mean':
-        val = val.mean()
-    elif reduction == 'sum':
-        val = val.sum()
-    elif reduction == 'none':
-        pass
-    else:
-        raise ValueError(f"Invalid reduction argument: {reduction}")
-    return val
-
-
 class EvidentialRegressionLoss:
     """
     Evidential Regression Loss
     """
-    def __init__(self, coeff=1.0, reduction='mean'):
+    def __init__(self, coeff=1.0, **kwargs):
         self._coeff = coeff
-        self._reduction = reduction
 
-    def nig_nll(self,
-                y: torch.Tensor,
+    @staticmethod
+    def nig_nll(y: torch.Tensor,
                 gamma: torch.Tensor,
                 nu: torch.Tensor,
                 alpha: torch.Tensor,
@@ -52,14 +34,15 @@ class EvidentialRegressionLoss:
             + (alpha + 0.5) * (nu * (y - gamma) ** 2 + inter).log() \
             + torch.lgamma(alpha) - torch.lgamma(alpha + 0.5)
 
-        return reduce(nll, reduction=self._reduction)
+        return nll
 
-    def nig_reg(self, y, gamma, nu, alpha):
+    @staticmethod
+    def nig_reg(y, gamma, nu, alpha):
 
         error = (y - gamma).abs()
         evidence = 2. * nu + alpha
 
-        return reduce(error * evidence, reduction=self._reduction)
+        return error * evidence
 
     def __call__(self, logits, lbs):
 
@@ -71,77 +54,63 @@ class EvidentialRegressionLoss:
         return loss_nll + self._coeff * loss_reg
 
 
-# --- discrete (classification) ---
+class EvidentialClassificationLoss:
+    def __init__(self, n_classes, n_steps_per_epoch, annealing_epochs=10, device='cpu'):
+        self._n_classes = n_classes
+        self._n_steps_per_epoch = n_steps_per_epoch
+        self._annealing_epochs = annealing_epochs
+        self._device = device
+        self._i_epoch = 0
+        self._i_step = 0
 
-def dirichlet_sos(y, outputs, device=None):
-    return edl_log_loss(outputs, y, device=device if device else outputs.device)
+    def kl_divergence(self, alpha, num_classes):
+        ones = torch.ones([1, num_classes], device=self._device)
+        sum_alpha = torch.sum(alpha, dim=1, keepdim=True)
+        first_term = (
+                torch.lgamma(sum_alpha)
+                - torch.lgamma(alpha).sum(dim=1, keepdim=True)
+                + torch.lgamma(ones).sum(dim=1, keepdim=True)
+                - torch.lgamma(ones.sum(dim=1, keepdim=True))
+        )
+        second_term = (
+            (alpha - ones)
+            .mul(torch.digamma(alpha) - torch.digamma(sum_alpha))
+            .sum(dim=1, keepdim=True)
+        )
+        kl = first_term + second_term
+        return kl
 
+    def loglikelihood_loss(self, y, alpha):
+        y = y.to(self._device)
+        alpha = alpha.to(self._device)
+        s = torch.sum(alpha, dim=1, keepdim=True)
+        loglikelihood_err = torch.sum((y - (alpha / s)) ** 2, dim=1, keepdim=True)
+        loglikelihood_var = torch.sum(
+            alpha * (s - alpha) / (s * s * (s + 1)), dim=1, keepdim=True
+        )
+        loglikelihood = loglikelihood_err + loglikelihood_var
+        return loglikelihood
 
-def dirichlet_evidence(outputs):
-    """Calculate ReLU evidence"""
-    return relu_evidence(outputs)
+    def mse_loss(self, y, alpha):
+        loglikelihood = self.loglikelihood_loss(y, alpha)
 
+        annealing_coef = torch.min(
+            torch.tensor(1.0, dtype=torch.float32),
+            torch.tensor(self._i_epoch / self._annealing_epochs, dtype=torch.float32),
+        )
 
-def dirichlet_matches(predictions, labels):
-    """Calculate the number of matches from index predictions"""
-    assert predictions.shape == labels.shape, f"Dimension mismatch between predictions " \
-                                              f"({predictions.shape}) and labels ({labels.shape})"
-    return torch.reshape(torch.eq(predictions, labels).float(), (-1, 1))
+        kl_alpha = (alpha - 1) * (1 - y) + 1
+        kl_div = annealing_coef * self.kl_divergence(kl_alpha, self._n_classes)
+        return loglikelihood + kl_div
 
+    def update_idx(self):
+        self._i_step += 1
+        if self._i_step % self._n_steps_per_epoch == 0:
+            self._i_epoch += 1
 
-def dirichlet_predictions(outputs):
-    """Calculate predictions from logits"""
-    return torch.argmax(outputs, dim=1)
-
-
-def dirichlet_uncertainty(outputs):
-    """Calculate uncertainty from logits"""
-    alpha = relu_evidence(outputs) + 1
-    return alpha.size(1) / torch.sum(alpha, dim=1, keepdim=True)
-
-
-def sigmoid_ce(y, y_logits, device=None):
-    return bce_loss(y_logits, y, device=device if device else y_logits.device)
-
-
-def relu_evidence(y):
-    return F.relu(y)
-
-
-def exp_evidence(y):
-    return torch.exp(torch.clamp(y, -10, 10))
-
-
-def softplus_evidence(y):
-    return F.softplus(y)
-
-
-def kl_divergence(alpha, num_classes, device=None):
-    beta = torch.ones([1, num_classes], dtype=torch.float32, device=device)
-    S_alpha = torch.sum(alpha, dim=1, keepdim=True)
-    S_beta = torch.sum(beta, dim=1, keepdim=True)
-    lnB = torch.lgamma(S_alpha) - torch.sum(torch.lgamma(alpha), dim=1, keepdim=True)
-    lnB_uni = torch.sum(torch.lgamma(beta), dim=1, keepdim=True) - torch.lgamma(S_beta)
-
-    dg0 = torch.digamma(S_alpha)
-    dg1 = torch.digamma(alpha)
-
-    kl = torch.sum((alpha - beta) * (dg1 - dg0), dim=1, keepdim=True) + lnB + lnB_uni
-    return kl
-
-
-def edl_loss(func, y, alpha, device=None):
-    S = torch.sum(alpha, dim=1, keepdim=True)
-    A = torch.sum(y * (func(S) - func(alpha)), dim=1, keepdim=True)
-
-    kl_alpha = (alpha - 1) * (1 - y) + 1
-    kl_div = kl_divergence(kl_alpha, y.shape[1], device=device)
-    return A + kl_div
-
-
-def edl_log_loss(output, target, device=None):
-    evidence = relu_evidence(output)
-    alpha = evidence + 1
-    loss = torch.mean(edl_loss(torch.log, target, alpha, device=device))
-    assert loss is not None
-    return loss
+    def __call__(self, inputs, targets):
+        evidence = F.relu(inputs)
+        alpha = evidence + 1
+        loss = self.mse_loss(targets, alpha)
+        self.update_idx()
+        return loss

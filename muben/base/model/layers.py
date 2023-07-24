@@ -16,6 +16,7 @@ class OutputLayer(nn.Module):
                  last_hidden_dim,
                  n_output_heads,
                  uncertainty_method=UncertaintyMethods.none,
+                 task_type='classification',
                  **kwargs):
         """
         Initialize the model output layer
@@ -33,7 +34,7 @@ class OutputLayer(nn.Module):
         self._uncertainty_method = uncertainty_method
         if uncertainty_method == UncertaintyMethods.bbp:
             self.output_layer = BBPOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
-        elif uncertainty_method == UncertaintyMethods.evidential:
+        elif uncertainty_method == UncertaintyMethods.evidential and task_type == 'regression':
             self.output_layer = NIGOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
         else:
             self.output_layer = nn.Linear(last_hidden_dim, n_output_heads)

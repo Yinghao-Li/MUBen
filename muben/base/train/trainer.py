@@ -36,7 +36,8 @@ from ..uncertainty import (
     SigmoidFocalLoss,
     SGLDOptimizer, PSGLDOptimizer,
     IsotonicCalibration,
-    EvidentialRegressionLoss
+    EvidentialRegressionLoss,
+    EvidentialClassificationLoss
 )
 
 from muben.utils.macro import EVAL_METRICS, UncertaintyMethods
@@ -129,6 +130,10 @@ class Trainer:
     def n_model_parameters(self):
         return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
+    @property
+    def n_update_steps_per_epoch(self):
+        return int(np.ceil(len(self._training_dataset) / self.config.batch_size))
+
     def initialize(self):
         """
         Initialize trainer status
@@ -170,35 +175,37 @@ class Trainer:
         """
         Initialize learning rate scheduler
         """
-        num_update_steps_per_epoch = int(np.ceil(
-            len(self._training_dataset) / self.config.batch_size
-        ))
-        num_warmup_steps = int(np.ceil(
-            num_update_steps_per_epoch * self.config.warmup_ratio * self._status.n_epochs
-        ))
-        num_training_steps = int(np.ceil(num_update_steps_per_epoch * self._status.n_epochs))
+        n_training_steps = int(np.ceil(self.n_update_steps_per_epoch * self._status.n_epochs))
+        n_warmup_steps = int(np.ceil(n_training_steps * self.config.warmup_ratio))
 
         self._scheduler = get_scheduler(
             self._status.lr_scheduler_type,
             self._optimizer,
-            num_warmup_steps=num_warmup_steps,
-            num_training_steps=num_training_steps,
+            num_warmup_steps=n_warmup_steps,
+            num_training_steps=n_training_steps,
         )
         return self
 
     def initialize_loss(self, disable_focal_loss=False):
 
-        # Notice that the reduction should always be 'none' here to facilitate
-        # the following masking operation
+        # Notice that the reduction should always be 'none' here for the following masking operation
         if self.config.task_type == 'classification':
-            # for compatibility with focal loss
-            if self.config.uncertainty_method == UncertaintyMethods.focal and not disable_focal_loss:
+            # evidential classification
+            if self.config.uncertainty_method == UncertaintyMethods.evidential:
+                self._loss_fn = EvidentialClassificationLoss(
+                    n_classes=2 if self.config.classes == 1 else self.config.classes,
+                    n_steps_per_epoch=self.n_update_steps_per_epoch,
+                    annealing_epochs=self.config.evidential_clx_loss_annealing_epochs,
+                    device=self._device
+                )
+            # focal loss
+            elif self.config.uncertainty_method == UncertaintyMethods.focal and not disable_focal_loss:
                 self._loss_fn = SigmoidFocalLoss(reduction='none')
             else:
                 self._loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         else:
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
-                self._loss_fn = EvidentialRegressionLoss(coeff=self.config.evidential_loss_weight, reduction='none')
+                self._loss_fn = EvidentialRegressionLoss(coeff=self.config.evidential_reg_loss_weight, reduction='none')
             elif self.config.regression_with_variance:
                 self._loss_fn = GaussianNLLLoss(reduction='none')
             else:
