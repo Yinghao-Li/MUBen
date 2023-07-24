@@ -126,10 +126,21 @@ class Trainer(BaseTrainer, ABC):
         atom_logits, bond_logits = logits
 
         if self.config.task_type == 'classification':
+            if self.config.uncertainty_method == UncertaintyMethods.evidential:
+                atom_logits = atom_logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
+                bond_logits = bond_logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
 
-            atom_preds = expit(atom_logits)  # sigmoid function
-            bond_preds = expit(bond_logits)  # sigmoid function
-            return (atom_preds + bond_preds) / 2
+                atom_alpha = atom_logits * (atom_logits > 0) + 1
+                bond_alpha = bond_logits * (bond_logits > 0) + 1
+                atom_probs = atom_alpha / np.sum(atom_alpha, axis=1, keepdims=True)
+                bond_probs = bond_alpha / np.sum(bond_alpha, axis=1, keepdims=True)
+
+                return (atom_probs + bond_probs) / 2
+
+            else:
+                atom_preds = expit(atom_logits)  # sigmoid function
+                bond_preds = expit(bond_logits)  # sigmoid function
+                return (atom_preds + bond_preds) / 2
 
         elif self.config.task_type == 'regression':
             logits = (atom_logits + bond_logits) / 2

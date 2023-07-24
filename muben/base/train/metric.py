@@ -9,13 +9,13 @@ from sklearn.metrics import (
 )
 from typing import Union, List
 
-__all__ = ["calculate_classification_metrics", "calculate_regression_metrics"]
+__all__ = ["calculate_binary_classification_metrics", "calculate_regression_metrics"]
 
 
-def calculate_classification_metrics(lbs: np.ndarray,
-                                     probs: np.ndarray,
-                                     masks: np.ndarray,
-                                     metrics: Union[str, List[str]]) -> dict:
+def calculate_binary_classification_metrics(lbs: np.ndarray,
+                                            probs: np.ndarray,
+                                            masks: np.ndarray,
+                                            metrics: Union[str, List[str]]) -> dict:
     """
     Calculate the classification metrics
 

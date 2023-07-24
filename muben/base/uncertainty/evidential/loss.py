@@ -63,8 +63,8 @@ class EvidentialClassificationLoss:
         self._i_epoch = 0
         self._i_step = 0
 
-    def kl_divergence(self, alpha, num_classes):
-        ones = torch.ones([1, num_classes], device=self._device)
+    def kl_divergence(self, alpha):
+        ones = torch.ones([1, self._n_classes], device=self._device)
         sum_alpha = torch.sum(alpha, dim=1, keepdim=True)
         first_term = (
                 torch.lgamma(sum_alpha)
@@ -80,27 +80,25 @@ class EvidentialClassificationLoss:
         kl = first_term + second_term
         return kl
 
-    def loglikelihood_loss(self, y, alpha):
-        y = y.to(self._device)
-        alpha = alpha.to(self._device)
+    @staticmethod
+    def loglikelihood_loss(y, alpha):
         s = torch.sum(alpha, dim=1, keepdim=True)
+
         loglikelihood_err = torch.sum((y - (alpha / s)) ** 2, dim=1, keepdim=True)
-        loglikelihood_var = torch.sum(
-            alpha * (s - alpha) / (s * s * (s + 1)), dim=1, keepdim=True
-        )
+        loglikelihood_var = torch.sum(alpha * (s - alpha) / (s * s * (s + 1)), dim=1, keepdim=True)
+
         loglikelihood = loglikelihood_err + loglikelihood_var
+
         return loglikelihood
 
     def mse_loss(self, y, alpha):
         loglikelihood = self.loglikelihood_loss(y, alpha)
 
-        annealing_coef = torch.min(
-            torch.tensor(1.0, dtype=torch.float32),
-            torch.tensor(self._i_epoch / self._annealing_epochs, dtype=torch.float32),
-        )
-
         kl_alpha = (alpha - 1) * (1 - y) + 1
-        kl_div = annealing_coef * self.kl_divergence(kl_alpha, self._n_classes)
+
+        annealing_coef = min(1.0, self._i_epoch / self._annealing_epochs)
+        kl_div = annealing_coef * self.kl_divergence(kl_alpha)
+
         return loglikelihood + kl_div
 
     def update_idx(self):
@@ -111,6 +109,7 @@ class EvidentialClassificationLoss:
     def __call__(self, inputs, targets):
         evidence = F.relu(inputs)
         alpha = evidence + 1
+        targets = targets.unsqueeze(-1)
         loss = self.mse_loss(targets, alpha)
         self.update_idx()
         return loss

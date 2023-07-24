@@ -22,7 +22,7 @@ from transformers import get_scheduler, set_seed
 from .scaler import StandardScaler
 from .loss import GaussianNLLLoss
 from .metric import (
-    calculate_classification_metrics,
+    calculate_binary_classification_metrics,
     calculate_regression_metrics
 )
 from .state import TrainerState
@@ -193,7 +193,7 @@ class Trainer:
             # evidential classification
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
                 self._loss_fn = EvidentialClassificationLoss(
-                    n_classes=2 if self.config.classes == 1 else self.config.classes,
+                    n_classes=2 if self.config.n_lbs == 1 else self.config.n_lbs,
                     n_steps_per_epoch=self.n_update_steps_per_epoch,
                     annealing_epochs=self.config.evidential_clx_loss_annealing_epochs,
                     device=self._device
@@ -673,7 +673,7 @@ class Trainer:
         masked_lbs = lbs[bool_masks]
 
         if self.config.task_type == 'classification':
-            masked_logits = logits[bool_masks]
+            masked_logits = logits.view(-1, self.config.n_tasks, self.config.n_lbs)[bool_masks]
 
         elif self.config.task_type == 'regression':
 
@@ -683,7 +683,7 @@ class Trainer:
             else:
                 assert self.config.regression_with_variance, NotImplementedError
                 # mean and var for the last dimension
-                masked_logits = logits.view(-1, self.config.n_tasks, 2)[bool_masks]
+                masked_logits = logits.view(-1, self.config.n_tasks, self.config.n_lbs)[bool_masks]
 
         else:
             raise ValueError
@@ -691,7 +691,7 @@ class Trainer:
         loss = self._loss_fn(masked_logits, masked_lbs)
         loss = torch.sum(loss) / masks.sum()
 
-        # for compatability with bbp
+        # for bbp
         if self.config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
             loss += self.model.output_layer.kld / n_steps_per_epoch / len(batch)
         return loss
@@ -739,7 +739,16 @@ class Trainer:
         """
 
         if self.config.task_type == 'classification':
-            return expit(logits)  # sigmoid function
+            if self.config.uncertainty_method == UncertaintyMethods.evidential:
+                logits = logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
+
+                evidence = logits * (logits > 0)  # relu
+                alpha = evidence + 1
+                probs = alpha / np.sum(alpha, axis=1, keepdims=True)
+
+                return probs
+            else:
+                return expit(logits)  # sigmoid function
 
         elif self.config.task_type == 'regression':
             # reshape the logits if the task and output-lbs (with shape config.n_lbs) dimensions are tangled
@@ -762,6 +771,7 @@ class Trainer:
 
             else:
                 return logits
+
         else:
             raise ValueError(f"Unrecognized task type: {self.config.task_type}")
 
@@ -901,11 +911,13 @@ class Trainer:
 
         if self.config.task_type == 'classification' and self.config.n_tasks > 1:
             preds = preds.reshape(-1, self.config.n_tasks, self.config.n_lbs)
+            if self.config.n_lbs == 2:
+                preds = preds[..., -1:]
         if preds.shape[-1] == 1 and len(preds.shape) > 1:  # remove tailing axis
             preds = preds.squeeze(-1)
 
         if self.config.task_type == 'classification':
-            metrics = calculate_classification_metrics(lbs, preds, bool_masks, self._valid_metric)
+            metrics = calculate_binary_classification_metrics(lbs, preds, bool_masks, self._valid_metric)
         else:
             metrics = calculate_regression_metrics(lbs, preds, bool_masks, self._valid_metric)
 

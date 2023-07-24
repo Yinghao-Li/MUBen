@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Created: June 17th, 2023
+# Modified: July 24th, 2023
+# ---------------------------------------
+# Description: Base classes for dataset creation and batch processing.
+"""
+
 import os
 import regex
 import torch

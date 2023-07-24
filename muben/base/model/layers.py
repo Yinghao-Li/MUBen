@@ -32,6 +32,7 @@ class OutputLayer(nn.Module):
         super().__init__()
 
         self._uncertainty_method = uncertainty_method
+        self._task_type = task_type
         if uncertainty_method == UncertaintyMethods.bbp:
             self.output_layer = BBPOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
         elif uncertainty_method == UncertaintyMethods.evidential and task_type == 'regression':
@@ -46,7 +47,7 @@ class OutputLayer(nn.Module):
         if self._uncertainty_method == UncertaintyMethods.bbp:
             self.output_layer.initialize()
             self.kld = None
-        elif self._uncertainty_method == UncertaintyMethods.evidential:
+        elif self._uncertainty_method == UncertaintyMethods.evidential and self._task_type == 'regression':
             self.output_layer.initialize()
         else:
             nn.init.xavier_uniform_(self.output_layer.weight)
