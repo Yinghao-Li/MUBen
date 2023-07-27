@@ -744,7 +744,7 @@ class Trainer:
 
                 evidence = logits * (logits > 0)  # relu
                 alpha = evidence + 1
-                probs = alpha / np.sum(alpha, axis=1, keepdims=True)
+                probs = alpha / np.sum(alpha, axis=-1, keepdims=True)
 
                 return probs
             else:
