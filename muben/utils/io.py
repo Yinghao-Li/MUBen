@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Created: July 17th, 2023
+# Modified: July 31st, 2023
+# ---------------------------------------
+# Description: Supportive IO functions
+"""
+
 import os
 import os.path as op
 import regex
@@ -246,7 +254,7 @@ def load_results(result_paths):
 
     # aggregate mean and variance
     preds = np.stack(preds_list).mean(axis=0)
-    if variances_list:  # regression
+    if variances_list and not (np.asarray(variances_list) == None).any():  # regression
         # variances = np.mean(np.stack(preds_list) ** 2 + np.stack(variances_list), axis=0) - preds ** 2
         variances = np.stack(variances_list).mean(axis=0)
     else:
