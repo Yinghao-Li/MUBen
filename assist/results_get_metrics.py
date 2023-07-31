@@ -171,7 +171,7 @@ def main(args: Arguments):
                 if not test_result_paths:
                     logger.warning(f"Directory {result_dir} does not contain any model prediction! "
                                    f"Will skip metric logging for {uncertainty_method}")
-                    break
+                    continue
 
                 preds, variances, lbs, masks = load_results(test_result_paths)
 
