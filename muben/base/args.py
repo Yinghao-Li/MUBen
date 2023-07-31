@@ -1,7 +1,7 @@
 """
 # Author: Yinghao Li
 # Created: July 23rd, 2023
-# Modified: July 24th, 2023
+# Modified: July 31st, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -383,7 +383,8 @@ class Config(Arguments):
                     and self.task_type == 'classification'), \
             f"{self.uncertainty_method} is not compatible with classification tasks!"
 
-        if self.uncertainty_method in [UncertaintyMethods.focal, UncertaintyMethods.bbp, UncertaintyMethods.sgld]:
+        if self.uncertainty_method in [UncertaintyMethods.focal, UncertaintyMethods.bbp,
+                                       UncertaintyMethods.sgld, UncertaintyMethods.evidential]:
             self.ignore_no_uncertainty_output = True
 
         if self.k_swa_checkpoints > self.n_swa_epochs:

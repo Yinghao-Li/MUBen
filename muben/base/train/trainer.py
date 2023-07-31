@@ -1,7 +1,9 @@
 """
-Yinghao Li @ Georgia Tech
-
-Base trainer function.
+# Author: Yinghao Li
+# Created: July 31st, 2023
+# Modified: July 31st, 2023
+# ---------------------------------------
+# Description: Base trainer functions.
 """
 
 import copy
@@ -674,6 +676,9 @@ class Trainer:
 
         if self.config.task_type == 'classification':
             masked_logits = logits.view(-1, self.config.n_tasks, self.config.n_lbs)[bool_masks]
+
+            if self.config.n_lbs == 1:  # binary classification
+                masked_logits = masked_logits.squeeze(-1)
 
         elif self.config.task_type == 'regression':
 
