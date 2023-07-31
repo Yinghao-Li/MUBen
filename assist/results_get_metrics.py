@@ -1,7 +1,7 @@
 """
 # Author: Yinghao Li
 # Created: July 6th, 2023
-# Modified: July 14th, 2023
+# Modified: July 31st, 2023
 # ---------------------------------------
 # Description: Calculate metrics of UQ methods from the saved results.
 """
@@ -34,6 +34,8 @@ from scipy.stats import norm as gaussian
 from muben.utils.io import set_logging, init_dir, load_results
 from muben.utils.macro import (
     DATASET_NAMES,
+    CLASSIFICATION_DATASET,
+    REGRESSION_DATASET,
     MODEL_NAMES,
     UncertaintyMethods,
     FINGERPRINT_FEATURE_TYPES
@@ -71,6 +73,13 @@ class Arguments:
             "help": "Feature type that the DNN model uses."
         }
     )
+    uncertainty_methods: Optional[str] = field(
+        default=None,
+        metadata={
+            "nargs": "*",
+            "help": "A list of uncertainty methods of which you want to calculate the metrics."
+        }
+    )
     result_folder: Optional[str] = field(
         default=".", metadata={"help": "The folder which holds the results."}
     )
@@ -99,8 +108,17 @@ class Arguments:
 
         if self.dataset_names is None:
             self.dataset_names: list[str] = DATASET_NAMES
+        elif self.dataset_names == "classification":
+            self.dataset_names: list[str] = CLASSIFICATION_DATASET
+        elif self.dataset_names == "regression":
+            self.dataset_names: list[str] = REGRESSION_DATASET
         elif isinstance(self.dataset_names, str):
             self.dataset_names: list[str] = [self.dataset_names]
+
+        if self.uncertainty_methods is None:
+            self.uncertainty_methods: list[str] = UncertaintyMethods.options()
+        elif isinstance(self.uncertainty_methods, str):
+            self.uncertainty_methods: list[str] = [self.uncertainty_methods]
 
 
 def main(args: Arguments):
@@ -109,7 +127,7 @@ def main(args: Arguments):
         logger.info(f"Processing {dataset_name} dataset...")
 
         uncertainty_results = dict()
-        for uncertainty_method in UncertaintyMethods.options():
+        for uncertainty_method in args.uncertainty_methods:
 
             result_dir = op.join(args.result_folder, dataset_name, args.model_name, uncertainty_method)
 
@@ -153,7 +171,7 @@ def main(args: Arguments):
                 if not test_result_paths:
                     logger.warning(f"Directory {result_dir} does not contain any model prediction! "
                                    f"Will skip metric logging for {uncertainty_method}")
-                    break
+                    continue
 
                 preds, variances, lbs, masks = load_results(test_result_paths)
 
