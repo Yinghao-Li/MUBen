@@ -1,7 +1,7 @@
 """
 # Author: Yinghao Li
 # Created: July 6th, 2023
-# Modified: July 14th, 2023
+# Modified: July 31st, 2023
 # ---------------------------------------
 # Description: Calculate metrics of UQ methods from the saved results.
 """
@@ -71,6 +71,13 @@ class Arguments:
             "help": "Feature type that the DNN model uses."
         }
     )
+    uncertainty_methods: Optional[str] = field(
+        default=None,
+        metadata={
+            "nargs": "*",
+            "help": "A list of uncertainty methods of which you want to calculate the metrics."
+        }
+    )
     result_folder: Optional[str] = field(
         default=".", metadata={"help": "The folder which holds the results."}
     )
@@ -102,6 +109,11 @@ class Arguments:
         elif isinstance(self.dataset_names, str):
             self.dataset_names: list[str] = [self.dataset_names]
 
+        if self.uncertainty_methods is None:
+            self.uncertainty_methods: list[str] = UncertaintyMethods.options()
+        elif isinstance(self.uncertainty_methods, str):
+            self.uncertainty_methods: list[str] = [self.uncertainty_methods]
+
 
 def main(args: Arguments):
 
@@ -109,7 +121,7 @@ def main(args: Arguments):
         logger.info(f"Processing {dataset_name} dataset...")
 
         uncertainty_results = dict()
-        for uncertainty_method in UncertaintyMethods.options():
+        for uncertainty_method in args.uncertainty_methods:
 
             result_dir = op.join(args.result_folder, dataset_name, args.model_name, uncertainty_method)
 
