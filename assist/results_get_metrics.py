@@ -34,6 +34,8 @@ from scipy.stats import norm as gaussian
 from muben.utils.io import set_logging, init_dir, load_results
 from muben.utils.macro import (
     DATASET_NAMES,
+    CLASSIFICATION_DATASET,
+    REGRESSION_DATASET,
     MODEL_NAMES,
     UncertaintyMethods,
     FINGERPRINT_FEATURE_TYPES
@@ -106,6 +108,10 @@ class Arguments:
 
         if self.dataset_names is None:
             self.dataset_names: list[str] = DATASET_NAMES
+        elif self.dataset_names == "classification":
+            self.dataset_names: list[str] = CLASSIFICATION_DATASET
+        elif self.dataset_names == "regression":
+            self.dataset_names: list[str] = REGRESSION_DATASET
         elif isinstance(self.dataset_names, str):
             self.dataset_names: list[str] = [self.dataset_names]
 
