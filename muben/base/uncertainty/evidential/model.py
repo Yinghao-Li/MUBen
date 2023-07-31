@@ -30,8 +30,8 @@ class NIGOutputLayer(Module):
         x = x.view(batch_size, -1, 4)
         gamma, nu, alpha, beta = torch.split(x, 1, dim=-1)
 
-        nu = F.softplus(nu)
-        alpha = F.softplus(alpha) + 1.
-        beta = F.softplus(beta)
+        nu = F.softplus(nu) + 1e-6
+        alpha = F.softplus(alpha) + 1. + 1e-6
+        beta = F.softplus(beta) + 1e-6
 
         return torch.cat((gamma, nu, alpha, beta), dim=-1)
