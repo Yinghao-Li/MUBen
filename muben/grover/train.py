@@ -1,3 +1,12 @@
+"""
+# Author: Yinghao Li
+# Created: July 31st, 2023
+# Modified: August 2nd, 2023
+# ---------------------------------------
+# Description: Trainer for GROVER backbone
+"""
+
+
 from abc import ABC
 
 import torch
@@ -145,8 +154,8 @@ class Trainer(BaseTrainer, ABC):
         elif self.config.task_type == 'regression':
             logits = (atom_logits + bond_logits) / 2
 
-            if self.config.n_tasks > 1:
-                logits = logits.reshape(-1, self.config.n_tasks, 2)
+            if self.config.n_tasks > 1 and len(logits.shape) == 2:
+                logits = logits.reshape(-1, self.config.n_tasks, self.config.n_lbs)
 
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
 
