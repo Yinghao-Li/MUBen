@@ -1,3 +1,10 @@
+"""
+# Author: Yinghao Li
+# Modified: August 4th, 2023
+# ---------------------------------------
+# Description: Arguments and configuration for Uni-Mol
+"""
+
 import os
 import logging
 from typing import Optional
@@ -25,6 +32,7 @@ class Arguments(BaseArguments):
             "choices": MODEL_NAMES
         }
     )
+    # --- Dataset arguments ---
     unimol_feature_folder: Optional[str] = field(
         default='.', metadata={'help': "The folder containing files with pre-defined uni-mol atoms and coordinates"}
     )

@@ -1,7 +1,6 @@
 """
 # Author: Yinghao Li
-# Created: June 17th, 2023
-# Modified: July 24th, 2023
+# Modified: August 4th, 2023
 # ---------------------------------------
 # Description: Base classes for dataset creation and batch processing.
 """
@@ -119,9 +118,11 @@ class Dataset(TorchDataset):
     def save(self, file_path: str):
         """
         Save the entire dataset for future usage
+
         Parameters
         ----------
         file_path: path to the saved file
+
         Returns
         -------
         self
@@ -139,9 +140,11 @@ class Dataset(TorchDataset):
     def load(self, file_path: str):
         """
         Load the entire dataset from disk
+
         Parameters
         ----------
         file_path: path to the saved file
+
         Returns
         -------
         self

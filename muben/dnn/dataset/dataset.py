@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 4th, 2023
+# ---------------------------------------
+# Description: 
+"""
+
+
 import logging
 import numpy as np
 
@@ -8,7 +16,7 @@ from muben.base.dataset import (
     pack_instances,
     Dataset as BaseDataset
 )
-from .features import (
+from muben.utils.chem import (
     rdkit_2d_features_normalized_generator,
     morgan_binary_features_generator
 )

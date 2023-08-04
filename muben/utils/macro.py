@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 4th, 2023
+# ---------------------------------------
+# Description: Constants
+"""
+
+
 import logging
 from enum import Enum
 
@@ -96,7 +104,8 @@ MODEL_NAMES = [
     "DNN",
     "ChemBERTa",
     "GROVER",
-    "Uni-Mol"
+    "Uni-Mol",
+    "TorchMD-NET"
 ]
 
 CLASSIFICATION_METRICS = ['roc-auc', 'ece', 'nll', 'brier']

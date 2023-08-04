@@ -1,13 +1,22 @@
+"""
+# Author: Yinghao Li
+# Modified: August 4th, 2023
+# ---------------------------------------
+# Description: Dataset class for Uni-Mol
+"""
+
+
 import os
 import lmdb
 import pickle
 import logging
+from functools import partial
 from multiprocessing import get_context
 from tqdm.auto import tqdm
 
-from .utils import smiles_to_coords
 from .process import ProcessingPipeline
 from .dictionary import Dictionary
+from muben.utils.chem import smiles_to_coords
 from muben.base.dataset import Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
@@ -102,8 +111,9 @@ class Dataset(BaseDataset):
         else:
             # TODO: there might be some issue with this generation method
             logger.info("Generating Uni-Mol features.")
+            s2c = partial(smiles_to_coords, n_conformer=10)
             with get_context('fork').Pool(config.num_preprocess_workers) as pool:
-                for outputs in tqdm(pool.imap(smiles_to_coords, self._smiles), total=len(self._smiles)):
+                for outputs in tqdm(pool.imap(s2c, self._smiles), total=len(self._smiles)):
                     atoms, coordinates = outputs
                     self._atoms.append(atoms)
                     self._cooridnates.append(coordinates)

@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 4th, 2023
+# ---------------------------------------
+# Description: IO functions
+"""
+
+
 import os
 import os.path as op
 import regex
@@ -187,7 +195,7 @@ def convert_arguments_from_argparse(args):
     args_string = ''
     for k, v in args.__dict__.items():
         default_value = f"'{v}'" if isinstance(v, str) else v
-        arg_str = f"{k}: Optional[{type(v)}] = field(\n"
+        arg_str = f"{k}: Optional[{type(v).__name__}] = field(\n"
         arg_str += f"    default={default_value}, metadata={{'help': ''}}\n"
         arg_str += f")\n\n"
         args_string += arg_str

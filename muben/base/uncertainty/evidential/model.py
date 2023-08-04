@@ -1,7 +1,6 @@
 """
 # Author: Yinghao Li
-# Created: July 19th, 2023
-# Modified: July 19th, 2023
+# Modified: August 4th, 2023
 # ---------------------------------------
 # Description: Implementation of evidential model layers.
                Modified from https://github.com/aamini/evidential-deep-learning
