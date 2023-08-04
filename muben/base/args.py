@@ -1,7 +1,6 @@
 """
 # Author: Yinghao Li
-# Created: July 23rd, 2023
-# Modified: July 31st, 2023
+# Modified: August 4th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -297,6 +296,12 @@ class Config(Arguments):
                 return 1
         else:
             ValueError(f"Unrecognized task type: {self.task_type}")
+
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            return getattr(self, item)
+        else:
+            raise ValueError("`Config` can only be subscribed by str!")
 
     def get_meta(self,
                  meta_dir: Optional[str] = None,

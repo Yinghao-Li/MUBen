@@ -6,6 +6,7 @@
 """
 
 
+import os.path as op
 import logging
 from typing import Optional
 from dataclasses import dataclass, field
@@ -216,6 +217,10 @@ class Arguments(BaseArguments):
     max_num_neighbors: Optional[int] = field(
         default=32, metadata={'help': ''}
     )
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.unimol_feature_dir = op.join(self.unimol_feature_folder, self.dataset_name)
 
 
 @dataclass

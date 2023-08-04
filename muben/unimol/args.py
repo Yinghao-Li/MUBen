@@ -5,7 +5,7 @@
 # Description: Arguments and configuration for Uni-Mol
 """
 
-import os
+import os.path as op
 import logging
 from typing import Optional
 from dataclasses import field, dataclass
@@ -78,7 +78,7 @@ class Arguments(BaseArguments):
 
     def __post_init__(self):
         super().__post_init__()
-        self.unimol_feature_dir = os.path.join(self.unimol_feature_folder, self.dataset_name)
+        self.unimol_feature_dir = op.join(self.unimol_feature_folder, self.dataset_name)
 
         self.pooler_dropout = self.dropout
 

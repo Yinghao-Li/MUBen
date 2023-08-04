@@ -1,8 +1,10 @@
 """
-Yinghao Li @ Georgia Tech
-
-Base trainer function.
+# Author: Yinghao Li
+# Modified: August 4th, 2023
+# ---------------------------------------
+# Description: Trainer for DNN.
 """
+
 
 import logging
 
@@ -11,7 +13,6 @@ from .model import DNN
 from .args import Config
 
 from muben.base.train import Trainer as BaseTrainer
-from muben.utils.macro import UncertaintyMethods
 
 logger = logging.getLogger(__name__)
 

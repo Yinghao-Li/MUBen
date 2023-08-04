@@ -154,5 +154,5 @@ def smiles_to_atom_ids(smiles: str) -> list[int]:
     """
 
     mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
-    atom_ids = [atom.GetAtomicNum() for atom in mol.GetAtoms]
+    atom_ids = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
     return atom_ids

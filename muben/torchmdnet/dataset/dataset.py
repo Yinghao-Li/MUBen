@@ -31,6 +31,11 @@ class Dataset(BaseDataset):
         self._atoms = None
         self._cooridnates = None
 
+    def prepare(self, config, partition, **kwargs):
+        self._partition = partition
+        super().prepare(config, partition, **kwargs)
+        return self
+
     def create_features(self, config):
         """
         Create data features
@@ -45,7 +50,6 @@ class Dataset(BaseDataset):
 
         # load feature if UniMol LMDB file exists else generate feature
         unimol_feature_path = os.path.join(config.unimol_feature_dir, f"{self._partition}.lmdb")
-        print(unimol_feature_path)
         if os.path.exists(unimol_feature_path):
             logger.info("Loading features form pre-processed Uni-Mol LMDB")
             env = lmdb.open(unimol_feature_path,

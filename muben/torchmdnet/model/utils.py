@@ -6,37 +6,6 @@ from torch_geometric.nn import MessagePassing
 from torch_cluster import radius_graph
 
 
-def visualize_basis(basis_type, num_rbf=50, cutoff_lower=0, cutoff_upper=5):
-    """
-    Function for quickly visualizing a specific basis. This is useful for inspecting
-    the distance coverage of basis functions for non-default lower and upper cutoffs.
-
-    Args:
-        basis_type (str): Specifies the type of basis functions used. Can be one of
-            ['gauss',expnorm']
-        num_rbf (int, optional): The number of basis functions.
-            (default: :obj:`50`)
-        cutoff_lower (float, optional): The lower cutoff of the basis.
-            (default: :obj:`0`)
-        cutoff_upper (float, optional): The upper cutoff of the basis.
-            (default: :obj:`5`)
-    """
-    import matplotlib.pyplot as plt
-
-    distances = torch.linspace(cutoff_lower - 1, cutoff_upper + 1, 1000)
-    basis_kwargs = {
-        "num_rbf": num_rbf,
-        "cutoff_lower": cutoff_lower,
-        "cutoff_upper": cutoff_upper,
-    }
-    basis_expansion = rbf_class_mapping[basis_type](**basis_kwargs)
-    expanded_distances = basis_expansion(distances)
-
-    for i in range(expanded_distances.shape[-1]):
-        plt.plot(distances.numpy(), expanded_distances[:, i].detach().numpy())
-    plt.show()
-
-
 class NeighborEmbedding(MessagePassing):
     def __init__(self, hidden_channels, num_rbf, cutoff_lower, cutoff_upper, max_z=100):
         super(NeighborEmbedding, self).__init__(aggr="add")

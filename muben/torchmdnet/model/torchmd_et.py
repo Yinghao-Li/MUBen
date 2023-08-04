@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch_geometric.nn import MessagePassing
 from torch_scatter import scatter
-from torchmdnet.models.utils import (
+from .utils import (
     NeighborEmbedding,
     CosineCutoff,
     Distance,

@@ -1,1 +1,3 @@
-__all__ = ["graph-network", "transformer", "equivariant-transformer"]
+from .model import load_model
+
+__all__ = ['load_model']
