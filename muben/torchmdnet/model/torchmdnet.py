@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from torch import nn
 from torch_scatter import scatter
 
-from . import output_modules
+from . import layers
 
 
 def create_model(args):
@@ -26,10 +26,10 @@ def create_model(args):
 
     # representation network
     if args["model"] == "equivariant-transformer":
-        from .torchmd_et import TorchMD_ET
+        from .et import TorchMDET
 
         is_equivariant = True
-        representation_model = TorchMD_ET(
+        representation_model = TorchMDET(
             attn_activation=args["attn_activation"],
             num_heads=args["num_heads"],
             distance_influence=args["distance_influence"],

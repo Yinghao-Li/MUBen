@@ -13,7 +13,7 @@ from .utils import (
 from torch.nn.parameter import Parameter
 
 
-class TorchMD_ET(nn.Module):
+class TorchMDET(nn.Module):
     r"""The TorchMD equivariant Transformer architecture.
 
     Args:
@@ -70,7 +70,7 @@ class TorchMD_ET(nn.Module):
         max_num_neighbors=32,
         layernorm_on_vec=None,
     ):
-        super(TorchMD_ET, self).__init__()
+        super(TorchMDET, self).__init__()
 
         assert distance_influence in ["keys", "values", "both", "none"]
         assert rbf_type in rbf_class_mapping, (

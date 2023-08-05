@@ -1,11 +1,3 @@
-/*
- * Author: Yinghao Li
- * Created: July 5th, 2023
- * Modified: August 3rd, 2023
- * ---------------------------------------
- * Description: 
- */
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -141,10 +133,10 @@ dmypy.json
 .vscode/
 unused/
 data/
-models/
 wandb/
 test/
 __MACOSX/
+test.ipynb
 *.csv
 *.bin
 *.ckpt

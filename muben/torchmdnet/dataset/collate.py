@@ -1,8 +1,8 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: August 5th, 2023
 # ---------------------------------------
-# Description: 
+# Description: Collate function for TorchMD-NET dataset
 """
 
 
@@ -32,8 +32,8 @@ class Collator:
         """
         atoms, coords, lbs, masks = unpack_instances(instances)
 
-        batch_ids = torch.tensor(
-            itertools.chain.from_iterable([[i]*len(a) for i, a in enumerate(atoms)]),
+        mol_ids = torch.tensor(
+            list(itertools.chain.from_iterable([[i]*len(a) for i, a in enumerate(atoms)])),
             dtype=torch.long
         )
         atoms_batch = torch.tensor(list(itertools.chain.from_iterable(atoms)), dtype=torch.long)
@@ -44,6 +44,6 @@ class Collator:
 
         return Batch(atoms=atoms_batch,
                      coords=coords_batch,
-                     batch_ids=batch_ids,
+                     mol_ids=mol_ids,
                      lbs=lbs_batch,
                      masks=masks_batch)
