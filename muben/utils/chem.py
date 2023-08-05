@@ -17,7 +17,10 @@ warnings.filterwarnings(action='ignore')
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["smiles_to_coords", "rdkit_2d_features_normalized_generator", "morgan_binary_features_generator"]
+__all__ = ["smiles_to_coords",
+           "smiles_to_atom_ids",
+           "rdkit_2d_features_normalized_generator",
+           "morgan_binary_features_generator"]
 
 
 def smiles_to_2d_coords(smiles):
