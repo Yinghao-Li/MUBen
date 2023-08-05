@@ -1,158 +1,124 @@
+"""
+# Author: Yinghao Li
+# Modified: August 5th, 2023
+# ---------------------------------------
+# Description: Implementation of (adjusted) TorchMD-NET.
+               Modified from https://github.com/shehzaidi/pre-training-via-denoising.
+"""
+
+
 import re
 import torch
-import warnings
+import logging
 
-from typing import Optional, Tuple
 from torch import nn
 from torch_scatter import scatter
 
-from . import layers
+from .et import TorchMDET
+from .layers import EquivariantScalar, EquivariantVectorOutput
+from .modules import act_class_mapping
+
+from muben.base.model import OutputLayer
+
+logger = logging.getLogger(__name__)
 
 
-def create_model(args):
-    shared_args = dict(
-        hidden_channels=args["embedding_dimension"],
-        num_layers=args["num_layers"],
-        num_rbf=args["num_rbf"],
-        rbf_type=args["rbf_type"],
-        trainable_rbf=args["trainable_rbf"],
-        activation=args["activation"],
-        neighbor_embedding=args["neighbor_embedding"],
-        cutoff_lower=args["cutoff_lower"],
-        cutoff_upper=args["cutoff_upper"],
-        max_z=args["max_z"],
-        max_num_neighbors=args["max_num_neighbors"],
-    )
+class TorchMDNET(nn.Module):
+    def __init__(self, config):
+        super().__init__()
 
-    # representation network
-    if args["model"] == "equivariant-transformer":
-        from .et import TorchMDET
-
-        is_equivariant = True
-        representation_model = TorchMDET(
-            attn_activation=args["attn_activation"],
-            num_heads=args["num_heads"],
-            distance_influence=args["distance_influence"],
-            layernorm_on_vec=args["layernorm_on_vec"],
-            **shared_args,
+        self.representation_model = TorchMDET(
+            attn_activation=config["attn_activation"],
+            num_heads=config["num_heads"],
+            distance_influence=config["distance_influence"],
+            layernorm_on_vec=config["layernorm_on_vec"],
+            hidden_channels=config["embedding_dimension"],
+            num_layers=config["num_layers"],
+            num_rbf=config["num_rbf"],
+            rbf_type=config["rbf_type"],
+            trainable_rbf=config["trainable_rbf"],
+            activation=config["activation"],
+            neighbor_embedding=config["neighbor_embedding"],
+            cutoff_lower=config["cutoff_lower"],
+            cutoff_upper=config["cutoff_upper"],
+            max_z=config["max_z"],
+            max_num_neighbors=config["max_num_neighbors"],
         )
-    else:
-        raise ValueError(f'Unknown architecture: {args["model"]}')
-
-    # create output network
-    output_prefix = "Equivariant" if is_equivariant else ""
-    output_model = getattr(output_modules, output_prefix + args["output_model"])(
-        args["embedding_dimension"], args["activation"]
-    )
-
-    # create the denoising output network
-    output_model_noise = None
-    if args['output_model_noise'] is not None:
-        output_model_noise = getattr(output_modules, output_prefix + args["output_model_noise"])(
-            args["embedding_dimension"], args["activation"],
+        self.output_model = EquivariantScalar(
+            config["embedding_dimension"],
+            config["activation"],
+            external_output_layer=True
+        )
+        self.output_model_noise = EquivariantVectorOutput(
+            config["embedding_dimension"],
+            config["activation"]
         )
 
-    # combine representation and output network
-    model = TorchMDNet(
-        representation_model,
-        output_model,
-        output_model_noise=output_model_noise,
-        position_noise_scale=args['position_noise_scale'],
-    )
-    return model
-
-
-def load_model(config, **kwargs):
-    ckpt = torch.load(config.checkpoint_path, map_location="cpu")
-
-    if config is None:
-        config = ckpt["hyper_parameters"]
-
-    for key, value in kwargs.items():
-        if key not in config:
-            warnings.warn(f'Unknown hyperparameter: {key}={value}')
-        config[key] = value
-
-    model = create_model(config)
-
-    state_dict = {re.sub(r"^model\.", "", k): v for k, v in ckpt["state_dict"].items()}
-    loading_return = model.load_state_dict(state_dict, strict=False)
-
-    if len(loading_return.unexpected_keys) > 0:
-        # Should only happen if not applying denoising during fine-tuning.
-        # we also removed mean and std from the model
-        assert all(("output_model_noise" in k or "pos_normalizer" in k or k in ['mean', 'std'])
-                   for k in loading_return.unexpected_keys)
-    assert len(loading_return.missing_keys) == 0, f"Missing keys: {loading_return.missing_keys}"
-
-    return model
-
-
-class TorchMDNet(nn.Module):
-    def __init__(
-            self,
-            representation_model,
-            output_model,
-            prior_model=None,
-            reduce_op="add",
-            derivative=False,
-            output_model_noise=None,
-            position_noise_scale=0.,
-    ):
-        super(TorchMDNet, self).__init__()
-        self.representation_model = representation_model
-        self.output_model = output_model
-
-        self.prior_model = prior_model
-
-        self.reduce_op = reduce_op
-        self.derivative = derivative
-        self.output_model_noise = output_model_noise
-        self.position_noise_scale = position_noise_scale
+        self.position_noise_scale = config.position_noise_scale
 
         if self.position_noise_scale > 0:
             self.pos_normalizer = AccumulatedNormalization(accumulator_shape=(3,))
+            self.noise_pred = None
+
+        self.dropout = nn.Dropout(config.dropout)
+        self.activation = act_class_mapping[config.activation]()
+        self.linear = nn.Linear(config.embedding_dimension // 2, config.embedding_dimension // 2)
+
+        self.output_layer = OutputLayer(
+            config.embedding_dimension // 2,
+            config.n_lbs * config.n_tasks,
+            config.uncertainty_method,
+            task_type=config.task_type,
+            bbp_prior_sigma=config.bbp_prior_sigma
+        )
 
         self.reset_parameters()
 
     def reset_parameters(self):
         self.representation_model.reset_parameters()
         self.output_model.reset_parameters()
-        if self.prior_model is not None:
-            self.prior_model.reset_parameters()
+        self.linear.reset_parameters()
+        self.output_layer.initialize()
+        return None
 
-    def forward(self, z, pos, batch: Optional[torch.Tensor] = None):
-        assert z.dim() == 1 and z.dtype == torch.long
-        batch = torch.zeros_like(z) if batch is None else batch
+    def load_from_checkpoint(self, ckpt):
 
-        # run the potentially wrapped representation model
-        x, v, z, pos, batch = self.representation_model(z, pos, batch=batch)
+        state_dict = {re.sub(r"^model\.", "", k): v for k, v in ckpt["state_dict"].items()}
+        loading_return = self.load_state_dict(state_dict, strict=False)
+
+        if len(loading_return.unexpected_keys) > 0:
+            logger.warning(f"Unexpected model layers: {loading_return.unexpected_keys}")
+        if len(loading_return.missing_keys) > 0:
+            logger.warning(f"Missing model layers: {loading_return.missing_keys}")
+        return self
+
+    def forward(self, batch):
+        atoms = batch.atoms
+        coords = batch.coords
+        mol_ids = batch.mol_ids
+        assert atoms.dim() == 1 and atoms.dtype == torch.long
+
+        # run the representation model
+        hidden, v, atoms, coords, batch = self.representation_model(atoms, coords, batch=mol_ids)
 
         # predict noise
-        noise_pred = None
-        if self.output_model_noise is not None:
-            noise_pred = self.output_model_noise.pre_reduce(x, v, z, pos, batch)
+        if self.position_noise_scale > 0:
+            self.noise_pred = self.output_model_noise.pre_reduce(hidden, v, atoms, coords, mol_ids)
 
         # apply the output network
-        x = self.output_model.pre_reduce(x, v, z, pos, batch)
-
-        # apply prior model
-        if self.prior_model is not None:
-            x = self.prior_model(x, z, pos, batch)
-
+        hidden = self.output_model.pre_reduce(hidden, v, atoms, coords, mol_ids)
         # aggregate atoms
-        out = scatter(x, batch, dim=0, reduce=self.reduce_op)
+        hidden = scatter(hidden, mol_ids, dim=0, reduce="add")
 
-        # apply output model after reduction
-        out = self.output_model.post_reduce(out)
+        out = self.output_layer(self.dropout(self.activation(self.linear(self.dropout(hidden)))))
 
-        return out, noise_pred, None
+        return out
 
 
 class AccumulatedNormalization(nn.Module):
     """Running normalization of a tensor."""
 
-    def __init__(self, accumulator_shape: Tuple[int, ...], epsilon: float = 1e-8):
+    def __init__(self, accumulator_shape: tuple[int, ...], epsilon: float = 1e-8):
         super(AccumulatedNormalization, self).__init__()
 
         self._epsilon = epsilon

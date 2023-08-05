@@ -1,15 +1,16 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: August 5th, 2023
 # ---------------------------------------
 # Description: Trainer function for TorchMD-Net.
 """
 
 
+import torch
 import logging
 
 from .dataset import Collator
-from .model import load_model
+from .model import TorchMDNET
 from .args import Config
 
 from muben.base.train import Trainer as BaseTrainer
@@ -40,4 +41,6 @@ class Trainer(BaseTrainer):
         return self._config
 
     def initialize_model(self, *args, **kwargs):
-        self._model = load_model(self.config)
+        ckpt = torch.load(self.config.checkpoint_path, map_location="cpu")
+
+        self._model = TorchMDNET(self.config).load_from_checkpoint(ckpt)

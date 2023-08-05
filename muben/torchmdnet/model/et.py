@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch_geometric.nn import MessagePassing
 from torch_scatter import scatter
-from .utils import (
+from .modules import (
     NeighborEmbedding,
     CosineCutoff,
     Distance,
@@ -167,7 +167,7 @@ class TorchMDET(nn.Module):
 
         edge_attr = self.distance_expansion(edge_weight)
         mask = edge_index[0] != edge_index[1]
-        edge_vec[mask] = edge_vec[mask] / torch.norm(edge_vec[mask], dim=1).unsqueeze(1)
+        edge_vec[mask] = edge_vec[mask] / (torch.norm(edge_vec[mask], dim=1).unsqueeze(1) + 1e-9)
 
         if self.neighbor_embedding is not None:
             x = self.neighbor_embedding(z, x, edge_index, edge_weight, edge_attr)

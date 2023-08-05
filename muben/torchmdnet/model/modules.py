@@ -208,7 +208,8 @@ class Distance(nn.Module):
 
 
 class GatedEquivariantBlock(nn.Module):
-    """Gated Equivariant Block as defined in Schütt et al. (2021):
+    """
+    Gated Equivariant Block as defined in Schütt et al. (2021):
     Equivariant message passing for the prediction of tensorial properties and molecular spectra
     """
 

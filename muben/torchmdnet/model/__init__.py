@@ -1,3 +1,3 @@
-from .torchmdnet import load_model
+from .torchmdnet import TorchMDNET
 
-__all__ = ['load_model']
+__all__ = ['TorchMDNET']
