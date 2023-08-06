@@ -1,8 +1,16 @@
-from typing import Optional, Tuple
+"""
+# Author: Yinghao Li
+# Modified: August 6th, 2023
+# ---------------------------------------
+# Description: Modified from https://github.com/shehzaidi/pre-training-via-denoising.
+"""
+
 import torch
 from torch import nn
+from torch.nn.parameter import Parameter
 from torch_geometric.nn import MessagePassing
 from torch_scatter import scatter
+from typing import Optional, Tuple
 from .modules import (
     NeighborEmbedding,
     CosineCutoff,
@@ -10,7 +18,6 @@ from .modules import (
     rbf_class_mapping,
     act_class_mapping,
 )
-from torch.nn.parameter import Parameter
 
 
 class TorchMDET(nn.Module):
@@ -287,6 +294,7 @@ class EquivariantMultiHeadAttention(MessagePassing):
             else None
         )
 
+        # The following comment is a part of the propagate functions and should not be modified.
         # propagate_type: (q: Tensor, k: Tensor, v: Tensor, vec: Tensor, dk: Tensor, dv: Tensor, r_ij: Tensor, d_ij: Tensor)
         x, vec = self.propagate(
             edge_index,
@@ -414,21 +422,21 @@ class EquivariantLayerNorm(nn.Module):
             -2, -1
         )
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        input = input.to(torch.float64) # Need double precision for accurate inversion.
-        input = self.mean_center(input)
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        inputs = inputs.to(torch.float64)  # Need double precision for accurate inversion.
+        inputs = self.mean_center(inputs)
         # We use different diagonal elements in case input matrix is approximately zero,
         # in which case all singular values are equal which is problematic for backprop.
         # See e.g. https://pytorch.org/docs/stable/generated/torch.svd.html
         reg_matrix = (
             torch.diag(torch.tensor([1.0, 2.0, 3.0]))
             .unsqueeze(0)
-            .to(input.device)
-            .type(input.dtype)
+            .to(inputs.device)
+            .type(inputs.dtype)
         )
-        covar = self.covariance(input) + self.eps * reg_matrix
+        covar = self.covariance(inputs) + self.eps * reg_matrix
         covar_sqrtinv = self.symsqrtinv(covar)
-        return (covar_sqrtinv @ input).to(
+        return (covar_sqrtinv @ inputs).to(
             self.weight.dtype
         ) * self.weight.reshape(1, 1, self.normalized_shape[0])
 

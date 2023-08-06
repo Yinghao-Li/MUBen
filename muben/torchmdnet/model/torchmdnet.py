@@ -54,12 +54,6 @@ class TorchMDNET(nn.Module):
             config["activation"]
         )
 
-        self.position_noise_scale = config.position_noise_scale
-
-        if self.position_noise_scale > 0:
-            self.pos_normalizer = AccumulatedNormalization(accumulator_shape=(3,))
-            self.noise_pred = None
-
         self.dropout = nn.Dropout(config.dropout)
         self.activation = act_class_mapping[config.activation]()
         self.linear = nn.Linear(config.embedding_dimension // 2, config.embedding_dimension // 2)
@@ -100,10 +94,6 @@ class TorchMDNET(nn.Module):
 
         # run the representation model
         hidden, v, atoms, coords, batch = self.representation_model(atoms, coords, batch=mol_ids)
-
-        # predict noise
-        if self.position_noise_scale > 0:
-            self.noise_pred = self.output_model_noise.pre_reduce(hidden, v, atoms, coords, mol_ids)
 
         # apply the output network
         hidden = self.output_model.pre_reduce(hidden, v, atoms, coords, mol_ids)
