@@ -14,7 +14,7 @@ from functools import partial
 from multiprocessing import get_context
 from tqdm.auto import tqdm
 
-from muben.utils.chem import smiles_to_coords, smiles_to_atom_ids
+from muben.utils.chem import smiles_to_coords, smiles_to_atom_ids, atom_to_atom_ids
 from muben.base.dataset import (
     pack_instances,
     Dataset as BaseDataset
@@ -50,6 +50,7 @@ class Dataset(BaseDataset):
 
         # load feature if UniMol LMDB file exists else generate feature
         unimol_feature_path = os.path.join(config.unimol_feature_dir, f"{self._partition}.lmdb")
+        unimol_atoms = list()
         if os.path.exists(unimol_feature_path):
             logger.info("Loading features form pre-processed Uni-Mol LMDB")
             env = lmdb.open(unimol_feature_path,
@@ -65,6 +66,7 @@ class Dataset(BaseDataset):
                 datapoint_pickled = txn.get(idx)
                 data = pickle.loads(datapoint_pickled)
                 self._cooridnates.append(data['coordinates'][0])
+                unimol_atoms.append(data['atoms'])
 
         else:
             logger.info("Generating 3D Coordinates.")
@@ -74,9 +76,11 @@ class Dataset(BaseDataset):
                     _, coordinates = outputs
                     self._cooridnates.append(coordinates[0])
 
-        for smiles, coords in zip(self._smiles, self._cooridnates):
+        for smiles, coords, atoms in zip(self._smiles, self._cooridnates, unimol_atoms):
             atom_ids = smiles_to_atom_ids(smiles)
-            assert len(atom_ids) == len(coords)
+            if len(atom_ids) != len(coords):
+                atom_ids = atom_to_atom_ids(atoms)
+                assert len(atom_ids) == len(coords)
             self._atoms.append(atom_ids)
 
         return self

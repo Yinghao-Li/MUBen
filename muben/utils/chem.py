@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["smiles_to_coords",
            "smiles_to_atom_ids",
+           "atom_to_atom_ids",
            "rdkit_2d_features_normalized_generator",
            "morgan_binary_features_generator"]
 
@@ -159,3 +160,19 @@ def smiles_to_atom_ids(smiles: str) -> list[int]:
     mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
     atom_ids = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
     return atom_ids
+
+
+def atom_to_atom_ids(atoms: list[str]) -> list[int]:
+    """
+    Convert a list of atoms strings to a list of atom ids
+
+    Parameters
+    ----------
+    atoms: a list of atoms strings
+
+    Returns
+    -------
+    atom ids
+    """
+    atoms_ids = [Chem.rdchem.Atom(atom).GetAtomicNum() for atom in atoms]
+    return atoms_ids
