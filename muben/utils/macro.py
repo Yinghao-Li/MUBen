@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: August 8th, 2023
 # ---------------------------------------
 # Description: Constants
 """
@@ -105,7 +105,8 @@ MODEL_NAMES = [
     "ChemBERTa",
     "GROVER",
     "Uni-Mol",
-    "TorchMD-NET"
+    "TorchMD-NET",
+    "GIN"
 ]
 
 CLASSIFICATION_METRICS = ['roc-auc', 'ece', 'nll', 'brier']

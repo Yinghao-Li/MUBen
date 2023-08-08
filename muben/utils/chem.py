@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 7th, 2023
+# Modified: August 8th, 2023
 # ---------------------------------------
 # Description: Molecular descriptors and features
 """
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["smiles_to_coords",
            "smiles_to_atom_ids",
+           "smiles_to_2d_graph",
            "atom_to_atom_ids",
            "rdkit_2d_features_normalized_generator",
            "morgan_binary_features_generator"]
@@ -192,3 +193,27 @@ def atom_to_atom_ids(atoms: list[str]) -> list[int]:
     """
     atoms_ids = [ATOMIC_NUMBER_MAP[atom] for atom in atoms]
     return atoms_ids
+
+
+def smiles_to_2d_graph(smiles):
+    """
+    Convert smiles to 2d graphs
+
+    Parameters
+    ----------
+    smiles: smiles strings
+
+    Returns
+    -------
+    atom ids and bonds
+    """
+    mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    atoms = smiles_to_atom_ids(smiles)
+    bonds = list()
+    for bond in mol.GetBonds():
+        start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+        bonds.append([start, end])
+        bonds.append([end, start])
+    bonds.sort(key=lambda x: x[0])
+
+    return atoms, bonds

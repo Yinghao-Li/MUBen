@@ -1,7 +1,8 @@
 """
-Yinghao Li @ Georgia Tech
-
-A simple deep neural network with customizable activation function.
+# Author: Yinghao Li
+# Modified: August 8th, 2023
+# ---------------------------------------
+# Description: A simple deep neural network with customizable activation function.
 """
 
 import torch

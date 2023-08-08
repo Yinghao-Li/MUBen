@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 8th, 2023
+# ---------------------------------------
+# Description: Arguments for DNN model
+"""
+
+
 import logging
 from typing import Optional
 from dataclasses import dataclass, field
@@ -28,7 +36,7 @@ class Arguments(BaseArguments):
 
     # -- Feature Arguments ---
     feature_type: Optional[str] = field(
-        default='none', metadata={
+        default='rdkit', metadata={
             "help": "Fingerprint generation function",
             "choices": FINGERPRINT_FEATURE_TYPES
         }
