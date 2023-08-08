@@ -179,9 +179,12 @@ class Dataset(TorchDataset):
 
 class Batch:
     def __init__(self, **kwargs):
+        self.size = 0
         super().__init__()
         self._tensor_members = dict()
         for k, v in kwargs.items():
+            if k == "batch_size":
+                self.size = v
             setattr(self, k, v)
             self.register_tensor_members(k, v)
 
@@ -195,7 +198,7 @@ class Batch:
         return self
 
     def __len__(self):
-        return len(tuple(self._tensor_members.values())[0])
+        return len(tuple(self._tensor_members.values())[0]) if not self.size else self.size
 
 
 def pack_instances(**kwargs) -> list[dict]:

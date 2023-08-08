@@ -47,7 +47,7 @@ class Trainer(BaseTrainer):
             max_atomic_num=self.config.max_atomic_num,
             n_layers=self.config.n_gin_layers,
             d_hidden=self.config.d_gin_hidden,
-            p_dropout=self.config.dropout,
+            dropout=self.config.dropout,
             uncertainty_method=self.config.uncertainty_method,
             task_type=self.config.task_type,
             bbp_prior_sigma=self.config.bbp_prior_sigma

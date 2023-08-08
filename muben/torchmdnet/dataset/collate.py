@@ -46,4 +46,5 @@ class Collator:
                      coords=coords_batch,
                      mol_ids=mol_ids,
                      lbs=lbs_batch,
-                     masks=masks_batch)
+                     masks=masks_batch,
+                     batch_size=len(lbs_batch))

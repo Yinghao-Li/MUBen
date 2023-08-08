@@ -42,7 +42,7 @@ class Arguments(BaseArguments):
 
     # --- reload training parameters ---
     lr_scheduler_type: Optional[str] = field(
-        default='constant', metadata={
+        default='linear', metadata={
             'help': "Learning rate scheduler with warm ups defined in `transformers`, Please refer to "
                     "https://huggingface.co/docs/transformers/main_classes/optimizer_schedules#schedules for details",
             'choices': ['linear', 'cosine', 'cosine_with_restarts', 'polynomial', 'constant', 'constant_with_warmup']
