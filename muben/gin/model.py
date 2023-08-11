@@ -27,9 +27,6 @@ class GIN(nn.Module):
         super().__init__()
         self.emb = nn.Embedding(max_atomic_num, d_hidden)
         self.gnn = pygnn.GIN(d_hidden, d_hidden, n_layers, dropout=dropout, jk='cat')
-        self.ffn = pygnn.MLP(
-            [d_hidden, d_hidden, d_hidden], norm="batch_norm", dropout=dropout
-        )
         self.output_layer = OutputLayer(d_hidden, n_lbs * n_tasks, uncertainty_method, **kwargs)
 
     def forward(self, batch, **kwargs):
@@ -40,14 +37,5 @@ class GIN(nn.Module):
         embs = self.emb(atoms_ids)
         x = self.gnn(embs, edge_indices)
         x = pygnn.global_add_pool(x, mol_ids)
-        # x = self.ffn(x)
         logits = self.output_layer(x)
         return logits
-
-    def training_step(self, data):
-        y_hat = self(data.x, data.edge_index, data.batch)
-        loss = F.cross_entropy(y_hat, data.y)
-        self.train_acc(y_hat.softmax(dim=-1), data.y)
-        self.log('train_acc', self.train_acc, prog_bar=True, on_step=False,
-                 on_epoch=True)
-        return loss

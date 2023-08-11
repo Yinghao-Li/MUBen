@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: August 10th, 2023
 # ---------------------------------------
 # Description: IO functions
 """
@@ -9,17 +9,21 @@
 import os
 import os.path as op
 import regex
+import pickle
 import json
 import shutil
+import lmdb
 import torch
 import logging
 import numpy as np
+from tqdm.auto import tqdm
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["set_log_path", "set_logging", "logging_args", "init_dir", "save_json",  "save_results", "load_results"]
+__all__ = ["set_log_path", "set_logging", "logging_args", "init_dir", "save_json",  "save_results", "load_results",
+           "load_lmdb"]
 
 
 def set_log_path(args, time):
@@ -261,3 +265,34 @@ def load_results(result_paths):
         variances = None
 
     return preds, variances, lbs, masks
+
+
+def load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = False):
+
+    result_dict = {k: list() for k in keys_to_load}
+    if not os.path.exists(data_path):
+        logger.error(f"Path {data_path} does not exist!")
+        return -1
+
+    env = lmdb.open(
+        data_path,
+        subdir=False,
+        readonly=True,
+        lock=False,
+        readahead=False,
+        meminit=False,
+        max_readers=256,
+    )
+    txn = env.begin()
+    keys = list(txn.cursor().iternext(values=False))
+
+    for idx in keys:
+        datapoint_pickled = txn.get(idx)
+        data = pickle.loads(datapoint_pickled)
+        for k in result_dict:
+            result_dict[k].append(data[k])
+
+    if return_dict:
+        return result_dict
+    else:
+        return (v for v in result_dict.values())
