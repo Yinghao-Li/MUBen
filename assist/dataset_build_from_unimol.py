@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 10th, 2023
+# Modified: August 12th, 2023
 # ---------------------------------------
 # Description: construct dataset from the Uni-Mol datasets.
 """
@@ -193,6 +193,7 @@ def main(args: Arguments):
                     'task_type': task,
                     'n_tasks': lbs.shape[-1],
                     'classes': None if task == 'regression' else [0, 1],
+                    'random_split': True
                 }
                 save_json(meta_dict, os.path.join(output_dir, "meta.json"), collapse_level=2)
 

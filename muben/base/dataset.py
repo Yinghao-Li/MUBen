@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: August 12th, 2023
 # ---------------------------------------
 # Description: Base classes for dataset creation and batch processing.
 """
@@ -30,6 +30,7 @@ class Dataset(TorchDataset):
         self._smiles: Union[list[str], None] = None
         self._lbs: Union[np.ndarray, None] = None
         self._masks: Union[np.ndarray, None] = None
+        self._ori_ids: Union[np.ndarray, None] = None
 
         self.data_instances = None
     
@@ -161,7 +162,7 @@ class Dataset(TorchDataset):
 
     def read_csv(self, data_dir: str, partition: str):
         """
-        Load data
+        Read data from csv files
         """
         file_path = os.path.normpath(os.path.join(data_dir, f"{partition}.csv"))
         logger.info(f"Loading dataset {file_path}")
@@ -173,6 +174,7 @@ class Dataset(TorchDataset):
         self._smiles = df.smiles.tolist()
         self._lbs = np.asarray(df.labels.map(literal_eval).to_list())
         self._masks = np.asarray(df.masks.map(literal_eval).to_list()) if not df.masks.isnull().all() else None
+        self._ori_ids = df.ori_ids.to_numpy() if 'ori_ids' in df.keys() else None  # for randomly split dataset
 
         return self
 

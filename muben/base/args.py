@@ -1,11 +1,11 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: August 12th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
 
-import os
+import os.path as op
 import json
 import torch
 import logging
@@ -48,6 +48,9 @@ class Arguments:
     )
     data_folder: Optional[str] = field(
         default='', metadata={'help': 'The folder containing all datasets.'}
+    )
+    data_seed: Optional[int] = field(
+        default=None, metadata={"help": "Seed used while constructing the random split dataset"}
     )
     result_folder: Optional[str] = field(
         default='./output', metadata={'help': "where to save model outputs."}
@@ -238,10 +241,16 @@ class Arguments:
             model_name_and_feature = f"{self.model_name}-{self.feature_type}"
 
         # update data and result dir
-        self.data_dir = os.path.join(self.data_folder, self.dataset_name)
-        self.result_dir = os.path.join(
+        self.data_dir = op.join(self.data_folder, self.dataset_name)
+        self.result_dir = op.join(
             self.result_folder, self.dataset_name, model_name_and_feature, self.uncertainty_method, f"seed-{self.seed}"
         )
+        if self.data_seed is not None:
+            self.data_dir = op.join(self.data_dir, f"seed-{self.data_seed}")
+            self.result_dir = op.join(
+                self.result_folder, self.dataset_name, f"data-seed-{self.data_seed}",
+                model_name_and_feature, self.uncertainty_method, f"seed-{self.seed}"
+            )
 
         # wandb arguments
         self.apply_wandb = not self.disable_wandb
@@ -274,11 +283,12 @@ class Arguments:
 @dataclass
 class Config(Arguments):
 
-    d_feature = None
-    classes = None
-    task_type = "classification"
-    n_tasks = None
-    eval_metric = None
+    d_feature = None  # feature dimensionality
+    classes = None  # all possible classification classes
+    task_type = "classification"  # classification or regression
+    n_tasks = None  # how many tasks (sets of labels to predict)
+    eval_metric = None  # which metric for evaluating valid and test performance *during training*
+    random_split = False  # whether the dataset is split randomly; False indicates scaffold split
 
     @cached_property
     def n_lbs(self):
@@ -315,7 +325,7 @@ class Config(Arguments):
             raise ValueError("To automatically load meta file, please either specify "
                              "the `meta_dir` argument or define a `data_dir` class attribute.")
 
-        meta_dir = os.path.join(meta_dir, meta_file_name)
+        meta_dir = op.join(meta_dir, meta_file_name)
         with open(meta_dir, 'r', encoding='utf-8') as f:
             meta_dict = json.load(f)
 
@@ -428,9 +438,9 @@ class Config(Arguments):
         -------
         self
         """
-        if os.path.isdir(file_dir):
-            file_path = os.path.join(file_dir, f'{file_name}.json')
-        elif os.path.isdir(os.path.split(file_dir)[0]):
+        if op.isdir(file_dir):
+            file_path = op.join(file_dir, f'{file_name}.json')
+        elif op.isdir(op.split(file_dir)[0]):
             file_path = file_dir
         else:
             raise FileNotFoundError(f"{file_dir} does not exist!")
@@ -457,10 +467,10 @@ class Config(Arguments):
         -------
         self
         """
-        if os.path.isdir(file_dir):
-            file_path = os.path.join(file_dir, f'{file_name}.json')
-            assert os.path.isfile(file_path), FileNotFoundError(f"{file_path} does not exist!")
-        elif os.path.isfile(file_dir):
+        if op.isdir(file_dir):
+            file_path = op.join(file_dir, f'{file_name}.json')
+            assert op.isfile(file_path), FileNotFoundError(f"{file_path} does not exist!")
+        elif op.isfile(file_dir):
             file_path = file_dir
         else:
             raise FileNotFoundError(f"{file_dir} does not exist!")

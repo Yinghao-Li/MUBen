@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 10th, 2023
+# Modified: August 12th, 2023
 # ---------------------------------------
 # Description: IO functions
 """
@@ -16,14 +16,13 @@ import lmdb
 import torch
 import logging
 import numpy as np
-from tqdm.auto import tqdm
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["set_log_path", "set_logging", "logging_args", "init_dir", "save_json",  "save_results", "load_results",
-           "load_lmdb"]
+           "load_lmdb", "load_unimol_preprocessed"]
 
 
 def set_log_path(args, time):
@@ -269,7 +268,28 @@ def load_results(result_paths):
 
 def load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = False):
 
-    result_dict = {k: list() for k in keys_to_load}
+    """
+    Load the lmdb-formatted dataset splits used in Uni-Mol
+
+    Parameters
+    ----------
+    data_path: path to data split (*.lmdb)
+    keys_to_load: dict keys to load. The argument `return_dict` is forced to be True if `keys_to_load` is left None
+    return_dict: whether to return a dictionary, will be forced to be True if `keys_to_load` is left None
+
+    Returns
+    -------
+    tuple if return_dict is False else dict of loaded values corresponding to specified keys
+    """
+
+    if keys_to_load is None:
+        result_dict = None
+        return_dict = True
+    elif isinstance(keys_to_load, str):
+        result_dict = {keys_to_load: list()}
+    else:
+        result_dict = {k: list() for k in keys_to_load}
+
     if not os.path.exists(data_path):
         logger.error(f"Path {data_path} does not exist!")
         return -1
@@ -289,6 +309,8 @@ def load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = Fal
     for idx in keys:
         datapoint_pickled = txn.get(idx)
         data = pickle.loads(datapoint_pickled)
+        if result_dict is None:
+            result_dict = {k: list() for k in data.keys()}
         for k in result_dict:
             result_dict[k].append(data[k])
 
@@ -296,3 +318,36 @@ def load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = Fal
         return result_dict
     else:
         return (v for v in result_dict.values())
+
+
+def load_unimol_preprocessed(data_dir: str):
+    """
+    Load all lmdb-formatted dataset training & valid& test splits used in Uni-Mol
+
+    Parameters
+    ----------
+    data_dir: dir to data splits
+
+    Returns
+    -------
+    tuple if return_dict is False else dict of loaded values corresponding to specified keys
+    """
+
+    result_dict = None
+    for partition in ('train', 'valid', 'test'):
+        # read data points
+        lmdb_path = os.path.join(data_dir, f"{partition}.lmdb")
+        results = load_lmdb(lmdb_path)
+
+        if results == -1:
+            raise FileNotFoundError(f'Invalid lmdb path: {lmdb_path}')
+
+        if result_dict is None:
+            result_dict = results
+
+        else:
+            for k in result_dict:
+                result_dict[k] += results[k]
+
+    return result_dict
+
