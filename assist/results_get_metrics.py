@@ -134,7 +134,6 @@ def main(args: Arguments):
             if uncertainty_method != UncertaintyMethods.ensembles:
 
                 results_for_seeds = list()
-                skip_uncertainty = False
 
                 for seed in args.result_seeds:
 
@@ -142,10 +141,7 @@ def main(args: Arguments):
                     test_result_paths = glob.glob(op.join(seeded_result_dir, "preds", "*.pt"))
 
                     if not test_result_paths:
-                        logger.warning(f"Directory {seeded_result_dir} does not contain any model prediction! "
-                                       f"Will skip metric logging for {uncertainty_method}")
-                        skip_uncertainty = True
-                        break
+                        continue
 
                     preds, variances, lbs, masks = load_results(test_result_paths)
 
@@ -157,7 +153,9 @@ def main(args: Arguments):
                     result_dict = {k: v['macro-avg'] for k, v in metrics.items()}
                     results_for_seeds.append(result_dict)
 
-                if skip_uncertainty:
+                if not results_for_seeds:
+                    logger.warning(f"Directory {result_dir} does not contain any model prediction! "
+                                   f"Will skip metric logging for {uncertainty_method}")
                     continue
 
                 results_aggr = aggregate_seeded_results(results_for_seeds)
