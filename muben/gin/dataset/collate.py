@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 8th, 2023
+# Modified: August 14th, 2023
 # ---------------------------------------
 # Description: Collate function for GIN model
 """
@@ -39,7 +39,7 @@ class Collator:
 
         atoms_batch = torch.tensor(list(itertools.chain.from_iterable(atom_ids)), dtype=torch.long)
 
-        edge_batch = torch.from_numpy(np.concatenate(edge_indices, axis=0)).to(torch.long)
+        edge_batch = torch.from_numpy(np.concatenate([ids for ids in edge_indices if ids], axis=0)).to(torch.long)
         edge_batch_ids = torch.tensor(
             list(itertools.chain.from_iterable([[i] * len(e) for i, e in enumerate(edge_indices)]))
         )
