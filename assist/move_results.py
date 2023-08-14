@@ -7,6 +7,7 @@
 
 
 import sys
+import glob
 import shutil
 import logging
 import os.path as op
@@ -20,7 +21,6 @@ from muben.utils.io import set_logging, init_dir
 from muben.utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
-    UncertaintyMethods,
     FINGERPRINT_FEATURE_TYPES
 )
 
@@ -35,6 +35,12 @@ class Arguments:
     """
 
     # --- IO arguments ---
+    src_folder: Optional[str] = field(
+        default=None, metadata={"help": "Source folder that stores the results."}
+    )
+    tgt_folder: Optional[str] = field(
+        default=None, metadata={"help": "Target folder that stores the results."}
+    )
     dataset_names: Optional[str] = field(
         default=None,
         metadata={
@@ -57,17 +63,7 @@ class Arguments:
             "help": "Feature type that the DNN model uses."
         }
     )
-    seeds: Optional[int] = field(
-        default=None,
-        metadata={
-            "nargs": "*",
-            "help": "A list of random seeds of individual runs."
-        }
-    )
-    result_folder: Optional[str] = field(
-        default=".", metadata={"help": "The folder which holds the results."}
-    )
-    overwrite_folder: Optional[bool] = field(
+    overwrite: Optional[bool] = field(
         default=False, metadata={'help': 'Whether overwrite existing outputs.'}
     )
 
@@ -81,33 +77,20 @@ class Arguments:
             assert self.feature_type != 'none', ValueError("Invalid feature type for DNN!")
             self.model_name = f"{self.model_name}-{self.feature_type}"
 
-        if self.seeds is None:
-            self.seeds: list[int] = [0, 1, 2]
-        elif isinstance(self.seeds, int):
-            self.seeds: list[int] = [self.seeds]
-
 
 def main(args: Arguments):
 
     for dataset_name in args.dataset_names:
-        for seed in args.seeds:
-            from_dir = op.join(args.result_folder, dataset_name, args.model_name, UncertaintyMethods.ensembles)
-            to_dir = op.join(args.result_folder, dataset_name, args.model_name, UncertaintyMethods.none)
+        src_dir = op.join(args.src_folder, dataset_name, args.model_name)
+        src_paths = glob.glob(op.join(src_dir, '**', 'preds', '*.pt'), recursive=True)
 
-            from_dir = op.join(from_dir, f"seed-{seed}")
-            to_dir = op.join(to_dir, f"seed-{seed}")
+        for src_path in src_paths:
+            tgt_path = src_path.replace(args.src_folder, args.tgt_folder)
+            tgt_dir = op.dirname(tgt_path)
+            init_dir(tgt_dir, clear_original_content=args.overwrite)
 
-            from_path = op.join(from_dir, f"model_best.ckpt")
-            to_path = op.join(to_dir, f"model_best.ckpt")
-
-            if not op.exists(from_path):
-                logger.warning(f"Model {from_path} does not exist!")
-                continue
-
-            init_dir(to_dir, clear_original_content=args.overwrite_folder)
-
-            logger.info(f"Moving {from_path} to {to_path}")
-            shutil.copy(from_path, to_path)
+            logger.info(f"Moving {src_path} to {tgt_path}")
+            shutil.copy(src_path, tgt_path)
 
     return None
 
