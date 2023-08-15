@@ -108,6 +108,7 @@ class Trainer:
 
         # flags
         self._model_frozen = False
+        self._backbone_frozen = False
 
         # normalize training dataset labels for regression task
         self.standardize_training_lbs()
@@ -147,6 +148,9 @@ class Trainer:
         self._timer.init()
         self._status.init()
         self._checkpoint_container = CheckpointContainer(self._update_criteria)
+
+        if self.config.freeze_backbone:
+            self.freeze_backbone()
         return self
 
     def initialize_model(self, *args, **kwargs):
@@ -402,7 +406,7 @@ class Trainer:
 
         # Train the model with early stopping.
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._checkpoint_container.state_dict)
+        self._load_model_state_dict()
 
         logger.info("SWA session start")
         self.swa_session()
@@ -445,7 +449,7 @@ class Trainer:
 
         # Train the model with early stopping.
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._checkpoint_container.state_dict)
+        self._load_model_state_dict()
 
         logger.info("Temperature Scaling session start.")
         self.ts_session()
@@ -487,7 +491,7 @@ class Trainer:
         """
         # Train the model with early stopping.
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._checkpoint_container.state_dict)
+        self._load_model_state_dict()
 
         logger.info("Isotonic calibration session start.")
 
@@ -528,7 +532,7 @@ class Trainer:
         Run the training and evaluation steps with stochastic gradient Langevin Dynamics
         """
         self.run_single_shot(apply_test=False)
-        self._model.load_state_dict(self._checkpoint_container.state_dict)
+        self._load_model_state_dict()
 
         logger.info("Langevin Dynamics session start.")
         self._sgld_model_buffer = list()
@@ -876,7 +880,7 @@ class Trainer:
         self.set_mode('test')
 
         if load_best_model and self._checkpoint_container.state_dict:
-            self._model.load_state_dict(self._checkpoint_container.state_dict)
+            self._load_model_state_dict()
 
         metrics, preds = self.evaluate(self._test_dataset, n_run=self.config.n_test, return_preds=True)
 
@@ -954,6 +958,26 @@ class Trainer:
         self._model_frozen = False
         return self
 
+    def freeze_backbone(self):
+        output_param_ids = [id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]]
+        backbone_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
+
+        for params in backbone_params:
+            params.requires_grad = False
+
+        self._backbone_frozen = True
+        return self
+
+    def unfreeze_backbone(self):
+        output_param_ids = [id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]]
+        backbone_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
+
+        for params in backbone_params:
+            params.requires_grad = True
+
+        self._backbone_frozen = False
+        return self
+
     def save_checkpoint(self):
 
         if not self.config.disable_result_saving:
@@ -964,12 +988,18 @@ class Trainer:
 
         return self
 
+    def _load_model_state_dict(self):
+        self._model.load_state_dict(self._checkpoint_container.state_dict)
+        if self.config.freeze_backbone:
+            self.freeze_backbone()
+        return self
+
     def _load_from_container(self, model_path):
         if not op.exists(model_path):
             return False
         logger.info(f"Loading trained model from {model_path}.")
         self._checkpoint_container.load(model_path)
-        self._model.load_state_dict(self._checkpoint_container.state_dict)
+        self._load_model_state_dict()
         self._model.to(self._device)
         return True
 
