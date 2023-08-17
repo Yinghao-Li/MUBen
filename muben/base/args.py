@@ -134,6 +134,10 @@ class Arguments:
     time_training: Optional[bool] = field(
         default=False, metadata={"help": "Measure training time in terms of training step."}
     )
+    freeze_backbone: Optional[bool] = field(
+        default=False, metadata={"help": "Whether freeze the backbone model during training. "
+                                         "If set to True, only the output layers will be updated."}
+    )
 
     # --- Evaluation Arguments ---
     valid_epoch_interval: Optional[int] = field(
