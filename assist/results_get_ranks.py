@@ -60,10 +60,10 @@ class Arguments:
 
     # --- IO arguments ---
     result_dir: Optional[str] = field(
-        default="./output/RESULTS/", metadata={"help": "The folder which holds the results."}
+        default="./output/RESULTS/", metadata={"help": "Directory the scores."}
     )
     output_dir: Optional[str] = field(
-        default="latex", metadata={"help": "Directory to save the latex tables."}
+        default="./output/RESULTS/", metadata={"help": "Where to save the ranks."}
     )
 
 
@@ -238,97 +238,6 @@ def main(args: Arguments):
     df = pd.DataFrame(reg_metric_rrs_mean)
     df.to_csv(op.join(output_dir, 'mrr_regression.csv'))
 
-    # get backbone-level uncertainty ranks (deprecated)
-
-    # cla_dt_md_mtr_unc_rnks = dict()
-    # unc_methods = None
-    # for dt, md_unc_mtr_values in cla_dt_md_unc_mtr.items():
-    #
-    #     if dt not in cla_dt_md_mtr_unc_rnks:
-    #         cla_dt_md_mtr_unc_rnks[dt] = dict()
-    #
-    #     for md, unc_mtr_values in md_unc_mtr_values.items():
-    #
-    #         if unc_methods is None:
-    #             unc_methods = list(unc_mtr_values.keys())
-    #
-    #         if md not in cla_dt_md_mtr_unc_rnks[dt]:
-    #             cla_dt_md_mtr_unc_rnks[dt][md] = dict()
-    #
-    #         for unc, mtr_values in unc_mtr_values.items():
-    #
-    #             for mtr in CLASSIFICATION_METRICS:
-    #                 if mtr not in cla_dt_md_mtr_unc_rnks[dt][md]:
-    #                     cla_dt_md_mtr_unc_rnks[dt][md][mtr] = dict()
-    #
-    #                 cla_dt_md_mtr_unc_rnks[dt][md][mtr][unc] = mtr_values[mtr]
-    #
-    #         for mtr in CLASSIFICATION_METRICS:
-    #             ranks = get_ranks(list(cla_dt_md_mtr_unc_rnks[dt][md][mtr].values()),
-    #                               smaller_is_better=not LARGER_BETTER_LOOKUP[mtr])
-    #             unc_ranks = {unc: r for unc, r in zip(cla_dt_md_mtr_unc_rnks[dt][md][mtr], ranks)}
-    #             cla_dt_md_mtr_unc_rnks[dt][md][mtr] = unc_ranks
-    #
-    # cla_avg_md_mtr_unc_rnks = dict()
-    # for md in MODEL_NAMES:
-    #     for unc in CLASSIFICATION_UNCERTAINTY:
-    #         md_unc = f"{md}-{unc}"
-    #         if md_unc not in cla_avg_md_mtr_unc_rnks:
-    #             cla_avg_md_mtr_unc_rnks[md_unc] = dict()
-    #
-    #         for mtr in CLASSIFICATION_METRICS:
-    #             avg_rank = np.mean([cla_dt_md_mtr_unc_rnks[dt][md][mtr][unc] for dt in CLASSIFICATION_DATASET])
-    #             cla_avg_md_mtr_unc_rnks[md_unc][mtr] = avg_rank
-    #
-    # reg_dt_md_mtr_unc_rnks = dict()
-    # unc_methods = None
-    # for dt, md_unc_mtr_values in reg_dt_md_unc_mtr.items():
-    #
-    #     if dt not in reg_dt_md_mtr_unc_rnks:
-    #         reg_dt_md_mtr_unc_rnks[dt] = dict()
-    #
-    #     for md, unc_mtr_values in md_unc_mtr_values.items():
-    #
-    #         if unc_methods is None:
-    #             unc_methods = list(unc_mtr_values.keys())
-    #
-    #         if md not in reg_dt_md_mtr_unc_rnks[dt]:
-    #             reg_dt_md_mtr_unc_rnks[dt][md] = dict()
-    #
-    #         for unc, mtr_values in unc_mtr_values.items():
-    #
-    #             for mtr in REGRESSION_METRICS:
-    #                 if mtr not in reg_dt_md_mtr_unc_rnks[dt][md]:
-    #                     reg_dt_md_mtr_unc_rnks[dt][md][mtr] = dict()
-    #
-    #                 reg_dt_md_mtr_unc_rnks[dt][md][mtr][unc] = mtr_values[mtr]
-    #
-    #         for mtr in REGRESSION_METRICS:
-    #             ranks = get_ranks(list(reg_dt_md_mtr_unc_rnks[dt][md][mtr].values()),
-    #                               smaller_is_better=not LARGER_BETTER_LOOKUP[mtr])
-    #             unc_ranks = {unc: r for unc, r in zip(reg_dt_md_mtr_unc_rnks[dt][md][mtr], ranks)}
-    #             reg_dt_md_mtr_unc_rnks[dt][md][mtr] = unc_ranks
-    #
-    # reg_avg_md_mtr_unc_rnks = dict()
-    # for md in MODEL_NAMES:
-    #     for unc in REGRESSION_UNCERTAINTY:
-    #         md_unc = f"{md}-{unc}"
-    #         if md_unc not in reg_avg_md_mtr_unc_rnks:
-    #             reg_avg_md_mtr_unc_rnks[md_unc] = dict()
-    #
-    #         for mtr in REGRESSION_METRICS:
-    #             avg_rank = np.mean([reg_dt_md_mtr_unc_rnks[dt][md][mtr][unc] for dt in REGRESSION_DATASET])
-    #             reg_avg_md_mtr_unc_rnks[md_unc][mtr] = avg_rank
-    #
-    # # save results
-    # output_dir = op.join(args.result_dir, 'backbone-ranks')
-    # init_dir(output_dir, clear_original_content=False)
-    #
-    # df = pd.DataFrame(cla_avg_md_mtr_unc_rnks)
-    # df.to_csv(op.join(output_dir, 'mean_classification.csv'))
-    #
-    # df = pd.DataFrame(reg_avg_md_mtr_unc_rnks)
-    # df.to_csv(op.join(output_dir, 'mean_regression.csv'))
     return None
 
 

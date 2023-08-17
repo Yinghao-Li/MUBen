@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 8th, 2023
+# Modified: August 17th, 2023
 # ---------------------------------------
 # Description: Constants
 """
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 __all__ = ['DATASET_NAMES', 'CLASSIFICATION_DATASET', 'REGRESSION_DATASET', 'dataset_mapping',
            'EVAL_METRICS', 'CLASSIFICATION_METRICS', 'REGRESSION_METRICS', 'metrics_mapping',
            'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES',
-           'StrEnum']
+           'StrEnum', 'QM_DATASET', 'PC_DATASET', 'BIO_DATASET', 'PHY_DATASET']
 
 
 class StrEnum(str, Enum):
@@ -62,6 +62,36 @@ REGRESSION_DATASET = [
     'qm7',
     'qm8',
     'qm9'
+]
+
+# Quantum Mechanics
+QM_DATASET = [
+    "qm7",
+    "qm8",
+    "qm9"
+]
+
+# Physical Chemistry
+PC_DATASET = [
+    "esol",
+    "freesolv",
+    "lipo"
+]
+
+# Biophysics
+BIO_DATASET = [
+    'bace',
+    'hiv',
+    'muv'
+]
+
+# Plysiology
+PHY_DATASET = [
+    'bbbp',
+    'clintox',
+    'tox21',
+    'toxcast',
+    'sider',
 ]
 
 
