@@ -30,9 +30,9 @@ class GIN(nn.Module):
         self.output_layer = OutputLayer(d_hidden, n_lbs * n_tasks, uncertainty_method, **kwargs)
 
     def forward(self, batch, **kwargs):
-        atoms_ids = batch.atom_ids
-        edge_indices = batch.edge_indices
-        mol_ids = batch.mol_ids
+        atoms_ids = batch.graphs.x
+        edge_indices = batch.graphs.edge_index
+        mol_ids = batch.graphs.batch
 
         embs = self.emb(atoms_ids)
         x = self.gnn(embs, edge_indices)

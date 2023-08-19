@@ -11,6 +11,7 @@ import logging
 import numpy as np
 import itertools
 
+from torch_geometric.data import Batch as pygBatch
 from muben.base.dataset import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
@@ -30,27 +31,13 @@ class Collator:
         -------
         a Batch of instances
         """
-        atom_ids, edge_indices, lbs, masks = unpack_instances(instances)
-
-        mol_ids = torch.tensor(
-            list(itertools.chain.from_iterable([[i]*len(a) for i, a in enumerate(atom_ids)])),
-            dtype=torch.long
-        )
-
-        atoms_batch = torch.tensor(list(itertools.chain.from_iterable(atom_ids)), dtype=torch.long)
-
-        edge_batch = torch.from_numpy(np.concatenate([ids for ids in edge_indices if ids], axis=0)).to(torch.long)
-        edge_batch_ids = torch.tensor(
-            list(itertools.chain.from_iterable([[i] * len(e) for i, e in enumerate(edge_indices)]))
-        )
-        edge_batch += edge_batch_ids.unsqueeze(-1)
+        graphs, lbs, masks = unpack_instances(instances)
+        batched_graphs = pygBatch().from_data_list(graphs)
 
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))
 
-        return Batch(atom_ids=atoms_batch,
-                     edge_indices=edge_batch.T,
-                     mol_ids=mol_ids,
+        return Batch(graphs=batched_graphs,
                      lbs=lbs_batch,
                      masks=masks_batch,
                      batch_size=len(lbs_batch))

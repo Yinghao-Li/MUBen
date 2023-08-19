@@ -7,7 +7,9 @@
 
 
 import logging
+import torch
 from tqdm.auto import tqdm
+from torch_geometric.data import Data
 
 from muben.utils.chem import smiles_to_2d_graph
 from muben.base.dataset import (
@@ -23,8 +25,7 @@ class Dataset(BaseDataset):
     def __init__(self):
         super().__init__()
 
-        self._atom_ids = None
-        self._edge_indices = None
+        self._graphs = None
 
     def create_features(self, config):
         """
@@ -35,18 +36,20 @@ class Dataset(BaseDataset):
         self
         """
 
-        self._atom_ids = list()
-        self._edge_indices = list()
+        self._graphs = list()
         for smiles in tqdm(self._smiles):
             atom_ids, edge_indices = smiles_to_2d_graph(smiles)
-            self._atom_ids.append(atom_ids)
-            self._edge_indices.append(edge_indices)
+            data = Data(
+                x=torch.tensor(atom_ids, dtype=torch.long),
+                edge_index=torch.tensor(edge_indices, dtype=torch.long).t().contiguous()
+            )
+            self._graphs.append(data)
 
         return self
 
     def get_instances(self):
         data_instances = pack_instances(
-            atom_ids=self._atom_ids, edge_indices=self._edge_indices, lbs=self.lbs, masks=self.masks
+            graphs=self._graphs, lbs=self.lbs, masks=self.masks
         )
 
         return data_instances
