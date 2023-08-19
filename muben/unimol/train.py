@@ -65,10 +65,10 @@ class Trainer(BaseTrainer, ABC):
         # for sgld compatibility
         if self.config.uncertainty_method == UncertaintyMethods.sgld:
             output_param_ids = [id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]]
-            base_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
+            backbone_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
             output_params = filter(lambda p: id(p) in output_param_ids, self._model.parameters())
 
-            self._optimizer = AdamW(base_params, lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
+            self._optimizer = AdamW(backbone_params, lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
             sgld_optimizer = PSGLDOptimizer if self.config.apply_preconditioned_sgld else SGLDOptimizer
             self._sgld_optimizer = sgld_optimizer(
                 output_params, lr=self._status.lr, norm_sigma=self.config.sgld_prior_sigma
