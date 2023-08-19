@@ -25,8 +25,6 @@ class Dataset(BaseDataset):
     def __init__(self):
         super().__init__()
 
-        self._atom_ids = None
-        self._edge_indices = None
         self._graphs = None
 
     def create_features(self, config):
@@ -38,13 +36,9 @@ class Dataset(BaseDataset):
         self
         """
 
-        self._atom_ids = list()
-        self._edge_indices = list()
         self._graphs = list()
         for smiles in tqdm(self._smiles):
             atom_ids, edge_indices = smiles_to_2d_graph(smiles)
-            self._atom_ids.append(atom_ids)
-            self._edge_indices.append(edge_indices)
             data = Data(
                 x=torch.tensor(atom_ids, dtype=torch.long),
                 edge_index=torch.tensor(edge_indices, dtype=torch.long).t().contiguous()
