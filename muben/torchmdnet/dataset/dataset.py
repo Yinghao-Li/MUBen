@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 7th, 2023
+# Modified: August 21st, 2023
 # ---------------------------------------
 # Description: TorchMD-NET dataset.
 """
@@ -66,6 +66,7 @@ class Dataset(BaseDataset):
                                    zip(unimol_data['ori_index'], unimol_data['atoms'], unimol_data['coordinates'])}
                 unimol_atoms = [id2data_mapping[idx][0] for idx in self._ori_ids]
                 self._coordinates = [id2data_mapping[idx][1] for idx in self._ori_ids]
+            self._coordinates = [c[0] for c in self._coordinates]
         else:
             logger.info("Generating 3D Coordinates.")
             s2c = partial(smiles_to_coords, n_conformer=1)
