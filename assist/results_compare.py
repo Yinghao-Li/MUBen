@@ -8,9 +8,8 @@ from muben.utils.macro import (
     CLASSIFICATION_DATASET,
     REGRESSION_DATASET,
     FINGERPRINT_FEATURE_TYPES,
-    MODEL_NAMES
 )
-from muben.utils.io import init_dir, set_logging
+from muben.utils.io import set_logging
 from muben.utils.argparser import ArgumentParser
 
 logger = logging.getLogger(__name__)
@@ -82,7 +81,7 @@ class Arguments:
                 self.model_names[idx] = f"DNN-{self.feature_type}"
 
 
-def main():
+def main(args: Arguments):
     diff_dfs = list()
     for dataset_name in CLASSIFICATION_DATASET:
         if dataset_name not in DATASETS:
@@ -91,22 +90,22 @@ def main():
         for model_name in MODELS:
 
             file_name = f"{model_name}-{dataset_name}.csv"
-            scaffold_path = op.join(scaffold_result_dir, file_name)
-            random_path = op.join(random_result_dir, file_name)
+            ori_path = op.join(args.ori_result_dir, file_name)
+            tgt_path = op.join(args.tgt_result_dir, file_name)
 
-            scaffold_df = pd.read_csv(scaffold_path, index_col='method')
-            random_df = pd.read_csv(random_path, index_col='method')
+            ori_df = pd.read_csv(ori_path, index_col='method')
+            tgt_df = pd.read_csv(tgt_path, index_col='method')
 
-            scaffold_df = scaffold_df.reindex([f'{model_name}-{unc}' for unc in CLASSIFICATION_UNCERTAINTY])
-            random_df = random_df.reindex([f'{model_name}-{unc}' for unc in CLASSIFICATION_UNCERTAINTY])
+            ori_df = ori_df.reindex([f'{model_name}-{unc}' for unc in CLASSIFICATION_UNCERTAINTY])
+            tgt_df = tgt_df.reindex([f'{model_name}-{unc}' for unc in CLASSIFICATION_UNCERTAINTY])
 
             for metrics in CLASSIFICATION_METRICS:
-                scaffold_df[metrics] = [m for m in scaffold_df[f'{metrics}-mean']]
-                random_df[metrics] = [m for m in random_df[f'{metrics}-mean']]
-            scaffold_df = scaffold_df[CLASSIFICATION_METRICS]
-            random_df = random_df[CLASSIFICATION_METRICS]
+                ori_df[metrics] = [m for m in ori_df[f'{metrics}-mean']]
+                tgt_df[metrics] = [m for m in tgt_df[f'{metrics}-mean']]
+            ori_df = ori_df[CLASSIFICATION_METRICS]
+            tgt_df = tgt_df[CLASSIFICATION_METRICS]
 
-            diff_df = (random_df - scaffold_df) / scaffold_df
+            diff_df = (tgt_df - ori_df) / ori_df
             diff_dfs.append(diff_df)
 
     merged_df = pd.concat(diff_dfs, ignore_index=True)
@@ -122,22 +121,22 @@ def main():
         for model_name in MODELS:
 
             file_name = f"{model_name}-{dataset_name}.csv"
-            scaffold_path = op.join(scaffold_result_dir, file_name)
-            random_path = op.join(random_result_dir, file_name)
+            ori_path = op.join(args.ori_result_dir, file_name)
+            tgt_path = op.join(args.tgt_result_dir, file_name)
 
-            scaffold_df = pd.read_csv(scaffold_path, index_col='method')
-            random_df = pd.read_csv(random_path, index_col='method')
+            ori_df = pd.read_csv(ori_path, index_col='method')
+            tgt_df = pd.read_csv(tgt_path, index_col='method')
 
-            scaffold_df = scaffold_df.reindex([f'{model_name}-{unc}' for unc in REGRESSION_UNCERTAINTY])
-            random_df = random_df.reindex([f'{model_name}-{unc}' for unc in REGRESSION_UNCERTAINTY])
+            ori_df = ori_df.reindex([f'{model_name}-{unc}' for unc in REGRESSION_UNCERTAINTY])
+            tgt_df = tgt_df.reindex([f'{model_name}-{unc}' for unc in REGRESSION_UNCERTAINTY])
 
             for metrics in REGRESSION_METRICS:
-                scaffold_df[metrics] = [m for m in scaffold_df[f'{metrics}-mean']]
-                random_df[metrics] = [m for m in random_df[f'{metrics}-mean']]
-            scaffold_df = scaffold_df[REGRESSION_METRICS]
-            random_df = random_df[REGRESSION_METRICS]
+                ori_df[metrics] = [m for m in ori_df[f'{metrics}-mean']]
+                tgt_df[metrics] = [m for m in tgt_df[f'{metrics}-mean']]
+            ori_df = ori_df[REGRESSION_METRICS]
+            tgt_df = tgt_df[REGRESSION_METRICS]
 
-            diff_df = (random_df - scaffold_df) / scaffold_df
+            diff_df = (tgt_df - ori_df) / ori_df
             diff_dfs.append(diff_df)
 
     merged_df = pd.concat(diff_dfs, ignore_index=True)
