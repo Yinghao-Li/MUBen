@@ -329,7 +329,7 @@ def classification_metrics(preds, lbs, masks):
 
     if brier_valid_flag:
         brier_avg = np.mean(brier_list)
-        result_metrics_dict["brier"] = {"brier": brier_list, "macro-avg": brier_avg}
+        result_metrics_dict["brier"] = {"all": brier_list, "macro-avg": brier_avg}
 
     return result_metrics_dict
 
