@@ -1,7 +1,6 @@
 """
 # Author: Yinghao Li
-# Created: July 19th, 2023
-# Modified: July 19th, 2023
+# Modified: August 23rd, 2023
 # ---------------------------------------
 # Description: Implementation of evidential loss functions.
                Modified from https://github.com/aamini/evidential-deep-learning
@@ -18,44 +17,50 @@ class EvidentialRegressionLoss:
     """
     Evidential Regression Loss
     """
+
     def __init__(self, coeff=1.0, **kwargs):
         self._coeff = coeff
 
     @staticmethod
-    def nig_nll(y: torch.Tensor,
-                gamma: torch.Tensor,
-                nu: torch.Tensor,
-                alpha: torch.Tensor,
-                beta: torch.Tensor):
+    def nig_nll(
+        y: torch.Tensor,
+        gamma: torch.Tensor,
+        nu: torch.Tensor,
+        alpha: torch.Tensor,
+        beta: torch.Tensor,
+    ):
         inter = 2 * beta * (1 + nu)
 
-        nll = 0.5 * (np.pi / nu).log() \
-            - alpha * inter.log() \
-            + (alpha + 0.5) * (nu * (y - gamma) ** 2 + inter).log() \
-            + torch.lgamma(alpha) - torch.lgamma(alpha + 0.5)
+        nll = (
+            0.5 * (np.pi / nu).log()
+            - alpha * inter.log()
+            + (alpha + 0.5) * (nu * (y - gamma) ** 2 + inter).log()
+            + torch.lgamma(alpha)
+            - torch.lgamma(alpha + 0.5)
+        )
 
         return nll
 
     @staticmethod
     def nig_reg(y, gamma, nu, alpha):
-
         error = (y - gamma).abs()
-        evidence = 2. * nu + alpha
+        evidence = 2.0 * nu + alpha
 
         return error * evidence
 
     def __call__(self, logits, lbs):
-
         gamma, nu, alpha, beta = torch.split(logits, 1, dim=-1)
 
-        loss_nll = self.nig_nll(lbs, gamma.view(-1), nu.view(-1), alpha.view(-1), beta.view(-1))
+        loss_nll = self.nig_nll(
+            lbs, gamma.view(-1), nu.view(-1), alpha.view(-1), beta.view(-1)
+        )
         loss_reg = self.nig_reg(lbs, gamma.view(-1), nu.view(-1), alpha.view(-1))
 
         return loss_nll + self._coeff * loss_reg
 
 
 class EvidentialClassificationLoss:
-    def __init__(self, n_classes, n_steps_per_epoch, annealing_epochs=10, device='cpu'):
+    def __init__(self, n_classes, n_steps_per_epoch, annealing_epochs=10, device="cpu"):
         self._n_classes = n_classes
         self._n_steps_per_epoch = n_steps_per_epoch
         self._annealing_epochs = annealing_epochs
@@ -67,10 +72,10 @@ class EvidentialClassificationLoss:
         ones = torch.ones([1, self._n_classes], device=self._device)
         sum_alpha = torch.sum(alpha, dim=1, keepdim=True)
         first_term = (
-                torch.lgamma(sum_alpha)
-                - torch.lgamma(alpha).sum(dim=1, keepdim=True)
-                + torch.lgamma(ones).sum(dim=1, keepdim=True)
-                - torch.lgamma(ones.sum(dim=1, keepdim=True))
+            torch.lgamma(sum_alpha)
+            - torch.lgamma(alpha).sum(dim=1, keepdim=True)
+            + torch.lgamma(ones).sum(dim=1, keepdim=True)
+            - torch.lgamma(ones.sum(dim=1, keepdim=True))
         )
         second_term = (
             (alpha - ones)
@@ -85,7 +90,9 @@ class EvidentialClassificationLoss:
         s = torch.sum(alpha, dim=1, keepdim=True)
 
         loglikelihood_err = torch.sum((y - (alpha / s)) ** 2, dim=1, keepdim=True)
-        loglikelihood_var = torch.sum(alpha * (s - alpha) / (s * s * (s + 1)), dim=1, keepdim=True)
+        loglikelihood_var = torch.sum(
+            alpha * (s - alpha) / (s * s * (s + 1)), dim=1, keepdim=True
+        )
 
         loglikelihood = loglikelihood_err + loglikelihood_var
 

@@ -1,11 +1,15 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Special arguments and configurations for ChemBERTa.
+"""
+
 import logging
 from typing import Optional
 from dataclasses import field, dataclass
 
-from muben.base.args import (
-    Arguments as BaseArguments,
-    Config as BaseConfig
-)
+from muben.base.args import Arguments as BaseArguments, Config as BaseConfig
 from muben.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
@@ -19,14 +23,11 @@ class Arguments(BaseArguments):
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
-        default='ChemBERTa', metadata={
-            'help': "Name of the model",
-            "choices": MODEL_NAMES
-        }
+        default="ChemBERTa",
+        metadata={"help": "Name of the model", "choices": MODEL_NAMES},
     )
 
 
 @dataclass
 class Config(Arguments, BaseConfig):
-
     pretrained_model_name_or_path = "DeepChem/ChemBERTa-77M-MLM"

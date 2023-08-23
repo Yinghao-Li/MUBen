@@ -1,18 +1,21 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: GROVER data collator.
+"""
+
 import torch
 import logging
 import numpy as np
 
-from muben.base.dataset import (
-    Batch,
-    unpack_instances
-)
+from muben.base.dataset import Batch, unpack_instances
 from .molgraph import BatchMolGraph
 
 logger = logging.getLogger(__name__)
 
 
 class Collator:
-
     def __init__(self, config):
         self._task = config.task_type
         self._lbs_type = torch.float
@@ -35,4 +38,6 @@ class Collator:
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))
 
-        return Batch(molecule_graphs=molecule_graphs_batch, lbs=lbs_batch, masks=masks_batch)
+        return Batch(
+            molecule_graphs=molecule_graphs_batch, lbs=lbs_batch, masks=masks_batch
+        )

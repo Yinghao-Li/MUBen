@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Pre-process the data, modified from
+               https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
+"""
+
 import torch
 import numpy as np
 from typing import List, Union, Optional
@@ -8,14 +16,15 @@ Matrix = Union[torch.Tensor, np.ndarray]  # to separate from list
 
 
 class ProcessingPipeline:
-    def __init__(self,
-                 dictionary: Dictionary,
-                 coordinate_padding: Optional[float] = 0.0,
-                 max_atoms: Optional[int] = 256,
-                 max_seq_len: Optional[int] = 512,
-                 remove_hydrogen_flag: Optional[bool] = False,
-                 remove_polar_hydrogen_flag: Optional[bool] = False):
-
+    def __init__(
+        self,
+        dictionary: Dictionary,
+        coordinate_padding: Optional[float] = 0.0,
+        max_atoms: Optional[int] = 256,
+        max_seq_len: Optional[int] = 512,
+        remove_hydrogen_flag: Optional[bool] = False,
+        remove_polar_hydrogen_flag: Optional[bool] = False,
+    ):
         self._dictionary = dictionary
         self._coordinate_padding = coordinate_padding
         self._max_atoms = max_atoms
@@ -26,18 +35,25 @@ class ProcessingPipeline:
     def process_instance(self, atoms: np.ndarray, coordinates: np.ndarray):
         atoms, coordinates = check_atom_types(atoms, coordinates)
         atoms, coordinates = remove_hydrogen(
-            atoms, coordinates, self._remove_hydrogen_flag, self._remove_polar_hydrogen_flag
+            atoms,
+            coordinates,
+            self._remove_hydrogen_flag,
+            self._remove_polar_hydrogen_flag,
         )
         atoms, coordinates = cropping(atoms, coordinates, self._max_atoms)
 
         atoms = tokenize_atoms(atoms, self._dictionary, self._max_seq_len)
-        atoms = prepend_and_append(atoms, self._dictionary.bos(), self._dictionary.eos())
+        atoms = prepend_and_append(
+            atoms, self._dictionary.bos(), self._dictionary.eos()
+        )
 
         edge_types = get_edge_type(atoms, len(self._dictionary))
 
         coordinates = normalize_coordinates(coordinates)
         coordinates = from_numpy(coordinates)
-        coordinates = prepend_and_append(coordinates, self._coordinate_padding, self._coordinate_padding)
+        coordinates = prepend_and_append(
+            coordinates, self._coordinate_padding, self._coordinate_padding
+        )
 
         distances = get_distance(coordinates)
 
@@ -46,9 +62,16 @@ class ProcessingPipeline:
     def process_training(self, atoms: List[str], coordinates: List[np.ndarray]):
         coordinates = conformer_sampling(coordinates)
         atoms = np.array(atoms)
-        atoms, coordinates, distances, edge_types = self.process_instance(atoms, coordinates)
+        atoms, coordinates, distances, edge_types = self.process_instance(
+            atoms, coordinates
+        )
 
-        return atoms.unsqueeze(0), coordinates.unsqueeze(0), distances.unsqueeze(0), edge_types.unsqueeze(0)
+        return (
+            atoms.unsqueeze(0),
+            coordinates.unsqueeze(0),
+            distances.unsqueeze(0),
+            edge_types.unsqueeze(0),
+        )
 
     def process_inference(self, atoms: List[str], coordinates: List[np.ndarray]):
         atoms = np.array(atoms)
@@ -101,8 +124,12 @@ def check_atom_types(atoms: Matrix, coordinates: Matrix):
     return atoms, coordinates
 
 
-def remove_hydrogen(atoms: Matrix, coordinates: Matrix, remove_hydrogen_flag=False, remove_polar_hydrogen_flag=False):
-
+def remove_hydrogen(
+    atoms: Matrix,
+    coordinates: Matrix,
+    remove_hydrogen_flag=False,
+    remove_polar_hydrogen_flag=False,
+):
     if remove_hydrogen_flag:
         mask_hydrogen = atoms != "H"
         atoms = atoms[mask_hydrogen]
@@ -122,7 +149,6 @@ def remove_hydrogen(atoms: Matrix, coordinates: Matrix, remove_hydrogen_flag=Fal
 
 
 def cropping(atoms: Matrix, coordinates: Matrix, max_atoms=256):
-
     if max_atoms and len(atoms) > max_atoms:
         index = np.random.choice(len(atoms), max_atoms, replace=False)
         atoms = np.array(atoms)[index]
@@ -151,7 +177,9 @@ def prepend_and_append(item: torch.Tensor, prepend_value, append_value):
     append_value: value to append
 
     """
-    item = torch.cat([torch.full_like(item[0], prepend_value).unsqueeze(0), item], dim=0)
+    item = torch.cat(
+        [torch.full_like(item[0], prepend_value).unsqueeze(0), item], dim=0
+    )
     item = torch.cat([item, torch.full_like(item[0], append_value).unsqueeze(0)], dim=0)
     return item
 

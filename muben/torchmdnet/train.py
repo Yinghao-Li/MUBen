@@ -19,13 +19,14 @@ logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer):
-    def __init__(self,
-                 config,
-                 training_dataset=None,
-                 valid_dataset=None,
-                 test_dataset=None,
-                 collate_fn=None):
-
+    def __init__(
+        self,
+        config,
+        training_dataset=None,
+        valid_dataset=None,
+        test_dataset=None,
+        collate_fn=None,
+    ):
         collate_fn = collate_fn if collate_fn is not None else Collator(config)
 
         super().__init__(

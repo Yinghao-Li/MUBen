@@ -10,10 +10,7 @@ import logging
 from typing import Optional
 from dataclasses import field, dataclass
 
-from muben.base.args import (
-    Arguments as BaseArguments,
-    Config as BaseConfig
-)
+from muben.base.args import Arguments as BaseArguments, Config as BaseConfig
 from muben.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
@@ -27,53 +24,69 @@ class Arguments(BaseArguments):
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
-        default='Uni-Mol', metadata={
-            'help': "The name of the model to be used.",
-            "choices": MODEL_NAMES
-        }
+        default="Uni-Mol",
+        metadata={"help": "The name of the model to be used.", "choices": MODEL_NAMES},
     )
     # --- Dataset arguments ---
     unimol_feature_folder: Optional[str] = field(
-        default='.', metadata={'help': "The folder containing files with pre-defined uni-mol atoms and coordinates"}
+        default=".",
+        metadata={
+            "help": "The folder containing files with pre-defined uni-mol atoms and coordinates"
+        },
     )
 
     # --- Reload training arguments to adjust default values ---
     lr_scheduler_type: Optional[str] = field(
-        default='polynomial', metadata={
-            'help': "Learning rate scheduler with warm ups defined in `transformers`, Please refer to "
-                    "https://huggingface.co/docs/transformers/main_classes/optimizer_schedules#schedules for details",
-            'choices': ['linear', 'cosine', 'cosine_with_restarts', 'polynomial', 'constant', 'constant_with_warmup']
-        }
+        default="polynomial",
+        metadata={
+            "help": "Learning rate scheduler with warm ups defined in `transformers`, Please refer to "
+            "https://huggingface.co/docs/transformers/main_classes/optimizer_schedules#schedules for details",
+            "choices": [
+                "linear",
+                "cosine",
+                "cosine_with_restarts",
+                "polynomial",
+                "constant",
+                "constant_with_warmup",
+            ],
+        },
     )
     grad_norm: Optional[float] = field(
-        default=1, metadata={"help": "Gradient norm. Default is 0 (do not clip gradient)"}
+        default=1,
+        metadata={"help": "Gradient norm. Default is 0 (do not clip gradient)"},
     )
 
     # --- update model parameters from Uni-Mol ---
     checkpoint_path: Optional[str] = field(
-        default='./models/unimol_base.pt', metadata={'help': "Path to the pre-trained model"}
+        default="./models/unimol_base.pt",
+        metadata={"help": "Path to the pre-trained model"},
     )
 
     # --- Arguments from Uni-Mol original implementation ---
-    batch_size: Optional[int] = field(
-        default=32, metadata={'help': 'Batch size'}
-    )
+    batch_size: Optional[int] = field(default=32, metadata={"help": "Batch size"})
 
     max_atoms: Optional[int] = field(
-        default=256, metadata={'help': 'the maximum number of atoms in the input molecules.'}
+        default=256,
+        metadata={"help": "the maximum number of atoms in the input molecules."},
     )
 
     max_seq_len: Optional[int] = field(
-        default=512, metadata={'help': 'Maximum length of the atom tokens.'}
+        default=512, metadata={"help": "Maximum length of the atom tokens."}
     )
 
     only_polar: Optional[int] = field(
-        default=0, metadata={'help': "1: only reserve polar hydrogen; 0: no hydrogen; -1: all hydrogen "}
+        default=0,
+        metadata={
+            "help": "1: only reserve polar hydrogen; 0: no hydrogen; -1: all hydrogen "
+        },
     )
 
     dropout: Optional[float] = field(
-        default=0.1, metadata={'help': 'The `pooler dropout` argument in the original implementation. '
-                                       'Controls the dropout ratio of the classification layers.'}
+        default=0.1,
+        metadata={
+            "help": "The `pooler dropout` argument in the original implementation. "
+            "Controls the dropout ratio of the classification layers."
+        },
     )
 
     def __post_init__(self):
@@ -97,7 +110,6 @@ class Arguments(BaseArguments):
         self._assign_default_model_args()
 
     def _assign_default_model_args(self):
-
         # Model architecture, should not be changed
         self.encoder_layers = 15
         self.encoder_embed_dim = 512
@@ -121,10 +133,11 @@ class Arguments(BaseArguments):
         self.masked_coord_loss = getattr(self, "masked_coord_loss", -1.0)
         self.masked_dist_loss = getattr(self, "masked_dist_loss", -1.0)
         self.x_norm_loss = getattr(self, "x_norm_loss", -1.0)
-        self.delta_pair_repr_norm_loss = getattr(self, "delta_pair_repr_norm_loss", -1.0)
+        self.delta_pair_repr_norm_loss = getattr(
+            self, "delta_pair_repr_norm_loss", -1.0
+        )
 
 
 @dataclass
 class Config(Arguments, BaseConfig):
-
     n_conformation = 11

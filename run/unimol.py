@@ -34,26 +34,20 @@ def main(args: Arguments):
         project=args.wandb_project,
         name=args.wandb_name,
         config=config.__dict__,
-        mode='online' if args.apply_wandb else 'disabled'
+        mode="online" if args.apply_wandb else "disabled",
     )
 
     dictionary = Dictionary.load()
     dictionary.add_symbol("[MASK]", is_special=True)
 
     training_dataset = Dataset().prepare(
-        config=config,
-        partition="train",
-        dictionary=dictionary
+        config=config, partition="train", dictionary=dictionary
     )
     valid_dataset = Dataset().prepare(
-        config=config,
-        partition="valid",
-        dictionary=dictionary
+        config=config, partition="valid", dictionary=dictionary
     )
     test_dataset = Dataset().prepare(
-        config=config,
-        partition="test",
-        dictionary=dictionary
+        config=config, partition="test", dictionary=dictionary
     )
 
     trainer = Trainer(
@@ -61,7 +55,7 @@ def main(args: Arguments):
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
-        dictionary=dictionary
+        dictionary=dictionary,
     )
 
     trainer.run()
@@ -69,8 +63,7 @@ def main(args: Arguments):
     return None
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
@@ -78,11 +71,9 @@ if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.
-        arguments, = parser.parse_json_file(
-            json_file=os.path.abspath(sys.argv[1])
-        )
+        (arguments,) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
-        arguments, = parser.parse_args_into_dataclasses()
+        (arguments,) = parser.parse_args_into_dataclasses()
 
     if not getattr(arguments, "log_path", None):
         arguments.log_path = set_log_path(arguments, _time)

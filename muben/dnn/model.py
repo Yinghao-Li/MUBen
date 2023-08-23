@@ -15,19 +15,19 @@ __all__ = ["DNN"]
 
 
 class DNN(nn.Module):
-
-    def __init__(self,
-                 d_feature: int,
-                 n_lbs: int,
-                 n_tasks: int,
-                 n_hidden_layers: Optional[int] = 4,
-                 d_hidden: Optional[int] = 128,
-                 p_dropout: Optional[float] = 0.1,
-                 hidden_dims: Optional[list] = None,
-                 activation: Optional[str] = 'ReLU',
-                 uncertainty_method: Optional[int] = 'none',
-                 **kwargs):
-
+    def __init__(
+        self,
+        d_feature: int,
+        n_lbs: int,
+        n_tasks: int,
+        n_hidden_layers: Optional[int] = 4,
+        d_hidden: Optional[int] = 128,
+        p_dropout: Optional[float] = 0.1,
+        hidden_dims: Optional[list] = None,
+        activation: Optional[str] = "ReLU",
+        uncertainty_method: Optional[int] = "none",
+        **kwargs
+    ):
         super().__init__()
 
         if hidden_dims is None:
@@ -38,17 +38,22 @@ class DNN(nn.Module):
         self.input_layer = nn.Sequential(
             nn.Linear(d_feature, hidden_dims[0]),
             getattr(nn, activation)(),
-            nn.Dropout(p_dropout)
+            nn.Dropout(p_dropout),
         )
 
-        hidden_layers = [nn.Sequential(
-            nn.Linear(hidden_dims[i], hidden_dims[i + 1]),
-            getattr(nn, activation)(),
-            nn.Dropout(p_dropout)
-        ) for i in range(n_hidden_layers)]
+        hidden_layers = [
+            nn.Sequential(
+                nn.Linear(hidden_dims[i], hidden_dims[i + 1]),
+                getattr(nn, activation)(),
+                nn.Dropout(p_dropout),
+            )
+            for i in range(n_hidden_layers)
+        ]
         self.hidden_layers = nn.Sequential(*hidden_layers)
 
-        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, uncertainty_method, **kwargs)
+        self.output_layer = OutputLayer(
+            hidden_dims[-1], n_lbs * n_tasks, uncertainty_method, **kwargs
+        )
 
         self.initialize()
 

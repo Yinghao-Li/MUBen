@@ -26,7 +26,6 @@ class TransformerEncoderWithPair(nn.Module):
         post_ln: bool = False,
         no_final_head_layer_norm: bool = False,
     ) -> None:
-
         super().__init__()
         self.emb_dropout = emb_dropout
         self.max_seq_len = max_seq_len
@@ -59,11 +58,12 @@ class TransformerEncoderWithPair(nn.Module):
             ]
         )
 
-    def forward(self,
-                emb: torch.Tensor,
-                attn_mask: Optional[torch.Tensor] = None,
-                padding_mask: Optional[torch.Tensor] = None):
-
+    def forward(
+        self,
+        emb: torch.Tensor,
+        attn_mask: Optional[torch.Tensor] = None,
+        padding_mask: Optional[torch.Tensor] = None,
+    ):
         bsz = emb.size(0)
         seq_len = emb.size(1)
         x = self.emb_layer_norm(emb)

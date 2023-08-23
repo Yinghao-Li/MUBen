@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Dict, Optional
+from typing import Optional
 
 import torch
 from torch import Tensor, nn
@@ -40,7 +40,6 @@ class SelfMultiheadAttention(nn.Module):
         attn_bias: Optional[Tensor] = None,
         return_attn: bool = False,
     ) -> Tensor:
-
         bsz, tgt_len, embed_dim = query.size()
         assert embed_dim == self.embed_dim
 
@@ -94,12 +93,18 @@ class SelfMultiheadAttention(nn.Module):
 
         if not return_attn:
             attn = softmax_dropout(
-                attn_weights, self.dropout, self.training, bias=attn_bias,
+                attn_weights,
+                self.dropout,
+                self.training,
+                bias=attn_bias,
             )
         else:
             attn_weights += attn_bias
             attn = softmax_dropout(
-                attn_weights, self.dropout, self.training, inplace=False,
+                attn_weights,
+                self.dropout,
+                self.training,
+                inplace=False,
             )
 
         o = torch.bmm(attn, v)
@@ -153,7 +158,6 @@ class CrossMultiheadAttention(nn.Module):
         key_padding_mask: Optional[Tensor] = None,
         attn_bias: Optional[Tensor] = None,
     ) -> Tensor:
-
         bsz, tgt_len, embed_dim = query.size()
         assert embed_dim == self.embed_dim
 
@@ -207,7 +211,9 @@ class CrossMultiheadAttention(nn.Module):
             )
             attn_weights = attn_weights.view(bsz * self.num_heads, tgt_len, src_len)
 
-        attn = softmax_dropout(attn_weights, self.dropout, self.training, bias=attn_bias)
+        attn = softmax_dropout(
+            attn_weights, self.dropout, self.training, bias=attn_bias
+        )
 
         o = torch.bmm(attn, v)
         assert list(o.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]

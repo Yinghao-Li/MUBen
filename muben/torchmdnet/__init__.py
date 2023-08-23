@@ -5,5 +5,3 @@
 # Description: Implementation of the TorchMD-NET model.
                Modified from https://github.com/shehzaidi/pre-training-via-denoising.
 """
-
-

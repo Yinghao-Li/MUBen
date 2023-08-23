@@ -1,6 +1,10 @@
 """
-Modified from https://github.com/JavierAntoran/Bayesian-Neural-Networks
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Modified from https://github.com/JavierAntoran/Bayesian-Neural-Networks
 """
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -10,9 +14,15 @@ __all__ = ["BBPOutputLayer"]
 
 def kld_cost(mu_p, sig_p, mu_q, sig_q):
     # https://arxiv.org/abs/1312.6114 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    kld = 0.5 * (
-            2 * torch.log(sig_p / sig_q) - 1 + (sig_q / sig_p).pow(2) + ((mu_p - mu_q) / sig_p).pow(2)
-    ).sum()
+    kld = (
+        0.5
+        * (
+            2 * torch.log(sig_p / sig_q)
+            - 1
+            + (sig_q / sig_p).pow(2)
+            + ((mu_p - mu_q) / sig_p).pow(2)
+        ).sum()
+    )
     return kld
 
 
@@ -62,7 +72,8 @@ class BBPOutputLayer(nn.Module):
 
         logits = act_w_out + act_b_out.unsqueeze(0).expand(x.shape[0], -1)
 
-        kld = kld_cost(mu_p=0, sig_p=self.prior_sigma, mu_q=self.weight_mu, sig_q=std_weight) + \
-              kld_cost(mu_p=0, sig_p=0.1, mu_q=self.bias_mu, sig_q=std_bias)
+        kld = kld_cost(
+            mu_p=0, sig_p=self.prior_sigma, mu_q=self.weight_mu, sig_q=std_weight
+        ) + kld_cost(mu_p=0, sig_p=0.1, mu_q=self.bias_mu, sig_q=std_bias)
 
         return logits, kld

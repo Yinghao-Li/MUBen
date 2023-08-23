@@ -23,7 +23,12 @@ class LayerNorm(torch.nn.Module):
 
         def torch_layer_norm(input):
             return F.layer_norm(
-                input, self.normalized_shape, self.weight.type(input.dtype), self.bias.type(input.dtype), self.eps)
+                input,
+                self.normalized_shape,
+                self.weight.type(input.dtype),
+                self.bias.type(input.dtype),
+                self.eps,
+            )
 
         self.func = torch_layer_norm
 
@@ -35,5 +40,6 @@ class LayerNorm(torch.nn.Module):
         return self.func(input)
 
     def extra_repr(self):
-        return '{normalized_shape}, eps={eps}, ' \
-               'elementwise_affine=True'.format(**self.__dict__)
+        return "{normalized_shape}, eps={eps}, " "elementwise_affine=True".format(
+            **self.__dict__
+        )

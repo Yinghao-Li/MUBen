@@ -1,3 +1,10 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: ChemBERTa trainer.
+"""
+
 from abc import ABC
 
 import logging
@@ -12,13 +19,14 @@ logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer, ABC):
-    def __init__(self,
-                 config,
-                 training_dataset=None,
-                 valid_dataset=None,
-                 test_dataset=None,
-                 collate_fn=None):
-
+    def __init__(
+        self,
+        config,
+        training_dataset=None,
+        valid_dataset=None,
+        test_dataset=None,
+        collate_fn=None,
+    ):
         if not collate_fn:
             collate_fn = Collator(config)
 
@@ -27,7 +35,7 @@ class Trainer(BaseTrainer, ABC):
             training_dataset=training_dataset,
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
-            collate_fn=collate_fn
+            collate_fn=collate_fn,
         )
 
     @property
@@ -41,5 +49,5 @@ class Trainer(BaseTrainer, ABC):
             n_tasks=self.config.n_tasks,
             uncertainty_method=self.config.uncertainty_method,
             task_type=self.config.task_type,
-            bbp_prior_sigma=self.config.bbp_prior_sigma
+            bbp_prior_sigma=self.config.bbp_prior_sigma,
         )

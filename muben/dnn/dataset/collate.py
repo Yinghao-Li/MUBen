@@ -1,3 +1,10 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Data collator for DNN
+"""
+
 import torch
 import logging
 import numpy as np
@@ -9,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class Collator:
-
     def __init__(self, *args, **kwargs):
         self._lbs_type = torch.float
 

@@ -1,7 +1,6 @@
 """
 # Author: Yinghao Li
-# Created: June 17th, 2023
-# Modified: July 6th, 2023
+# Modified: August 23rd, 2023
 # ---------------------------------------
 # Description: Generate the plots of the difference between the predicted and true labels
                against the predicted standard deviation.
@@ -14,15 +13,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from dataclasses import dataclass, field
-from transformers import HfArgumentParser
 from typing import Optional
 
 from muben.utils.io import load_results, init_dir
+from muben.utils.argparser import ArgumentParser
 from muben.utils.macro import (
     DATASET_NAMES,
     MODEL_NAMES,
     UncertaintyMethods,
-    FINGERPRINT_FEATURE_TYPES
+    FINGERPRINT_FEATURE_TYPES,
 )
 
 
@@ -35,24 +34,17 @@ class Arguments:
     # --- IO arguments ---
     dataset_name: Optional[str] = field(
         default=None,
-        metadata={
-            "choices": DATASET_NAMES,
-            "help": "A list of dataset names."
-        }
+        metadata={"choices": DATASET_NAMES, "help": "A list of dataset names."},
     )
     model_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "choices": MODEL_NAMES,
-            "help": "A list of model names"
-        }
+        default=None, metadata={"choices": MODEL_NAMES, "help": "A list of model names"}
     )
     feature_type: Optional[str] = field(
         default="none",
         metadata={
             "choices": FINGERPRINT_FEATURE_TYPES,
-            "help": "Feature type that the DNN model uses."
-        }
+            "help": "Feature type that the DNN model uses.",
+        },
     )
     result_dir: Optional[str] = field(
         default=".", metadata={"help": "The folder which holds the results."}
@@ -69,21 +61,30 @@ class Arguments:
 
     def __post_init__(self):
         if self.model_name == "DNN":
-            assert self.feature_type != 'none', ValueError("Invalid feature type for DNN!")
+            assert self.feature_type != "none", ValueError(
+                "Invalid feature type for DNN!"
+            )
             self.model_name = f"{self.model_name}-{self.feature_type}"
 
         self.none_result_dir = op.join(
-            self.result_dir, self.dataset_name, self.model_name,
-            UncertaintyMethods.none, f"seed-{self.result_seed}", "preds"
+            self.result_dir,
+            self.dataset_name,
+            self.model_name,
+            UncertaintyMethods.none,
+            f"seed-{self.result_seed}",
+            "preds",
         )
         self.sgld_result_dir = op.join(
-            self.result_dir, self.dataset_name, self.model_name,
-            UncertaintyMethods.sgld, f"seed-{self.result_seed}", "preds"
+            self.result_dir,
+            self.dataset_name,
+            self.model_name,
+            UncertaintyMethods.sgld,
+            f"seed-{self.result_seed}",
+            "preds",
         )
 
 
 def main(args: Arguments):
-
     # load results
     none_result_paths = glob.glob(op.join(args.none_result_dir, "*"))
     sgld_result_paths = glob.glob(op.join(args.sgld_result_dir, "*"))
@@ -117,40 +118,85 @@ def main(args: Arguments):
     # plot figure
     fig, ax = plt.subplots(figsize=(4, 3), dpi=300)
 
-    ref_x = np.linspace(min(sgld_abs_error.min(), none_abs_error.min()),
-                        max(sgld_abs_error.max(), none_abs_error.max()), 100)
+    ref_x = np.linspace(
+        min(sgld_abs_error.min(), none_abs_error.min()),
+        max(sgld_abs_error.max(), none_abs_error.max()),
+        100,
+    )
 
-    ax.plot(ref_x, ref_x, color='black', linestyle="dashed", alpha=1, linewidth=1, zorder=10, label="y=x")
-    ax.plot(ref_x, ref_x * 2, color='black', linestyle="dotted", alpha=1, linewidth=1, zorder=10, label="y=2x")
-    ax.plot(ref_x, ref_x * 3, color='black', linestyle="dashdot", alpha=1, linewidth=1, zorder=10, label="y=3x")
-    ax.scatter(np.sqrt(sgld_variances), sgld_abs_error, color='goldenrod', marker='^', s=20, alpha=0.6, zorder=100,
-               label="Deterministic")
-    ax.scatter(np.sqrt(none_variances), none_abs_error, color='royalblue', s=20, alpha=0.6, zorder=100, label="SGLD")
+    ax.plot(
+        ref_x,
+        ref_x,
+        color="black",
+        linestyle="dashed",
+        alpha=1,
+        linewidth=1,
+        zorder=10,
+        label="y=x",
+    )
+    ax.plot(
+        ref_x,
+        ref_x * 2,
+        color="black",
+        linestyle="dotted",
+        alpha=1,
+        linewidth=1,
+        zorder=10,
+        label="y=2x",
+    )
+    ax.plot(
+        ref_x,
+        ref_x * 3,
+        color="black",
+        linestyle="dashdot",
+        alpha=1,
+        linewidth=1,
+        zorder=10,
+        label="y=3x",
+    )
+    ax.scatter(
+        np.sqrt(sgld_variances),
+        sgld_abs_error,
+        color="goldenrod",
+        marker="^",
+        s=20,
+        alpha=0.6,
+        zorder=100,
+        label="Deterministic",
+    )
+    ax.scatter(
+        np.sqrt(none_variances),
+        none_abs_error,
+        color="royalblue",
+        s=20,
+        alpha=0.6,
+        zorder=100,
+        label="SGLD",
+    )
 
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
 
-    ax.set_ylabel('Absolute Prediction Error', fontsize=12)
-    ax.set_xlabel('Predicted Standard Deviation', fontsize=12)
+    ax.set_ylabel("Absolute Prediction Error", fontsize=12)
+    ax.set_xlabel("Predicted Standard Deviation", fontsize=12)
     ax.set_xlim(0, ref_x[-1] / 3)
     ax.set_ylim(0, ref_x[-1])
     plt.legend()
 
     init_dir(args.output_dir, clear_original_content=False)
     # use png in case the number of points to plot is too large
-    f_name = f'regression.dev.{args.model_name}.{args.dataset_name}.png'
-    fig.savefig(op.join(args.output_dir, f_name), bbox_inches='tight')
+    f_name = f"regression.dev.{args.model_name}.{args.dataset_name}.png"
+    fig.savefig(op.join(args.output_dir, f_name), bbox_inches="tight")
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # --- set up arguments ---
-    parser = HfArgumentParser(Arguments)
+    parser = ArgumentParser(Arguments)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.
-        arguments, = parser.parse_json_file(json_file=op.abspath(sys.argv[1]))
+        (arguments,) = parser.parse_json_file(json_file=op.abspath(sys.argv[1]))
     else:
-        arguments, = parser.parse_args_into_dataclasses()
+        (arguments,) = parser.parse_args_into_dataclasses()
 
     main(args=arguments)

@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 class Collator:
-
     def __init__(self, config):
         self._task = config.task_type
         self._lbs_type = torch.float
@@ -37,7 +36,9 @@ class Collator:
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))
 
-        return Batch(graphs=batched_graphs,
-                     lbs=lbs_batch,
-                     masks=masks_batch,
-                     batch_size=len(lbs_batch))
+        return Batch(
+            graphs=batched_graphs,
+            lbs=lbs_batch,
+            masks=masks_batch,
+            batch_size=len(lbs_batch),
+        )

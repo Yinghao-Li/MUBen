@@ -15,19 +15,23 @@ from muben.base.model import OutputLayer
 
 
 class GIN(nn.Module):
-    def __init__(self,
-                 n_lbs: int,
-                 n_tasks: int,
-                 max_atomic_num: int = 100,
-                 d_hidden: int = 64,
-                 n_layers: int = 3,
-                 uncertainty_method: Optional[int] = 'none',
-                 dropout: float = 0.1,
-                 **kwargs):
+    def __init__(
+        self,
+        n_lbs: int,
+        n_tasks: int,
+        max_atomic_num: int = 100,
+        d_hidden: int = 64,
+        n_layers: int = 3,
+        uncertainty_method: Optional[int] = "none",
+        dropout: float = 0.1,
+        **kwargs
+    ):
         super().__init__()
         self.emb = nn.Embedding(max_atomic_num, d_hidden)
-        self.gnn = pygnn.GIN(d_hidden, d_hidden, n_layers, dropout=dropout, jk='cat')
-        self.output_layer = OutputLayer(d_hidden, n_lbs * n_tasks, uncertainty_method, **kwargs)
+        self.gnn = pygnn.GIN(d_hidden, d_hidden, n_layers, dropout=dropout, jk="cat")
+        self.output_layer = OutputLayer(
+            d_hidden, n_lbs * n_tasks, uncertainty_method, **kwargs
+        )
 
     def forward(self, batch, **kwargs):
         atoms_ids = batch.graphs.x

@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class Collator:
-
     def __init__(self, config):
         self._task = config.task_type
         self._lbs_type = torch.float
@@ -33,18 +32,26 @@ class Collator:
         atoms, coords, lbs, masks = unpack_instances(instances)
 
         mol_ids = torch.tensor(
-            list(itertools.chain.from_iterable([[i]*len(a) for i, a in enumerate(atoms)])),
-            dtype=torch.long
+            list(
+                itertools.chain.from_iterable(
+                    [[i] * len(a) for i, a in enumerate(atoms)]
+                )
+            ),
+            dtype=torch.long,
         )
-        atoms_batch = torch.tensor(list(itertools.chain.from_iterable(atoms)), dtype=torch.long)
+        atoms_batch = torch.tensor(
+            list(itertools.chain.from_iterable(atoms)), dtype=torch.long
+        )
         coords_batch = torch.from_numpy(np.concatenate(coords, axis=0)).to(torch.float)
 
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))
 
-        return Batch(atoms=atoms_batch,
-                     coords=coords_batch,
-                     mol_ids=mol_ids,
-                     lbs=lbs_batch,
-                     masks=masks_batch,
-                     batch_size=len(lbs_batch))
+        return Batch(
+            atoms=atoms_batch,
+            coords=coords_batch,
+            mol_ids=mol_ids,
+            lbs=lbs_batch,
+            masks=masks_batch,
+            batch_size=len(lbs_batch),
+        )

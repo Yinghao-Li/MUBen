@@ -1,12 +1,15 @@
 """
-The scaler for the regression task.
-This implementation is adapted from
-https://github.com/chemprop/chemprop/blob/master/chemprop/data/scaler.py
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: The scaler for the regression task, adapted from
+               https://github.com/chemprop/chemprop/blob/master/chemprop/data/scaler.py
 """
+
 import numpy as np
 from typing import Any, Optional
 
-__all__ = ['StandardScaler']
+__all__ = ["StandardScaler"]
 
 
 class StandardScaler:
@@ -17,7 +20,12 @@ class StandardScaler:
     When transforming a dataset, the StandardScaler subtracts the means and divides by the standard deviations.
     """
 
-    def __init__(self, means: np.ndarray = None, stds: np.ndarray = None, replace_nan_token: Any = None):
+    def __init__(
+        self,
+        means: np.ndarray = None,
+        stds: np.ndarray = None,
+        replace_nan_token: Any = None,
+    ):
         """
         Initialize StandardScaler, optionally with means and standard deviations precomputed.
 
@@ -31,7 +39,7 @@ class StandardScaler:
         self.stds = stds
         self.replace_nan_token = replace_nan_token
 
-    def fit(self, x: np.ndarray) -> 'StandardScaler':
+    def fit(self, x: np.ndarray) -> "StandardScaler":
         """
         Learns means and standard deviations across the 0th axis.
 
@@ -46,7 +54,9 @@ class StandardScaler:
         x = np.array(x).astype(float)
         self.means = np.nanmean(x, axis=0)
         self.stds = np.nanstd(x, axis=0)
-        self.means = np.where(np.isnan(self.means), np.zeros(self.means.shape), self.means)
+        self.means = np.where(
+            np.isnan(self.means), np.zeros(self.means.shape), self.means
+        )
         self.stds = np.where(np.isnan(self.stds), np.ones(self.stds.shape), self.stds)
         self.stds = np.where(self.stds == 0, np.ones(self.stds.shape), self.stds)
 
@@ -66,11 +76,13 @@ class StandardScaler:
         """
         x = np.array(x).astype(float)
         transformed_with_nan = (x - self.means) / self.stds
-        transformed_with_none = np.where(np.isnan(transformed_with_nan), self.replace_nan_token, transformed_with_nan)
+        transformed_with_none = np.where(
+            np.isnan(transformed_with_nan), self.replace_nan_token, transformed_with_nan
+        )
 
         return transformed_with_none
 
-    def inverse_transform(self, x:  np.ndarray, var: Optional[np.ndarray] = None):
+    def inverse_transform(self, x: np.ndarray, var: Optional[np.ndarray] = None):
         """
         Performs the inverse transformation by multiplying by the standard deviations and adding the means.
 
@@ -85,7 +97,9 @@ class StandardScaler:
         """
         assert isinstance(x, np.ndarray), TypeError("x is required to be numpy array!")
         if var is not None:
-            assert isinstance(x, np.ndarray), TypeError("x is required to be numpy array!")
+            assert isinstance(x, np.ndarray), TypeError(
+                "x is required to be numpy array!"
+            )
 
         transformed_x = x * self.stds + self.means
         transformed_x = np.where(
@@ -94,7 +108,7 @@ class StandardScaler:
         if var is None:
             return transformed_x
 
-        transformed_var = var * self.stds ** 2
+        transformed_var = var * self.stds**2
         transformed_var = np.where(
             np.isnan(transformed_var), self.replace_nan_token, transformed_var
         )

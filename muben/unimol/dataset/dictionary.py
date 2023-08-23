@@ -38,7 +38,7 @@ UNIMOL_DICT = [
     "Se",
     "Gd",
     "Au",
-    "Li"
+    "Li",
 ]
 
 
@@ -87,7 +87,7 @@ class Dictionary:
         if sym in self.indices:
             return self.indices[sym]
         return self.indices[self.unk_word]
-    
+
     def special_index(self):
         return [self.index(x) for x in self.specials]
 

@@ -33,18 +33,22 @@ class Dataset(TorchDataset):
         self._ori_ids: Union[np.ndarray, None] = None
 
         self.data_instances = None
-    
+
     @property
     def smiles(self) -> list[str]:
         return self._smiles
-    
+
     @property
     def lbs(self) -> np.ndarray:
         return self._lbs
 
     @cached_property
     def masks(self) -> np.ndarray:
-        return self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
+        return (
+            self._masks
+            if self._masks is not None
+            else np.ones_like(self.lbs).astype(int)
+        )
 
     def __len__(self):
         return len(self._smiles)
@@ -74,14 +78,20 @@ class Dataset(TorchDataset):
         self
         """
 
-        assert partition in ['train', 'valid', 'test'], \
-            ValueError(f"Argument `partition` should be one of 'train', 'valid' or 'test'!")
+        assert partition in ["train", "valid", "test"], ValueError(
+            f"Argument `partition` should be one of 'train', 'valid' or 'test'!"
+        )
 
-        method_identifier = f"{config.model_name}-{config.feature_type}" \
-            if config.feature_type != 'none' else config.model_name
-        preprocessed_path = os.path.normpath(os.path.join(
-            config.data_dir, "processed", method_identifier, f"{partition}.pt"
-        ))
+        method_identifier = (
+            f"{config.model_name}-{config.feature_type}"
+            if config.feature_type != "none"
+            else config.model_name
+        )
+        preprocessed_path = os.path.normpath(
+            os.path.join(
+                config.data_dir, "processed", method_identifier, f"{partition}.pt"
+            )
+        )
         # Load Pre-processed dataset if exist
         if os.path.exists(preprocessed_path) and not config.ignore_preprocessed_dataset:
             logger.info(f"Loading pre-processed dataset {preprocessed_path}")
@@ -113,7 +123,6 @@ class Dataset(TorchDataset):
         raise NotImplementedError
 
     def get_instances(self):
-
         raise NotImplementedError
 
     def save(self, file_path: str):
@@ -173,8 +182,14 @@ class Dataset(TorchDataset):
         df = pd.read_csv(file_path)
         self._smiles = df.smiles.tolist()
         self._lbs = np.asarray(df.labels.map(literal_eval).to_list())
-        self._masks = np.asarray(df.masks.map(literal_eval).to_list()) if not df.masks.isnull().all() else None
-        self._ori_ids = df.ori_ids.to_numpy() if 'ori_ids' in df.keys() else None  # for randomly split dataset
+        self._masks = (
+            np.asarray(df.masks.map(literal_eval).to_list())
+            if not df.masks.isnull().all()
+            else None
+        )
+        self._ori_ids = (
+            df.ori_ids.to_numpy() if "ori_ids" in df.keys() else None
+        )  # for randomly split dataset
 
         return self
 
@@ -200,7 +215,9 @@ class Batch:
         return self
 
     def __len__(self):
-        return len(tuple(self._tensor_members.values())[0]) if not self.size else self.size
+        return (
+            len(tuple(self._tensor_members.values())[0]) if not self.size else self.size
+        )
 
 
 def pack_instances(**kwargs) -> list[dict]:

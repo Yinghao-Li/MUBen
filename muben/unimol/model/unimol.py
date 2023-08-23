@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: The Uni-Mol model, modified from
+               https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
+"""
+
 # Copyright (c) DP Technology.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -6,13 +14,8 @@ import logging
 import torch.nn as nn
 from .layers import init_bert_params
 from .encoder import TransformerEncoderWithPair
-from .module import (
-    NonLinearHead,
-    DistanceHead,
-    GaussianLayer
-)
+from .module import NonLinearHead, DistanceHead, GaussianLayer
 from muben.base.model import OutputLayer
-from muben.utils.macro import UncertaintyMethods
 
 
 logger = logging.getLogger(__name__)
@@ -63,18 +66,22 @@ class UniMol(nn.Module):
             nn.Dropout(config.pooler_dropout),
             nn.Linear(config.encoder_embed_dim, config.encoder_embed_dim),
             getattr(nn, config.pooler_activation_fn)(),
-            nn.Dropout(config.pooler_dropout)
+            nn.Dropout(config.pooler_dropout),
         )
         self.output_layer = OutputLayer(
             config.encoder_embed_dim,
             config.n_lbs * config.n_tasks,
             config.uncertainty_method,
             task_type=config.task_type,
-            bbp_prior_sigma=config.bbp_prior_sigma
+            bbp_prior_sigma=config.bbp_prior_sigma,
         )
 
     def forward(self, batch, **kwargs):
-        src_tokens, src_distance, src_edge_type = batch.atoms, batch.distances, batch.edge_types
+        src_tokens, src_distance, src_edge_type = (
+            batch.atoms,
+            batch.distances,
+            batch.edge_types,
+        )
 
         padding_mask = src_tokens.eq(self.padding_idx)
         if not padding_mask.any():
@@ -86,14 +93,20 @@ class UniMol(nn.Module):
             gbf_feature = self.gbf(dist, et)
             gbf_result = self.gbf_proj(gbf_feature)
             graph_attn_bias_inner = gbf_result
-            graph_attn_bias_inner = graph_attn_bias_inner.permute(0, 3, 1, 2).contiguous()
+            graph_attn_bias_inner = graph_attn_bias_inner.permute(
+                0, 3, 1, 2
+            ).contiguous()
             graph_attn_bias_inner = graph_attn_bias_inner.view(-1, n_node, n_node)
             return graph_attn_bias_inner
 
         graph_attn_bias = get_dist_features(src_distance, src_edge_type)
-        encoder_rep, _, _, _, _ = self.encoder(x, padding_mask=padding_mask, attn_mask=graph_attn_bias)
+        encoder_rep, _, _, _, _ = self.encoder(
+            x, padding_mask=padding_mask, attn_mask=graph_attn_bias
+        )
 
-        hidden_state = self.hidden_layer(encoder_rep[:, 0, :])  # take <s> token (equiv. to [CLS])
+        hidden_state = self.hidden_layer(
+            encoder_rep[:, 0, :]
+        )  # take <s> token (equiv. to [CLS])
         logits = self.output_layer(hidden_state)
         return logits
 
