@@ -1,0 +1,6 @@
+{
+  "task_type": "classification",
+  "n_tasks": 1,
+  "classes": [0, 1],
+  "random_split": true
+}

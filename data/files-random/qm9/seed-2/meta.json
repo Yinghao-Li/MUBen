@@ -1,0 +1,6 @@
+{
+  "task_type": "regression",
+  "n_tasks": 3,
+  "classes": null,
+  "random_split": true
+}
