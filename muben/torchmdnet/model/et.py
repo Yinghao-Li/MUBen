@@ -150,7 +150,7 @@ class TorchMDET(nn.Module):
                 self.out_norm_vec = EquivariantLayerNorm(hidden_channels)
             else:
                 raise ValueError(f"{self.layernorm_on_vec} not recognized.")
-            
+
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -174,7 +174,9 @@ class TorchMDET(nn.Module):
 
         edge_attr = self.distance_expansion(edge_weight)
         mask = edge_index[0] != edge_index[1]
-        edge_vec[mask] = edge_vec[mask] / (torch.norm(edge_vec[mask], dim=1).unsqueeze(1) + 1e-9)
+        edge_vec[mask] = edge_vec[mask] / (
+            torch.norm(edge_vec[mask], dim=1).unsqueeze(1) + 1e-9
+        )
 
         if self.neighbor_embedding is not None:
             x = self.neighbor_embedding(z, x, edge_index, edge_weight, edge_attr)
@@ -385,7 +387,9 @@ class EquivariantLayerNorm(nn.Module):
                 torch.empty(self.normalized_shape, **factory_kwargs)
             )
         else:
-            self.register_parameter("weight", None) # Without bias term to preserve equivariance!
+            self.register_parameter(
+                "weight", None
+            )  # Without bias term to preserve equivariance!
 
         self.reset_parameters()
 
@@ -405,9 +409,7 @@ class EquivariantLayerNorm(nn.Module):
         Based on https://github.com/pytorch/pytorch/issues/25481
         """
         _, s, v = matrix.svd()
-        good = (
-            s > s.max(-1, True).values * s.size(-1) * torch.finfo(s.dtype).eps
-        )
+        good = s > s.max(-1, True).values * s.size(-1) * torch.finfo(s.dtype).eps
         components = good.sum(-1)
         common = components.max()
         unbalanced = common != components.min()
@@ -418,12 +420,12 @@ class EquivariantLayerNorm(nn.Module):
                 good = good[..., :common]
         if unbalanced:
             s = s.where(good, torch.zeros((), device=s.device, dtype=s.dtype))
-        return (v * 1 / torch.sqrt(s + self.eps).unsqueeze(-2)) @ v.transpose(
-            -2, -1
-        )
+        return (v * 1 / torch.sqrt(s + self.eps).unsqueeze(-2)) @ v.transpose(-2, -1)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        inputs = inputs.to(torch.float64)  # Need double precision for accurate inversion.
+        inputs = inputs.to(
+            torch.float64
+        )  # Need double precision for accurate inversion.
         inputs = self.mean_center(inputs)
         # We use different diagonal elements in case input matrix is approximately zero,
         # in which case all singular values are equal which is problematic for backprop.
@@ -436,12 +438,11 @@ class EquivariantLayerNorm(nn.Module):
         )
         covar = self.covariance(inputs) + self.eps * reg_matrix
         covar_sqrtinv = self.symsqrtinv(covar)
-        return (covar_sqrtinv @ inputs).to(
-            self.weight.dtype
-        ) * self.weight.reshape(1, 1, self.normalized_shape[0])
+        return (covar_sqrtinv @ inputs).to(self.weight.dtype) * self.weight.reshape(
+            1, 1, self.normalized_shape[0]
+        )
 
     def extra_repr(self) -> str:
-        return (
-            "{normalized_shape}, "
-            "elementwise_linear={elementwise_linear}".format(**self.__dict__)
+        return "{normalized_shape}, " "elementwise_linear={elementwise_linear}".format(
+            **self.__dict__
         )

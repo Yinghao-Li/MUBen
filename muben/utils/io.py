@@ -21,17 +21,28 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["set_log_path", "set_logging", "logging_args", "init_dir", "save_json",  "save_results", "load_results",
-           "load_lmdb", "load_unimol_preprocessed"]
+__all__ = [
+    "set_log_path",
+    "set_logging",
+    "logging_args",
+    "init_dir",
+    "save_json",
+    "save_results",
+    "load_results",
+    "load_lmdb",
+    "load_unimol_preprocessed",
+]
 
 
 def set_log_path(args, time):
     log_path = op.join(
-        'logs', 
+        "logs",
         args.dataset_name,
-        args.model_name if args.feature_type == 'none' else f'{args.model_name}-{args.feature_type}',
+        args.model_name
+        if args.feature_type == "none"
+        else f"{args.model_name}-{args.feature_type}",
         args.uncertainty_method,
-        f'{time}.log'
+        f"{time}.log",
     )
     return log_path
 
@@ -66,17 +77,14 @@ def set_logging(log_path: Optional[str] = None):
             format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
             datefmt="%m/%d/%Y %H:%M:%S",
             level=0,
-            handlers=[
-                stream_handler,
-                file_handler
-            ]
+            handlers=[stream_handler, file_handler],
         )
     else:
         logging.basicConfig(
             format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
             datefmt="%m/%d/%Y %H:%M:%S",
             level=logging.INFO,
-            handlers=[stream_handler]
+            handlers=[stream_handler],
         )
 
     return None
@@ -95,8 +103,13 @@ def logging_args(args):
     -------
     None
     """
-    arg_elements = {attr: getattr(args, attr) for attr in dir(args) if not callable(getattr(args, attr))
-                    and not attr.startswith("__") and not attr.startswith("_")}
+    arg_elements = {
+        attr: getattr(args, attr)
+        for attr in dir(args)
+        if not callable(getattr(args, attr))
+        and not attr.startswith("__")
+        and not attr.startswith("_")
+    }
     logger.info(f"Configurations: ({type(args)})")
     for arg_element, value in arg_elements.items():
         logger.info(f"  {arg_element}: {value}")
@@ -148,7 +161,7 @@ def save_json(obj, path: str, collapse_level: Optional[int] = None):
     if collapse_level:
         json_obj = prettify_json(json_obj, collapse_level=collapse_level)
 
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(json_obj)
 
     return None
@@ -175,10 +188,12 @@ def prettify_json(text, indent=2, collapse_level=4):
     ```
     """
     pattern = r"[\r\n]+ {%d,}" % (indent * collapse_level)
-    text = regex.sub(pattern, ' ', text)
-    text = regex.sub(r'([\[({])+ +', r'\g<1>', text)
-    text = regex.sub(r'[\r\n]+ {%d}([])}])' % (indent * (collapse_level - 1)), r'\g<1>', text)
-    text = regex.sub(r'(\S) +([])}])', r'\g<1>\g<2>', text)
+    text = regex.sub(pattern, " ", text)
+    text = regex.sub(r"([\[({])+ +", r"\g<1>", text)
+    text = regex.sub(
+        r"[\r\n]+ {%d}([])}])" % (indent * (collapse_level - 1)), r"\g<1>", text
+    )
+    text = regex.sub(r"(\S) +([])}])", r"\g<1>\g<2>", text)
     return text
 
 
@@ -195,7 +210,7 @@ def convert_arguments_from_argparse(args):
     -------
     str
     """
-    args_string = ''
+    args_string = ""
     for k, v in args.__dict__.items():
         default_value = f"'{v}'" if isinstance(v, str) else v
         arg_str = f"{k}: Optional[{type(v).__name__}] = field(\n"
@@ -206,7 +221,7 @@ def convert_arguments_from_argparse(args):
 
 
 def save_results(path, preds, variances, lbs, masks):
-    if not path.endswith('.pt'):
+    if not path.endswith(".pt"):
         path = f"{path}.pt"
 
     data_dict = {
@@ -214,7 +229,7 @@ def save_results(path, preds, variances, lbs, masks):
         "preds": preds,
         "vars": variances,
         "lbs": lbs,
-        "masks": masks
+        "masks": masks,
     }
 
     os.makedirs(op.dirname(op.normpath(path)), exist_ok=True)
@@ -231,25 +246,25 @@ def load_results(result_paths):
         results = torch.load(test_result_path)
 
         if lbs is not np.nan:
-            assert (lbs == results['lbs']).all()
+            assert (lbs == results["lbs"]).all()
         else:
-            lbs: np.ndarray = results['lbs']
+            lbs: np.ndarray = results["lbs"]
 
         if masks is not np.nan:
-            assert (masks == results['masks']).all()
+            assert (masks == results["masks"]).all()
         else:
-            masks: np.ndarray = results['masks']
+            masks: np.ndarray = results["masks"]
 
-        if results.get('version', 1) == 1:
-            preds_list.append(results['preds']['preds'])
+        if results.get("version", 1) == 1:
+            preds_list.append(results["preds"]["preds"])
             try:
-                variances_list.append(results['preds']['vars'])
+                variances_list.append(results["preds"]["vars"])
             except KeyError:
                 pass
-        elif results.get('version', 1) == 2:
-            preds_list.append(results['preds'])
+        elif results.get("version", 1) == 2:
+            preds_list.append(results["preds"])
             try:
-                variances_list.append(results['vars'])
+                variances_list.append(results["vars"])
             except KeyError:
                 pass
         else:
@@ -267,7 +282,6 @@ def load_results(result_paths):
 
 
 def load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = False):
-
     """
     Load the lmdb-formatted dataset splits used in Uni-Mol
 
@@ -334,13 +348,13 @@ def load_unimol_preprocessed(data_dir: str):
     """
 
     result_dict = None
-    for partition in ('train', 'valid', 'test'):
+    for partition in ("train", "valid", "test"):
         # read data points
         lmdb_path = os.path.join(data_dir, f"{partition}.lmdb")
         results = load_lmdb(lmdb_path)
 
         if results == -1:
-            raise FileNotFoundError(f'Invalid lmdb path: {lmdb_path}')
+            raise FileNotFoundError(f"Invalid lmdb path: {lmdb_path}")
 
         if result_dict is None:
             result_dict = results
@@ -350,4 +364,3 @@ def load_unimol_preprocessed(data_dir: str):
                 result_dict[k] += results[k]
 
     return result_dict
-

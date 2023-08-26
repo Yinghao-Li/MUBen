@@ -1,3 +1,10 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Validation and prediction test metrics
+"""
+
 
 import numpy as np
 from sklearn.metrics import (
@@ -12,10 +19,12 @@ from typing import Union, List
 __all__ = ["calculate_binary_classification_metrics", "calculate_regression_metrics"]
 
 
-def calculate_binary_classification_metrics(lbs: np.ndarray,
-                                            probs: np.ndarray,
-                                            masks: np.ndarray,
-                                            metrics: Union[str, List[str]]) -> dict:
+def calculate_binary_classification_metrics(
+    lbs: np.ndarray,
+    probs: np.ndarray,
+    masks: np.ndarray,
+    metrics: Union[str, List[str]],
+) -> dict:
     """
     Calculate the classification metrics
 
@@ -36,15 +45,14 @@ def calculate_binary_classification_metrics(lbs: np.ndarray,
     results = dict()
     for metric in metrics:
         if len(lbs.shape) == 1:  # only one task
-
             lbs = lbs[masks]
             probs = probs[masks]
 
-            if metric == 'roc_auc':
+            if metric == "roc_auc":
                 if probs.shape[-1] == 2:
                     probs = probs[..., 1]
                 val = roc_auc_score(lbs, probs)
-            elif metric == 'prc_auc':
+            elif metric == "prc_auc":
                 if probs.shape[-1] == 2:
                     probs = probs[..., 1]
                 p, r, _ = precision_recall_curve(lbs, probs)
@@ -67,12 +75,14 @@ def calculate_binary_classification_metrics(lbs: np.ndarray,
                     continue
                 if (lbs_ < 0).any():
                     raise ValueError("Invalid label value encountered!")
-                if (lbs_ == 0).all() or (lbs_ == 1).all():  # skip tasks with no positive label, as Uni-Mol did.
+
+                # skip tasks with no positive label, as Uni-Mol did.
+                if (lbs_ == 0).all() or (lbs_ == 1).all():
                     continue
 
-                if metric == 'roc_auc':
+                if metric == "roc_auc":
                     vals.append(roc_auc_score(lbs_, probs_))
-                elif metric == 'prc_auc':
+                elif metric == "prc_auc":
                     p, r, _ = precision_recall_curve(lbs_, probs_)
                     vals.append(auc(r, p))
                 else:
@@ -84,10 +94,12 @@ def calculate_binary_classification_metrics(lbs: np.ndarray,
     return results
 
 
-def calculate_regression_metrics(lbs: np.ndarray,
-                                 preds: np.ndarray,
-                                 masks: np.ndarray,
-                                 metrics: Union[str, List[str]]) -> dict:
+def calculate_regression_metrics(
+    lbs: np.ndarray,
+    preds: np.ndarray,
+    masks: np.ndarray,
+    metrics: Union[str, List[str]],
+) -> dict:
     """
     Calculate the regression metrics
 
@@ -111,9 +123,9 @@ def calculate_regression_metrics(lbs: np.ndarray,
 
     results = dict()
     for metric in metrics:
-        if metric == 'rmse':
+        if metric == "rmse":
             val = mean_squared_error(lbs, preds, squared=False)
-        elif metric == 'mae':
+        elif metric == "mae":
             val = mean_absolute_error(lbs, preds)
         else:
             raise NotImplementedError("Metric is not implemented")

@@ -11,10 +11,24 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['DATASET_NAMES', 'CLASSIFICATION_DATASET', 'REGRESSION_DATASET', 'dataset_mapping',
-           'EVAL_METRICS', 'CLASSIFICATION_METRICS', 'REGRESSION_METRICS', 'metrics_mapping',
-           'MODEL_NAMES', 'UncertaintyMethods', 'FINGERPRINT_FEATURE_TYPES',
-           'StrEnum', 'QM_DATASET', 'PC_DATASET', 'BIO_DATASET', 'PHY_DATASET']
+__all__ = [
+    "DATASET_NAMES",
+    "CLASSIFICATION_DATASET",
+    "REGRESSION_DATASET",
+    "dataset_mapping",
+    "EVAL_METRICS",
+    "CLASSIFICATION_METRICS",
+    "REGRESSION_METRICS",
+    "metrics_mapping",
+    "MODEL_NAMES",
+    "UncertaintyMethods",
+    "FINGERPRINT_FEATURE_TYPES",
+    "StrEnum",
+    "QM_DATASET",
+    "PC_DATASET",
+    "BIO_DATASET",
+    "PHY_DATASET",
+]
 
 
 class StrEnum(str, Enum):
@@ -22,7 +36,7 @@ class StrEnum(str, Enum):
     def options(cls):
         opts = list()
         for k, v in cls.__dict__.items():
-            if not k.startswith('_') and k != 'options':
+            if not k.startswith("_") and k != "options":
                 opts.append(v.value)
         return opts
 
@@ -41,57 +55,38 @@ DATASET_NAMES = [
     "clintox",
     "qm7",
     "qm8",
-    "qm9"
+    "qm9",
 ]
 
 CLASSIFICATION_DATASET = [
-    'bace',
-    'bbbp',
-    'clintox',
-    'tox21',
-    'toxcast',
-    'sider',
-    'hiv',
-    'muv'
+    "bace",
+    "bbbp",
+    "clintox",
+    "tox21",
+    "toxcast",
+    "sider",
+    "hiv",
+    "muv",
 ]
 
-REGRESSION_DATASET = [
-    'esol',
-    'freesolv',
-    'lipo',
-    'qm7',
-    'qm8',
-    'qm9'
-]
+REGRESSION_DATASET = ["esol", "freesolv", "lipo", "qm7", "qm8", "qm9"]
 
 # Quantum Mechanics
-QM_DATASET = [
-    "qm7",
-    "qm8",
-    "qm9"
-]
+QM_DATASET = ["qm7", "qm8", "qm9"]
 
 # Physical Chemistry
-PC_DATASET = [
-    "esol",
-    "freesolv",
-    "lipo"
-]
+PC_DATASET = ["esol", "freesolv", "lipo"]
 
 # Biophysics
-BIO_DATASET = [
-    'bace',
-    'hiv',
-    'muv'
-]
+BIO_DATASET = ["bace", "hiv", "muv"]
 
 # Plysiology
 PHY_DATASET = [
-    'bbbp',
-    'clintox',
-    'tox21',
-    'toxcast',
-    'sider',
+    "bbbp",
+    "clintox",
+    "tox21",
+    "toxcast",
+    "sider",
 ]
 
 
@@ -109,7 +104,7 @@ dataset_mapping = {
     "clintox": "ClinTox",
     "qm7": "QM7",
     "qm8": "QM8",
-    "qm9": "QM9"
+    "qm9": "QM9",
 }
 
 EVAL_METRICS = {
@@ -127,47 +122,36 @@ EVAL_METRICS = {
     "clintox": "roc-auc",
     "qm7": "mae",
     "qm8": "mae",
-    "qm9": "mae"
+    "qm9": "mae",
 }
 
-MODEL_NAMES = [
-    "DNN",
-    "ChemBERTa",
-    "GROVER",
-    "Uni-Mol",
-    "TorchMD-NET",
-    "GIN"
-]
+MODEL_NAMES = ["DNN", "ChemBERTa", "GROVER", "Uni-Mol", "TorchMD-NET", "GIN"]
 
-CLASSIFICATION_METRICS = ['roc-auc', 'ece', 'nll', 'brier']
-REGRESSION_METRICS = ['rmse', 'mae', 'nll', 'ce']
+CLASSIFICATION_METRICS = ["roc-auc", "ece", "nll", "brier"]
+REGRESSION_METRICS = ["rmse", "mae", "nll", "ce"]
 metrics_mapping = {
-    'roc-auc': 'ROC-AUC',
-    'ece': 'ECE',
-    'nll': 'NLL',
-    'brier': 'BS',
-    'rmse': 'RMSE',
-    'mae': 'MAE',
-    'ce': 'CE'
+    "roc-auc": "ROC-AUC",
+    "ece": "ECE",
+    "nll": "NLL",
+    "brier": "BS",
+    "rmse": "RMSE",
+    "mae": "MAE",
+    "ce": "CE",
 }
 
 
 class UncertaintyMethods(StrEnum):
-    none = 'none'
-    mc_dropout = 'MCDropout'
-    temperature = 'TemperatureScaling'
-    swag = 'SWAG'
-    bbp = 'BBP'
-    sgld = 'SGLD'
-    ensembles = 'DeepEnsembles'
-    conformal = 'ConformalPrediction'
-    focal = 'FocalLoss'
-    iso = 'IsotonicCalibration',
-    evidential = 'Evidential'
+    none = "none"
+    mc_dropout = "MCDropout"
+    temperature = "TemperatureScaling"
+    swag = "SWAG"
+    bbp = "BBP"
+    sgld = "SGLD"
+    ensembles = "DeepEnsembles"
+    conformal = "ConformalPrediction"
+    focal = "FocalLoss"
+    iso = ("IsotonicCalibration",)
+    evidential = "Evidential"
 
 
-FINGERPRINT_FEATURE_TYPES = [
-    "none",
-    "rdkit",
-    "morgan"
-]
+FINGERPRINT_FEATURE_TYPES = ["none", "rdkit", "morgan"]

@@ -17,7 +17,7 @@ class EquivariantScalar(nn.Module):
                     hidden_channels // 2,
                     1,
                     activation=activation,
-                )
+                ),
             ]
         )
         self.external_output_layer = external_output_layer
@@ -29,7 +29,6 @@ class EquivariantScalar(nn.Module):
             layer.reset_parameters()
 
     def pre_reduce(self, x, v, z, pos, batch):
-
         if self.external_output_layer:
             x, v = self.output_network[0](x, v)
             # include v in output to make sure all parameters have a gradient

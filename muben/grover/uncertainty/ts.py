@@ -1,6 +1,9 @@
 """
-Modified from
-ethen8181.github.io/machine-learning/model_selection/prob_calibration/deeplearning_prob_calibration.html
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Reload the Temperature Scaling UQ method
+               to accomotate GROVER's 2-head output format.
 """
 
 import torch
@@ -14,8 +17,12 @@ class TSModel(nn.Module):
         # the single temperature scaling parameter, the initialization value doesn't
         # seem to matter that much based on some ad-hoc experimentation
         self.model = model
-        self.atom_temperature = nn.Parameter(torch.ones(n_task))  # assign one temperature for each task
-        self.bond_temperature = nn.Parameter(torch.ones(n_task))  # assign one temperature for each task
+        self.atom_temperature = nn.Parameter(
+            torch.ones(n_task)
+        )  # assign one temperature for each task
+        self.bond_temperature = nn.Parameter(
+            torch.ones(n_task)
+        )  # assign one temperature for each task
 
     def forward(self, batch):
         """forward method that returns softmax-ed confidence scores."""
@@ -28,4 +35,3 @@ class TSModel(nn.Module):
         bond_logits_scaled = bond_logits / self.bond_temperature
 
         return atom_logits_scaled, bond_logits_scaled
-

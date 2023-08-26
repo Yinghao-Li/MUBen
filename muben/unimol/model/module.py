@@ -9,11 +9,11 @@ class NonLinearHead(nn.Module):
     """Head for simple classification tasks."""
 
     def __init__(
-            self,
-            input_dim,
-            out_dim,
-            activation_fn,
-            hidden=None,
+        self,
+        input_dim,
+        out_dim,
+        activation_fn,
+        hidden=None,
     ):
         super().__init__()
         hidden = input_dim if not hidden else hidden
@@ -30,9 +30,9 @@ class NonLinearHead(nn.Module):
 
 class DistanceHead(nn.Module):
     def __init__(
-            self,
-            heads,
-            activation_fn,
+        self,
+        heads,
+        activation_fn,
     ):
         super().__init__()
         self.dense = nn.Linear(heads, heads)
@@ -71,7 +71,9 @@ class GaussianLayer(nn.Module):
         """
         Use exp-log-gaussian for numerical stability
         """
-        return torch.exp(-0.5 * ((x - mu) / sigma) ** 2 - torch.log(sigma) - self.half_log_2pi)
+        return torch.exp(
+            -0.5 * ((x - mu) / sigma) ** 2 - torch.log(sigma) - self.half_log_2pi
+        )
 
     def forward(self, x, edge_type):
         mul = self.mul(edge_type)

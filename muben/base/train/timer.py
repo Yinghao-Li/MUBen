@@ -1,3 +1,10 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Simple training timer.
+"""
+
 import time
 import torch
 import numpy as np
@@ -6,8 +13,8 @@ __all__ = ["Timer"]
 
 
 class Timer:
-    def __init__(self, device='cpu'):
-        self._cuda_enabled = torch.device(device).type == 'cuda'
+    def __init__(self, device="cpu"):
+        self._cuda_enabled = torch.device(device).type == "cuda"
         self.start = None
         self.end = None
         self.started_flag = False
@@ -15,7 +22,11 @@ class Timer:
         self.time_elapsed_cache = list()
 
     def init(self, device=None):
-        self._cuda_enabled = torch.device(device).type == 'cuda' if device is not None else self._cuda_enabled
+        self._cuda_enabled = (
+            torch.device(device).type == "cuda"
+            if device is not None
+            else self._cuda_enabled
+        )
         self.start = None
         self.end = None
         self.started_flag = False

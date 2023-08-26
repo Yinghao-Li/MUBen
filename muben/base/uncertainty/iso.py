@@ -1,6 +1,10 @@
 """
-Modified from https://github.com/kage08/DistCal/tree/master
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: regression calibration, modified from https://github.com/kage08/DistCal/tree/master
 """
+
 import torch
 import logging
 import numpy as np
@@ -20,7 +24,9 @@ class IsotonicCalibration:
     def __init__(self, n_task):
         super().__init__()
         self._n_task = n_task
-        self._isotonic_regressors = [IsotonicRegression(out_of_bounds='clip') for _ in range(n_task)]
+        self._isotonic_regressors = [
+            IsotonicRegression(out_of_bounds="clip") for _ in range(n_task)
+        ]
 
     def fit(self, means, variances, lbs, masks) -> "IsotonicCalibration":
         """
@@ -56,8 +62,9 @@ class IsotonicCalibration:
         if len(bool_masks.shape) == 1:
             bool_masks = bool_masks.reshape(-1, 1)
 
-        for task_means, task_vars, task_lbs, task_masks, regressor in \
-                zip(means.T, variances.T, lbs.T, bool_masks.T, self._isotonic_regressors):
+        for task_means, task_vars, task_lbs, task_masks, regressor in zip(
+            means.T, variances.T, lbs.T, bool_masks.T, self._isotonic_regressors
+        ):
             task_means = task_means[task_masks]
             task_vars = task_vars[task_masks]
             task_lbs = task_lbs[task_masks]
@@ -92,23 +99,28 @@ class IsotonicCalibration:
 
         nll_list = list()
         rmse_list = list()
-        for task_means, task_vars, task_lbs, task_masks, regressor in \
-                zip(means.T, variances.T, lbs.T, bool_masks.T, self._isotonic_regressors):
-
+        for task_means, task_vars, task_lbs, task_masks, regressor in zip(
+            means.T, variances.T, lbs.T, bool_masks.T, self._isotonic_regressors
+        ):
             task_means = task_means[task_masks]
             task_vars = task_vars[task_masks]
             task_stds = np.sqrt(task_vars)
             task_lbs = task_lbs[task_masks]
 
-            t_list_test = np.linspace(np.min(task_means) - 16.0 * np.max(task_stds),
-                                      np.max(task_means) + 16.0 * np.max(task_stds),
-                                      n_t_test).reshape(1, -1)
+            t_list_test = np.linspace(
+                np.min(task_means) - 16.0 * np.max(task_stds),
+                np.max(task_means) + 16.0 * np.max(task_stds),
+                n_t_test,
+            ).reshape(1, -1)
 
-            q_base, s_base = get_norm_q(task_means.ravel(), task_stds.ravel(), t_list_test.ravel())
+            q_base, s_base = get_norm_q(
+                task_means.ravel(), task_stds.ravel(), t_list_test.ravel()
+            )
             q_iso = regressor.predict(q_base.ravel()).reshape(np.shape(q_base))
 
-            s_iso = np.diff(q_iso, axis=1) / \
-                (t_list_test[0, 1:] - t_list_test[0, :-1]).ravel().reshape(1, -1).repeat(len(task_lbs), axis=0)
+            s_iso = np.diff(q_iso, axis=1) / (
+                t_list_test[0, 1:] - t_list_test[0, :-1]
+            ).ravel().reshape(1, -1).repeat(len(task_lbs), axis=0)
 
             y_iso = get_y_hat(t_list_test.ravel(), s_iso)
 
@@ -125,7 +137,6 @@ class IsotonicCalibration:
 
 
 def get_iso_cal_table(y, mu, sigma):
-
     q_raw = scipy.stats.norm.cdf(y, loc=mu.reshape(-1, 1), scale=sigma.reshape(-1, 1))
     q_list, idx = np.unique(q_raw, return_inverse=True)
 
@@ -138,7 +149,6 @@ def get_iso_cal_table(y, mu, sigma):
 
 
 def get_cal_table_test(mu, sigma, t_list_test):
-
     n_t = np.shape(t_list_test)[1]
 
     n_y = np.shape(mu)[0]
@@ -161,7 +171,6 @@ def get_cal_table_test(mu, sigma, t_list_test):
 
 
 def get_norm_q(mu, sigma, t_list):
-
     q = np.zeros([len(mu), len(t_list)])
 
     s = np.zeros([len(mu), len(t_list)])
@@ -174,7 +183,6 @@ def get_norm_q(mu, sigma, t_list):
 
 
 def get_log_loss(y, t_list, density_hat):
-
     t_list_hat = (t_list[0:-1] + t_list[1:]) / 2
 
     ll = np.zeros(len(y))
@@ -190,7 +198,6 @@ def get_log_loss(y, t_list, density_hat):
 
 
 def get_y_hat(t_list, density_hat):
-
     n_y, n_t = np.shape(density_hat)
 
     t_list_hat = (t_list[0:-1] + t_list[1:]) / 2
@@ -198,16 +205,13 @@ def get_y_hat(t_list, density_hat):
     y_hat = np.zeros(n_y)
 
     if len(t_list_hat) == n_t:
-
         for i in range(0, n_y):
-
             y_py = t_list_hat * density_hat[i, :]
 
             y_hat[i] = scipy.integrate.trapz(y_py, t_list_hat)
 
     else:
         for i in range(0, n_y):
-
             y_py = t_list * density_hat[i, :]
 
             y_hat[i] = scipy.integrate.trapz(y_py, t_list)
@@ -216,7 +220,6 @@ def get_y_hat(t_list, density_hat):
 
 
 def get_y_var(t_list, density_hat):
-
     n_y, n_t = np.shape(density_hat)
 
     t_list_hat = (t_list[0:-1] + t_list[1:]) / 2
@@ -225,17 +228,14 @@ def get_y_var(t_list, density_hat):
     y_var = np.zeros(n_y)
 
     if len(t_list_hat) == n_t:
-
         for i in range(0, n_y):
-
-            y_py = ((t_list_hat-y_hat[i])**2) * density_hat[i, :]
+            y_py = ((t_list_hat - y_hat[i]) ** 2) * density_hat[i, :]
 
             y_var[i] = scipy.integrate.trapz(y_py, t_list_hat)
 
     else:
         for i in range(0, n_y):
-
-            y_py = ((t_list - y_hat[i])**2) * density_hat[i, :]
+            y_py = ((t_list - y_hat[i]) ** 2) * density_hat[i, :]
 
             y_var[i] = scipy.integrate.trapz(y_py, t_list)
 
@@ -243,14 +243,12 @@ def get_y_var(t_list, density_hat):
 
 
 def get_se(y, y_hat):
-
-    se = (np.squeeze(y) - np.squeeze(y_hat))**2
+    se = (np.squeeze(y) - np.squeeze(y_hat)) ** 2
 
     return se
 
 
 def get_q_y(y, q, t_list):
-
     q_y = np.zeros(len(y))
 
     for i in range(0, len(y)):
@@ -261,7 +259,6 @@ def get_q_y(y, q, t_list):
 
 
 def get_cal_error(q_y):
-
     ce = np.zeros(20)
 
     q_list = np.linspace(0, 1, 21)[1:-1]
@@ -271,7 +268,7 @@ def get_cal_error(q_y):
     for i in range(0, len(q_list)):
         q_hat[i] = np.mean(q_y <= q_list[i])
 
-    ce[1:20] = (q_list.ravel() - q_hat.ravel())**2
+    ce[1:20] = (q_list.ravel() - q_hat.ravel()) ** 2
 
     ce[0] = np.mean(ce[1:20])
 

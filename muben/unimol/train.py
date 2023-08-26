@@ -18,14 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer, ABC):
-    def __init__(self,
-                 config,
-                 training_dataset=None,
-                 valid_dataset=None,
-                 test_dataset=None,
-                 collate_fn=None,
-                 dictionary=None):
-
+    def __init__(
+        self,
+        config,
+        training_dataset=None,
+        valid_dataset=None,
+        test_dataset=None,
+        collate_fn=None,
+        dictionary=None,
+    ):
         # this should be before super.__init__ as we require self.dictionary to initialize model
         if dictionary is None:
             self.dictionary = Dictionary.load()
@@ -41,7 +42,7 @@ class Trainer(BaseTrainer, ABC):
             training_dataset=training_dataset,
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
-            collate_fn=collate_fn
+            collate_fn=collate_fn,
         )
 
     @property
@@ -52,7 +53,7 @@ class Trainer(BaseTrainer, ABC):
         self._model = UniMol(self.config, self.dictionary)
 
         state = load_checkpoint_to_cpu(self.config.checkpoint_path)
-        model_loading_info = self._model.load_state_dict(state['model'], strict=False)
+        model_loading_info = self._model.load_state_dict(state["model"], strict=False)
         logger.info(model_loading_info)
         return self
 
@@ -60,18 +61,34 @@ class Trainer(BaseTrainer, ABC):
         # Original implementation seems set weight decay to 0, which is weird.
         # We'll keep it as default here
         params = [p for p in self.model.parameters() if p.requires_grad]
-        self._optimizer = AdamW(params, lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
+        self._optimizer = AdamW(params, lr=self._status.lr, betas=(0.9, 0.99), eps=1e-6)
 
         # for sgld compatibility
         if self.config.uncertainty_method == UncertaintyMethods.sgld:
-            output_param_ids = [id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]]
-            backbone_params = filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
-            output_params = filter(lambda p: id(p) in output_param_ids, self._model.parameters())
+            output_param_ids = [
+                id(x[1])
+                for x in self._model.named_parameters()
+                if "output_layer" in x[0]
+            ]
+            backbone_params = filter(
+                lambda p: id(p) not in output_param_ids, self._model.parameters()
+            )
+            output_params = filter(
+                lambda p: id(p) in output_param_ids, self._model.parameters()
+            )
 
-            self._optimizer = AdamW(backbone_params, lr=self._status.lr, betas=(0.9, 0.99), eps=1E-6)
-            sgld_optimizer = PSGLDOptimizer if self.config.apply_preconditioned_sgld else SGLDOptimizer
+            self._optimizer = AdamW(
+                backbone_params, lr=self._status.lr, betas=(0.9, 0.99), eps=1e-6
+            )
+            sgld_optimizer = (
+                PSGLDOptimizer
+                if self.config.apply_preconditioned_sgld
+                else SGLDOptimizer
+            )
             self._sgld_optimizer = sgld_optimizer(
-                output_params, lr=self._status.lr, norm_sigma=self.config.sgld_prior_sigma
+                output_params,
+                lr=self._status.lr,
+                norm_sigma=self.config.sgld_prior_sigma,
             )
 
         return None
@@ -79,9 +96,11 @@ class Trainer(BaseTrainer, ABC):
     def ts_session(self):
         # update hyper parameters
         self._status.lr = self.config.ts_lr
-        self._status.lr_scheduler_type = 'constant'
+        self._status.lr_scheduler_type = "constant"
         self._status.n_epochs = self.config.n_ts_epochs
-        self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
+        self._status.valid_epoch_interval = (
+            0  # Can also set this to None; disable validation
+        )
 
         self.model.to(self._device)
         self.freeze()
@@ -92,30 +111,36 @@ class Trainer(BaseTrainer, ABC):
         self.initialize_loss(disable_focal_loss=True)
 
         logger.info("Training model on validation")
-        self._valid_dataset.set_processor_variant('training')
+        self._valid_dataset.set_processor_variant("training")
         self.train(use_valid_dataset=True)
-        self._valid_dataset.set_processor_variant('inference')
+        self._valid_dataset.set_processor_variant("inference")
 
         self.unfreeze()
         return self
 
     def process_logits(self, logits: np.ndarray):
-
         preds = super().process_logits(logits)
 
         if isinstance(preds, np.ndarray):
             pred_instance_shape = preds.shape[1:]
 
-            preds = preds.reshape((-1, self.config.n_conformation, *pred_instance_shape))
+            preds = preds.reshape(
+                (-1, self.config.n_conformation, *pred_instance_shape)
+            )
             return preds.mean(axis=1)
 
         elif isinstance(preds, tuple):
             pred_instance_shape = preds[0].shape[1:]
 
             # this could be improved for deep ensembles
-            return tuple([p.reshape(
-                (-1, self.config.n_conformation, *pred_instance_shape)
-            ).mean(axis=1) for p in preds])
+            return tuple(
+                [
+                    p.reshape(
+                        (-1, self.config.n_conformation, *pred_instance_shape)
+                    ).mean(axis=1)
+                    for p in preds
+                ]
+            )
 
         else:
             raise TypeError(f"Unsupported prediction type {type(preds)}")

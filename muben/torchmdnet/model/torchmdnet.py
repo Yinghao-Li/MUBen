@@ -47,23 +47,24 @@ class TorchMDNET(nn.Module):
         self.output_model = EquivariantScalar(
             config["embedding_dimension"],
             config["activation"],
-            external_output_layer=True
+            external_output_layer=True,
         )
         self.output_model_noise = EquivariantVectorOutput(
-            config["embedding_dimension"],
-            config["activation"]
+            config["embedding_dimension"], config["activation"]
         )
 
         self.dropout = nn.Dropout(config.dropout)
         self.activation = act_class_mapping[config.activation]()
-        self.linear = nn.Linear(config.embedding_dimension // 2, config.embedding_dimension // 2)
+        self.linear = nn.Linear(
+            config.embedding_dimension // 2, config.embedding_dimension // 2
+        )
 
         self.output_layer = OutputLayer(
             config.embedding_dimension // 2,
             config.n_lbs * config.n_tasks,
             config.uncertainty_method,
             task_type=config.task_type,
-            bbp_prior_sigma=config.bbp_prior_sigma
+            bbp_prior_sigma=config.bbp_prior_sigma,
         )
 
         self.reset_parameters()
@@ -76,8 +77,9 @@ class TorchMDNET(nn.Module):
         return None
 
     def load_from_checkpoint(self, ckpt):
-
-        state_dict = {re.sub(r"^model\.", "", k): v for k, v in ckpt["state_dict"].items()}
+        state_dict = {
+            re.sub(r"^model\.", "", k): v for k, v in ckpt["state_dict"].items()
+        }
         loading_return = self.load_state_dict(state_dict, strict=False)
 
         if len(loading_return.unexpected_keys) > 0:
@@ -93,14 +95,18 @@ class TorchMDNET(nn.Module):
         assert atoms.dim() == 1 and atoms.dtype == torch.long
 
         # run the representation model
-        hidden, v, atoms, coords, batch = self.representation_model(atoms, coords, batch=mol_ids)
+        hidden, v, atoms, coords, batch = self.representation_model(
+            atoms, coords, batch=mol_ids
+        )
 
         # apply the output network
         hidden = self.output_model.pre_reduce(hidden, v, atoms, coords, mol_ids)
         # aggregate atoms
         hidden = scatter(hidden, mol_ids, dim=0, reduce="add")
 
-        out = self.output_layer(self.dropout(self.activation(self.linear(self.dropout(hidden)))))
+        out = self.output_layer(
+            self.dropout(self.activation(self.linear(self.dropout(hidden))))
+        )
 
         return out
 

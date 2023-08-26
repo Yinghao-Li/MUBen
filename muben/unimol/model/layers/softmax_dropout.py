@@ -2,11 +2,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch
 import torch.nn.functional as F
 
 
-def softmax_dropout(input, dropout_prob, is_training=True, mask=None, bias=None, inplace=True):
+def softmax_dropout(
+    input, dropout_prob, is_training=True, mask=None, bias=None, inplace=True
+):
     """softmax dropout, and mask, bias are optional.
     Args:
         input (torch.Tensor): input tensor

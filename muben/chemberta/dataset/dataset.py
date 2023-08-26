@@ -1,10 +1,14 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Dataset for ChemBERTa.
+"""
+
 import logging
 
 from transformers import AutoTokenizer
-from muben.base.dataset import (
-    pack_instances,
-    Dataset as BaseDataset
-)
+from muben.base.dataset import pack_instances, Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +29,14 @@ class Dataset(BaseDataset):
         """
         tokenizer_name = config.pretrained_model_name_or_path
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
-        tokenized_instances = tokenizer(self._smiles, add_special_tokens=True, truncation=True)
+        tokenized_instances = tokenizer(
+            self._smiles, add_special_tokens=True, truncation=True
+        )
 
         self._atom_ids = tokenized_instances.input_ids
 
     def get_instances(self):
-
-        data_instances = pack_instances(atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks)
+        data_instances = pack_instances(
+            atom_ids=self._atom_ids, lbs=self.lbs, masks=self.masks
+        )
         return data_instances

@@ -52,7 +52,7 @@ def move_to_cuda(sample, device=None):
 
 
 def get_activation_fn(activation: str) -> Callable:
-    """ Returns the activation function corresponding to `activation` """
+    """Returns the activation function corresponding to `activation`"""
 
     if activation == "relu":
         return F.relu

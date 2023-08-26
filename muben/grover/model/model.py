@@ -32,16 +32,18 @@ class GROVEREmbedding(nn.Module):
         self.embedding_output_type = args.embedding_output_type
         edge_dim = get_bond_fdim() + get_atom_fdim()
         node_dim = get_atom_fdim()
-        self.encoders = GTransEncoder(args,
-                                      hidden_size=args.hidden_size,
-                                      edge_fdim=edge_dim,
-                                      node_fdim=node_dim,
-                                      dropout=args.dropout,
-                                      activation=args.activation,
-                                      num_mt_block=args.num_mt_block,
-                                      num_attn_head=args.num_attn_head,
-                                      atom_emb_output=self.embedding_output_type,
-                                      bias=args.bias)
+        self.encoders = GTransEncoder(
+            args,
+            hidden_size=args.hidden_size,
+            edge_fdim=edge_dim,
+            node_fdim=node_dim,
+            dropout=args.dropout,
+            activation=args.activation,
+            num_mt_block=args.num_mt_block,
+            num_attn_head=args.num_attn_head,
+            atom_emb_output=self.embedding_output_type,
+            bias=args.bias,
+        )
 
     def forward(self, graph_batch: List) -> Dict:
         """
@@ -52,15 +54,27 @@ class GROVEREmbedding(nn.Module):
         :return: a dict containing the embedding results.
         """
         output = self.encoders(graph_batch)
-        if self.embedding_output_type == 'atom':
-            return {"atom_from_atom": output[0], "atom_from_bond": output[1],
-                    "bond_from_atom": None, "bond_from_bond": None}  # atom_from_atom, atom_from_bond
-        elif self.embedding_output_type == 'bond':
-            return {"atom_from_atom": None, "atom_from_bond": None,
-                    "bond_from_atom": output[0], "bond_from_bond": output[1]}  # bond_from_atom, bond_from_bond
+        if self.embedding_output_type == "atom":
+            return {
+                "atom_from_atom": output[0],
+                "atom_from_bond": output[1],
+                "bond_from_atom": None,
+                "bond_from_bond": None,
+            }  # atom_from_atom, atom_from_bond
+        elif self.embedding_output_type == "bond":
+            return {
+                "atom_from_atom": None,
+                "atom_from_bond": None,
+                "bond_from_atom": output[0],
+                "bond_from_bond": output[1],
+            }  # bond_from_atom, bond_from_bond
         elif self.embedding_output_type == "both":
-            return {"atom_from_atom": output[0][0], "bond_from_atom": output[0][1],
-                    "atom_from_bond": output[1][0], "bond_from_bond": output[1][1]}
+            return {
+                "atom_from_atom": output[0][0],
+                "bond_from_atom": output[0][1],
+                "atom_from_bond": output[1][0],
+                "bond_from_bond": output[1][1],
+            }
 
 
 def create_ffn(config):
@@ -81,18 +95,22 @@ def create_ffn(config):
     else:
         ffn = [
             nn.Dropout(config.dropout),
-            nn.Linear(first_linear_dim, config.ffn_hidden_size)
+            nn.Linear(first_linear_dim, config.ffn_hidden_size),
         ]
         for _ in range(config.ffn_num_layers - 2):
-            ffn.extend([
+            ffn.extend(
+                [
+                    activation,
+                    nn.Dropout(config.dropout),
+                    nn.Linear(config.ffn_hidden_size, config.ffn_hidden_size),
+                ]
+            )
+        ffn.extend(
+            [
                 activation,
                 nn.Dropout(config.dropout),
-                nn.Linear(config.ffn_hidden_size, config.ffn_hidden_size),
-            ])
-        ffn.extend([
-            activation,
-            nn.Dropout(config.dropout),
-        ])
+            ]
+        )
 
     # Create FFN model
     return nn.Sequential(*ffn)
@@ -102,6 +120,7 @@ class GROVERFinetuneModel(nn.Module):
     """
     The finetune
     """
+
     def __init__(self, config):
         super(GROVERFinetuneModel, self).__init__()
 
@@ -116,17 +135,17 @@ class GROVERFinetuneModel(nn.Module):
 
         self.atom_output_layer = OutputLayer(
             config.ffn_hidden_size,
-            config.n_lbs*config.n_tasks,
+            config.n_lbs * config.n_tasks,
             config.uncertainty_method,
             task_type=config.task_type,
-            bbp_prior_sigma=config.bbp_prior_sigma
+            bbp_prior_sigma=config.bbp_prior_sigma,
         )
         self.bond_output_layer = OutputLayer(
             config.ffn_hidden_size,
-            config.n_lbs*config.n_tasks,
+            config.n_lbs * config.n_tasks,
             config.uncertainty_method,
             task_type=config.task_type,
-            bbp_prior_sigma=config.bbp_prior_sigma
+            bbp_prior_sigma=config.bbp_prior_sigma,
         )
 
     def init_backbone_weights(self):
@@ -164,8 +183,10 @@ def load_checkpoint(config):
     """
 
     # Load model and args
-    state = torch.load(config.checkpoint_path, map_location=lambda storage, loc: storage)
-    args, loaded_state_dict = state['args'], state['state_dict']
+    state = torch.load(
+        config.checkpoint_path, map_location=lambda storage, loc: storage
+    )
+    args, loaded_state_dict = state["args"], state["state_dict"]
     model_args = get_model_args()
 
     if config is not None:
@@ -182,14 +203,21 @@ def load_checkpoint(config):
     for param_name in loaded_state_dict.keys():
         new_param_name = param_name
         if new_param_name not in model_state_dict:
-            logger.info(f'Pretrained parameter "{param_name}" cannot be found in model parameters.')
-        elif model_state_dict[new_param_name].shape != loaded_state_dict[param_name].shape:
-            logger.info(f'Pretrained parameter "{param_name}" '
-                        f'of shape {loaded_state_dict[param_name].shape} does not match corresponding '
-                        f'model parameter of shape {model_state_dict[new_param_name].shape}.')
+            logger.info(
+                f'Pretrained parameter "{param_name}" cannot be found in model parameters.'
+            )
+        elif (
+            model_state_dict[new_param_name].shape
+            != loaded_state_dict[param_name].shape
+        ):
+            logger.info(
+                f'Pretrained parameter "{param_name}" '
+                f"of shape {loaded_state_dict[param_name].shape} does not match corresponding "
+                f"model parameter of shape {model_state_dict[new_param_name].shape}."
+            )
         else:
             pretrained_state_dict[new_param_name] = loaded_state_dict[param_name]
-    logger.info(f'Pretrained parameter loaded.')
+    logger.info(f"Pretrained parameter loaded.")
     # Load pretrained weights
     model_state_dict.update(pretrained_state_dict)
     model.load_state_dict(model_state_dict)

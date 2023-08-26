@@ -71,6 +71,8 @@ You need to specify the `--checkpoint_path` argument if you prefer other locatio
 
 ## 3. RUN
 
+> A simple demo of running our project can be found at `<project root>/demo/demo.ipynb`.
+
 To run each of the four backbone models with uncertainty estimation methods, you can check the `run_*.py` files in the root directory.
 Example shell scripts are provided in the `./scripts` folder as `.sh` files.
 You can use them through

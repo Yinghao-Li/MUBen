@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Reload Gaussian NLL loss function to accept 
+               a logit Tensor of shape (..., 2) as input.
+"""
+
 
 from torch import Tensor
 from torch.nn import GaussianNLLLoss as GaussianNLLLossBase

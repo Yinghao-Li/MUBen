@@ -1,5 +1,8 @@
 """
-Focal loss with adaptive gamma, as proposed in https://arxiv.org/pdf/2006.15607.pdf
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Focal loss with adaptive gamma, as proposed in https://arxiv.org/pdf/2006.15607.pdf
 """
 
 import torch.nn as nn
@@ -9,8 +12,7 @@ __all__ = ["SigmoidFocalLoss"]
 
 
 class SigmoidFocalLoss(nn.Module):
-
-    def __init__(self, gamma_threshold=0.25, gamma=2, reduction: str = 'none'):
+    def __init__(self, gamma_threshold=0.25, gamma=2, reduction: str = "none"):
         """
         Initialize the Focal Loss.
         The parameters are defined in the paper and theoretically do not need to modify
@@ -26,6 +28,10 @@ class SigmoidFocalLoss(nn.Module):
 
     def forward(self, inputs, targets):
         loss = sigmoid_focal_loss(
-            inputs=inputs, targets=targets, alpha=self.gamma_threshold, gamma=self.gamma, reduction=self.reduction
+            inputs=inputs,
+            targets=targets,
+            alpha=self.gamma_threshold,
+            gamma=self.gamma,
+            reduction=self.reduction,
         )
         return loss

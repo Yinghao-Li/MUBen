@@ -1,3 +1,10 @@
+"""
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Compare the results of different experimental settings.
+"""
+
 import sys
 import logging
 import os.path as op
@@ -29,6 +36,7 @@ CLASSIFICATION_METRICS = ["roc-auc", "ece", "nll", "brier"]
 REGRESSION_METRICS = ["rmse", "mae", "nll", "ce"]
 
 DATASETS = ["bace", "bbbp", "clintox", "esol", "freesolv", "lipo", "tox21", "qm7"]
+
 
 @dataclass
 class Arguments:

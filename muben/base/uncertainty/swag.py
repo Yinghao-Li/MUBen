@@ -1,8 +1,10 @@
 """
-Implements SWA and SWAG algorithms: https://arxiv.org/abs/1902.02476
-
-Modified from the PyTorch implementation at torch.optim.swa_utils.py
-and the original SWAG repo: https://github.com/wjmaddox/swa_gaussian/blob/master/swag/posteriors/swag.py
+# Author: Yinghao Li
+# Modified: August 23rd, 2023
+# ---------------------------------------
+# Description: Implements SWA and SWAG algorithms: https://arxiv.org/abs/1902.02476
+               Modified from the PyTorch implementation at torch.optim.swa_utils.py
+               and the original SWAG repo: https://github.com/wjmaddox/swa_gaussian/blob/master/swag/posteriors/swag.py
 """
 
 import torch
@@ -60,7 +62,7 @@ class SWAModel(Module):
         https://arxiv.org/abs/2001.02312
     """
 
-    def __init__(self, model, k_models, var_clamp=1e-30, device='cpu'):
+    def __init__(self, model, k_models, var_clamp=1e-30, device="cpu"):
         super(SWAModel, self).__init__()
 
         self.module = deepcopy(model)
@@ -73,17 +75,19 @@ class SWAModel(Module):
             name = regex.sub(r"\.", "_", name)
             self.register_buffer(f"{name}_Mean", torch.zeros_like(param.data))
             self.register_buffer(f"{name}_SqMean", torch.zeros_like(param.data))
-            self.register_buffer(f"{name}_CovMatSqrt", torch.zeros((1, param.data.numel())))
+            self.register_buffer(
+                f"{name}_CovMatSqrt", torch.zeros((1, param.data.numel()))
+            )
 
-        self.register_buffer('n_averaged', torch.tensor(0, dtype=torch.long, device=device))
+        self.register_buffer(
+            "n_averaged", torch.tensor(0, dtype=torch.long, device=device)
+        )
 
     def forward(self, *args, **kwargs):
         return self.module(*args, **kwargs)
 
     def update_parameters(self, model):
-
         for name, params in model.named_parameters():
-
             name_ = regex.sub(r"\.", "_", name)
 
             mean = self.__getattr__(f"{name_}_Mean")
@@ -97,10 +101,13 @@ class SWAModel(Module):
 
             else:
                 # first moment
-                mean = mean * n_averaged / (n_averaged + 1.0) + params.data.cpu() / (n_averaged + 1.0)
+                mean = mean * n_averaged / (n_averaged + 1.0) + params.data.cpu() / (
+                    n_averaged + 1.0
+                )
                 # second moment
-                sq_mean = sq_mean * n_averaged / (n_averaged + 1.0) + \
-                    params.data.square().cpu() / (n_averaged + 1.0)
+                sq_mean = sq_mean * n_averaged / (
+                    n_averaged + 1.0
+                ) + params.data.square().cpu() / (n_averaged + 1.0)
                 # block covariance matrices, store deviation from current mean
                 dev = (params.data.cpu() - mean).view(-1, 1)
                 cov_mat_sqrt = torch.cat((cov_mat_sqrt, dev.view(-1, 1).T), dim=0)
@@ -117,11 +124,9 @@ class SWAModel(Module):
         return self
 
     def sample_parameters(self):
-
         scale = torch.sqrt(torch.tensor(0.5))
 
         for name, _ in self.module.named_parameters():
-
             name_ = regex.sub(r"\.", "_", name)
 
             mean = self.__getattr__(f"{name_}_Mean").cpu()
@@ -129,11 +134,13 @@ class SWAModel(Module):
             cov_mat_sqrt = self.__getattr__(f"{name_}_CovMatSqrt").cpu()
 
             eps = torch.randn_like(mean)
-            var = torch.clamp(sq_mean - mean ** 2, self.var_clamp)
+            var = torch.clamp(sq_mean - mean**2, self.var_clamp)
             scaled_diag_sample = scale * torch.sqrt(var) * eps
 
             eps = torch.randn((cov_mat_sqrt.shape[0], 1))
-            cov_sample = (scale / (self.k_models - 1) ** 0.5) * cov_mat_sqrt.T.matmul(eps).view_as(mean)
+            cov_sample = (scale / (self.k_models - 1) ** 0.5) * cov_mat_sqrt.T.matmul(
+                eps
+            ).view_as(mean)
 
             w = mean + scaled_diag_sample + cov_sample
 
@@ -143,7 +150,7 @@ class SWAModel(Module):
 
 
 @torch.no_grad()
-def update_bn(model, training_loader, device: str = 'cpu'):
+def update_bn(model, training_loader, device: str = "cpu"):
     r"""
     Updates BatchNorm running_mean, running_var buffers in the model.
 
