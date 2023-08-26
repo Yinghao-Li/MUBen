@@ -73,13 +73,13 @@ class Dataset(BaseDataset):
         """
         return MolGraphAttrs().from_mol_graph(MolGraph(smiles))
 
-    def get_instances(self) -> List[object]:
+    def get_instances(self) -> list[dict]:
         """
         Get data instances packed with molecule graphs, labels, and masks.
 
         Returns
         -------
-        list of objects
+        list of dicts
             Data instances containing molecule graphs, labels, and masks.
         """
         data_instances = pack_instances(
