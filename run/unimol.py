@@ -28,6 +28,7 @@ def main(args: Arguments):
     # --- construct and validate configuration ---
     config = Config().from_args(args).get_meta().validate().log()
 
+    # --- initialize wandb ---
     if args.apply_wandb and args.wandb_api_key:
         wandb.login(key=args.wandb_api_key)
 
@@ -41,6 +42,7 @@ def main(args: Arguments):
     dictionary = Dictionary.load()
     dictionary.add_symbol("[MASK]", is_special=True)
 
+    # --- prepare dataset ---
     training_dataset = Dataset().prepare(
         config=config, partition="train", dictionary=dictionary
     )
@@ -51,6 +53,7 @@ def main(args: Arguments):
         config=config, partition="test", dictionary=dictionary
     )
 
+    # --- initialize trainer ---
     trainer = Trainer(
         config=config,
         training_dataset=training_dataset,
@@ -59,6 +62,7 @@ def main(args: Arguments):
         dictionary=dictionary,
     )
 
+    # --- run training and testing ---
     trainer.run()
 
     return None
