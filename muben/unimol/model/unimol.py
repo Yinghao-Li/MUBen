@@ -1,11 +1,12 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: The Uni-Mol model, modified from
-               https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
+# Description: The Uni-Mol model
+# Reference: Modified from https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
 """
 
+# Original copyright:
 # Copyright (c) DP Technology.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -22,7 +23,21 @@ logger = logging.getLogger(__name__)
 
 
 class UniMol(nn.Module):
+    """
+    Uni-Mol model for molecular structure analysis.
+    """
+
     def __init__(self, config, dictionary):
+        """
+        Initialize the UniMol model.
+
+        Parameters
+        ----------
+        config : Configuration
+            The configuration object containing model hyperparameters.
+        dictionary : Dictionary
+            The dictionary object mapping tokens to integers.
+        """
         super().__init__()
         self.config = config
         self.padding_idx = dictionary.pad()
@@ -77,6 +92,19 @@ class UniMol(nn.Module):
         )
 
     def forward(self, batch, **kwargs):
+        """
+        Defines the computation performed at every call.
+
+        Parameters
+        ----------
+        batch : Batch
+            A batch of input data.
+
+        Returns
+        -------
+        torch.Tensor
+            Logits produced by the model.
+        """
         src_tokens, src_distance, src_edge_type = (
             batch.atoms,
             batch.distances,
@@ -96,7 +124,9 @@ class UniMol(nn.Module):
             graph_attn_bias_inner = graph_attn_bias_inner.permute(
                 0, 3, 1, 2
             ).contiguous()
-            graph_attn_bias_inner = graph_attn_bias_inner.view(-1, n_node, n_node)
+            graph_attn_bias_inner = graph_attn_bias_inner.view(
+                -1, n_node, n_node
+            )
             return graph_attn_bias_inner
 
         graph_attn_bias = get_dist_features(src_distance, src_edge_type)
@@ -109,10 +139,3 @@ class UniMol(nn.Module):
         )  # take <s> token (equiv. to [CLS])
         logits = self.output_layer(hidden_state)
         return logits
-
-    def set_num_updates(self, num_updates):
-        """State from trainer to pass along to model at every update."""
-        self._num_updates = num_updates
-
-    def get_num_updates(self):
-        return self._num_updates

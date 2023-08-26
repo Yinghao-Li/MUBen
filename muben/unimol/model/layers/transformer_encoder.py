@@ -30,7 +30,9 @@ def init_bert_params(module):
             module.weight.data[module.padding_idx].zero_()
 
 
-def relative_position_bucket(relative_position, num_buckets=32, max_distance=128):
+def relative_position_bucket(
+    relative_position, num_buckets=32, max_distance=128
+):
     sign = torch.sign(relative_position)
     num_buckets //= 2
     n = torch.abs(relative_position)
@@ -145,7 +147,9 @@ class TransformerEncoder(nn.Module):
             x = x * (1 - padding_mask.unsqueeze(-1).type_as(x))
 
         rel_pos_bias = (
-            self.get_rel_pos_bias(x).repeat(x.size(0), 1, 1) if self.rel_pos else None
+            self.get_rel_pos_bias(x).repeat(x.size(0), 1, 1)
+            if self.rel_pos
+            else None
         )
         if attn_mask is None:
             attn_mask = rel_pos_bias
@@ -156,7 +160,8 @@ class TransformerEncoder(nn.Module):
             # merge key_padding_mask and attn_mask
             attn_mask = attn_mask.view(x.size(0), -1, seq_len, seq_len)
             attn_mask.masked_fill_(
-                padding_mask.unsqueeze(1).unsqueeze(2).to(torch.bool), float("-inf")
+                padding_mask.unsqueeze(1).unsqueeze(2).to(torch.bool),
+                float("-inf"),
             )
             attn_mask = attn_mask.view(-1, seq_len, seq_len)
             padding_mask = None

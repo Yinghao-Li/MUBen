@@ -1,3 +1,9 @@
+"""
+# Modified: August 26th, 2023
+# ---------------------------------------
+# Description: Equivariant Transformer Network Components.
+# Reference: https://github.com/shehzaidi/pre-training-via-denoising.
+"""
 import math
 import torch
 from torch import nn
@@ -7,7 +13,29 @@ from torch_cluster import radius_graph
 
 
 class NeighborEmbedding(MessagePassing):
-    def __init__(self, hidden_channels, num_rbf, cutoff_lower, cutoff_upper, max_z=100):
+    """
+    Create an embedding for the neighbors of each node in the graph.
+
+    This class uses a Message Passing mechanism to create an embedding for
+    each neighbor in the graph.
+
+    Parameters
+    ----------
+    hidden_channels : int
+        The number of channels in the hidden layer.
+    num_rbf : int
+        Number of radial basis functions.
+    cutoff_lower : float
+        Lower bound of the cutoff function.
+    cutoff_upper : float
+        Upper bound of the cutoff function.
+    max_z : int, optional, default=100
+        Maximum number of atomic numbers to consider in the embedding.
+    """
+
+    def __init__(
+        self, hidden_channels, num_rbf, cutoff_lower, cutoff_upper, max_z=100
+    ):
         super(NeighborEmbedding, self).__init__(aggr="add")
         self.embedding = nn.Embedding(max_z, hidden_channels)
         self.distance_proj = nn.Linear(num_rbf, hidden_channels)
@@ -45,7 +73,26 @@ class NeighborEmbedding(MessagePassing):
 
 
 class GaussianSmearing(nn.Module):
-    def __init__(self, cutoff_lower=0.0, cutoff_upper=5.0, num_rbf=50, trainable=True):
+    """
+    Implements Gaussian smearing of distances.
+
+    Smearing functions are used to create a smooth representation of distances.
+
+    Parameters
+    ----------
+    cutoff_lower : float, optional, default=0.0
+        Lower bound for the smearing function.
+    cutoff_upper : float, optional, default=5.0
+        Upper bound for the smearing function.
+    num_rbf : int, optional, default=50
+        Number of radial basis functions.
+    trainable : bool, optional, default=True
+        If True, the parameters of smearing can be optimized.
+    """
+
+    def __init__(
+        self, cutoff_lower=0.0, cutoff_upper=5.0, num_rbf=50, trainable=True
+    ):
         super(GaussianSmearing, self).__init__()
         self.cutoff_lower = cutoff_lower
         self.cutoff_upper = cutoff_upper
@@ -61,7 +108,9 @@ class GaussianSmearing(nn.Module):
             self.register_buffer("offset", offset)
 
     def _initial_params(self):
-        offset = torch.linspace(self.cutoff_lower, self.cutoff_upper, self.num_rbf)
+        offset = torch.linspace(
+            self.cutoff_lower, self.cutoff_upper, self.num_rbf
+        )
         coeff = -0.5 / (offset[1] - offset[0]) ** 2
         return offset, coeff
 
@@ -76,7 +125,24 @@ class GaussianSmearing(nn.Module):
 
 
 class ExpNormalSmearing(nn.Module):
-    def __init__(self, cutoff_lower=0.0, cutoff_upper=5.0, num_rbf=50, trainable=True):
+    """
+    Implements exponential normal smearing of distances.
+
+    Parameters
+    ----------
+    cutoff_lower : float, optional, default=0.0
+        Lower bound for the smearing function.
+    cutoff_upper : float, optional, default=5.0
+        Upper bound for the smearing function.
+    num_rbf : int, optional, default=50
+        Number of radial basis functions.
+    trainable : bool, optional, default=True
+        If True, the parameters of smearing can be optimized.
+    """
+
+    def __init__(
+        self, cutoff_lower=0.0, cutoff_upper=5.0, num_rbf=50, trainable=True
+    ):
         super(ExpNormalSmearing, self).__init__()
         self.cutoff_lower = cutoff_lower
         self.cutoff_upper = cutoff_upper
@@ -115,26 +181,66 @@ class ExpNormalSmearing(nn.Module):
         dist = dist.unsqueeze(-1)
         return self.cutoff_fn(dist) * torch.exp(
             -self.betas
-            * (torch.exp(self.alpha * (-dist + self.cutoff_lower)) - self.means) ** 2
+            * (
+                torch.exp(self.alpha * (-dist + self.cutoff_lower))
+                - self.means
+            )
+            ** 2
         )
 
 
 class ShiftedSoftplus(nn.Module):
+    """
+    Implements a shifted version of the softplus activation function.
+
+    The output is shifted by the natural logarithm of 2.
+    """
+
     def __init__(self):
         super(ShiftedSoftplus, self).__init__()
         self.shift = torch.log(torch.tensor(2.0)).item()
 
     def forward(self, x):
+        """
+        Applies the shifted softplus function on the input tensor.
+        """
         return F.softplus(x) - self.shift
 
 
 class CosineCutoff(nn.Module):
+    """
+    Implements the cosine cutoff function to produce a weight based on input distances.
+
+    The weight is calculated using a cosine-based cutoff function.
+    """
+
     def __init__(self, cutoff_lower=0.0, cutoff_upper=5.0):
+        """
+        Parameters
+        ----------
+        cutoff_lower : float, optional
+            Lower bound for the cutoff, by default 0.0.
+        cutoff_upper : float, optional
+            Upper bound for the cutoff, by default 5.0.
+        """
         super(CosineCutoff, self).__init__()
         self.cutoff_lower = cutoff_lower
         self.cutoff_upper = cutoff_upper
 
     def forward(self, distances):
+        """
+        Computes the cosine cutoff weights based on the input distances.
+
+        Parameters
+        ----------
+        distances : torch.Tensor
+            Tensor containing distances.
+
+        Returns
+        -------
+        torch.Tensor
+            Tensor containing the cosine cutoff weights.
+        """
         if self.cutoff_lower > 0:
             cutoffs = 0.5 * (
                 torch.cos(
@@ -153,13 +259,19 @@ class CosineCutoff(nn.Module):
             cutoffs = cutoffs * (distances > self.cutoff_lower).float()
             return cutoffs
         else:
-            cutoffs = 0.5 * (torch.cos(distances * math.pi / self.cutoff_upper) + 1.0)
+            cutoffs = 0.5 * (
+                torch.cos(distances * math.pi / self.cutoff_upper) + 1.0
+            )
             # remove contributions beyond the cutoff radius
             cutoffs = cutoffs * (distances < self.cutoff_upper).float()
             return cutoffs
 
 
 class Distance(nn.Module):
+    """
+    Computes distances between points in a batch and produces edge indices and weights.
+    """
+
     def __init__(
         self,
         cutoff_lower,
@@ -168,6 +280,20 @@ class Distance(nn.Module):
         return_vecs=False,
         loop=False,
     ):
+        """
+        Parameters
+        ----------
+        cutoff_lower : float
+            Lower distance cutoff.
+        cutoff_upper : float
+            Upper distance cutoff.
+        max_num_neighbors : int, optional
+            Maximum number of neighbors to consider, by default 32.
+        return_vecs : bool, optional
+            If True, return edge vectors along with edge indices and weights, by default False.
+        loop : bool, optional
+            If True, include self loops, by default False.
+        """
         super(Distance, self).__init__()
         self.cutoff_lower = cutoff_lower
         self.cutoff_upper = cutoff_upper
@@ -176,6 +302,21 @@ class Distance(nn.Module):
         self.loop = loop
 
     def forward(self, pos, batch):
+        """
+        Computes distances between points and returns edge indices, edge weights, and optionally edge vectors.
+
+        Parameters
+        ----------
+        pos : torch.Tensor
+            Tensor containing positions of points.
+        batch : torch.Tensor
+            Batch tensor, which assigns each node to a specific example.
+
+        Returns
+        -------
+        tuple
+            Tuple containing edge indices, edge weights, and optionally edge vectors.
+        """
         edge_index = radius_graph(
             pos,
             r=self.cutoff_upper,
@@ -202,15 +343,28 @@ class Distance(nn.Module):
         if self.return_vecs:
             edge_vec = edge_vec[lower_mask]
             return edge_index, edge_weight, edge_vec
-        # TODO: return only `edge_index` and `edge_weight` once
-        # Union typing works with TorchScript (https://github.com/pytorch/pytorch/pull/53180)
         return edge_index, edge_weight, None
 
 
 class GatedEquivariantBlock(nn.Module):
     """
-    Gated Equivariant Block as defined in Schütt et al. (2021):
-    Equivariant message passing for the prediction of tensorial properties and molecular spectra
+    Gated Equivariant Block for tensorial properties and molecular spectra.
+
+    This class is based on the Gated Equivariant Block defined in:
+    Schütt et al. (2021): Equivariant message passing for the prediction of tensorial properties and molecular spectra.
+
+    Parameters
+    ----------
+    hidden_channels : int
+        Number of channels in the hidden layer.
+    out_channels : int
+        Number of output channels.
+    intermediate_channels : int, optional
+        Number of intermediate channels. If None, defaults to `hidden_channels`.
+    activation : str, optional, default="silu"
+        Type of activation function to use. Options include "ssp", "silu", "tanh", and "sigmoid".
+    scalar_activation : bool, optional, default=False
+        If True, uses scalar activation.
     """
 
     def __init__(
@@ -227,7 +381,9 @@ class GatedEquivariantBlock(nn.Module):
         if intermediate_channels is None:
             intermediate_channels = hidden_channels
 
-        self.vec1_proj = nn.Linear(hidden_channels, hidden_channels, bias=False)
+        self.vec1_proj = nn.Linear(
+            hidden_channels, hidden_channels, bias=False
+        )
         self.vec2_proj = nn.Linear(hidden_channels, out_channels, bias=False)
 
         act_class = act_class_mapping[activation]

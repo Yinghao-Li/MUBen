@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Calculate the metrics for the uncertainty quantification
 """
@@ -23,6 +23,23 @@ from scipy.stats import norm as gaussian
 
 
 def classification_metrics(preds, lbs, masks):
+    """
+    Calculate the metrics for classification tasks
+
+    Parameters
+    ----------
+    preds : numpy array
+        The predicted values
+    lbs : numpy array
+        The ground truth values
+    masks : numpy array
+        The mask for the ground truth values
+
+    Returns
+    -------
+    result_metrics_dict : dict
+        The dictionary of the metrics
+    """
     result_metrics_dict = dict()
 
     roc_auc_list = list()
@@ -105,11 +122,17 @@ def classification_metrics(preds, lbs, masks):
 
     if roc_auc_valid_flag:
         roc_auc_avg = np.mean(roc_auc_list)
-        result_metrics_dict["roc-auc"] = {"all": roc_auc_list, "macro-avg": roc_auc_avg}
+        result_metrics_dict["roc-auc"] = {
+            "all": roc_auc_list,
+            "macro-avg": roc_auc_avg,
+        }
 
     if prc_auc_valid_flag:
         prc_auc_avg = np.mean(prc_auc_list)
-        result_metrics_dict["prc-auc"] = {"all": prc_auc_list, "macro-avg": prc_auc_avg}
+        result_metrics_dict["prc-auc"] = {
+            "all": prc_auc_list,
+            "macro-avg": prc_auc_avg,
+        }
 
     if ece_valid_flag:
         ece_avg = np.mean(ece_list)
@@ -125,12 +148,34 @@ def classification_metrics(preds, lbs, masks):
 
     if brier_valid_flag:
         brier_avg = np.mean(brier_list)
-        result_metrics_dict["brier"] = {"all": brier_list, "macro-avg": brier_avg}
+        result_metrics_dict["brier"] = {
+            "all": brier_list,
+            "macro-avg": brier_avg,
+        }
 
     return result_metrics_dict
 
 
 def regression_metrics(preds, variances, lbs, masks):
+    """
+    Calculate the metrics for regression tasks
+
+    Parameters
+    ----------
+    preds : numpy array
+        The predicted values (means)
+    variances : numpy array
+        The predicted variances
+    lbs : numpy array
+        The ground truth values
+    masks : numpy array
+        The mask for the ground truth values
+
+    Returns
+    -------
+    result_metrics_dict : dict
+        The dictionary of the metrics
+    """
     if len(preds.shape) == 1:
         preds = preds[:, np.newaxis]
 
@@ -160,7 +205,9 @@ def regression_metrics(preds, variances, lbs, masks):
 
         # --- Gaussian NLL ---
         nll = F.gaussian_nll_loss(
-            torch.from_numpy(preds_), torch.from_numpy(lbs_), torch.from_numpy(vars_)
+            torch.from_numpy(preds_),
+            torch.from_numpy(lbs_),
+            torch.from_numpy(vars_),
         ).item()
         nll_list.append(nll)
 
@@ -184,8 +231,29 @@ def regression_metrics(preds, variances, lbs, masks):
 
 
 def regression_calibration_error(lbs, preds, variances, n_bins=20):
+    """
+    Calculate the calibration error for regression tasks
+
+    Parameters
+    ----------
+    lbs : numpy array
+        The ground truth values
+    preds : numpy array
+        The predicted values (means)
+    variances : numpy array
+        The predicted variances
+    n_bins : int
+        The number of bins to use
+
+    Returns
+    -------
+    calibration_error : float
+        The calibration error
+    """
     sigma = np.sqrt(variances)
-    phi_lbs = gaussian.cdf(lbs, loc=preds.reshape(-1, 1), scale=sigma.reshape(-1, 1))
+    phi_lbs = gaussian.cdf(
+        lbs, loc=preds.reshape(-1, 1), scale=sigma.reshape(-1, 1)
+    )
 
     expected_confidence = np.linspace(0, 1, n_bins + 1)[1:-1]
     observed_confidence = np.zeros_like(expected_confidence)

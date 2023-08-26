@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 8th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Molecular descriptors and features
 """
@@ -28,6 +28,17 @@ __all__ = [
 
 
 def smiles_to_2d_coords(smiles):
+    """
+    Convert smiles to 2d coordinates
+
+    Parameters
+    ----------
+    smiles: smiles strings
+
+    Returns
+    -------
+    2d coordinates in numpy array
+    """
     mol = Chem.MolFromSmiles(smiles)
     mol = AllChem.AddHs(mol)
     AllChem.Compute2DCoords(mol)
@@ -39,6 +50,18 @@ def smiles_to_2d_coords(smiles):
 
 
 def smiles_to_3d_coords(smiles, n_conformer):
+    """
+    Convert smiles to 3d coordinates
+
+    Parameters
+    ----------
+    smiles: smiles strings
+    n_conformer: conformer num, default (uni-mol) all==11, 10 3d + 1 2d
+
+    Returns
+    -------
+    3d coordinates in list of numpy array
+    """
     mol = Chem.MolFromSmiles(smiles)
     mol = AllChem.AddHs(mol)
     coordinate_list = []
@@ -54,12 +77,16 @@ def smiles_to_3d_coords(smiles, n_conformer):
                     )  # some conformer can not use MMFF optimize
                     coordinates = mol.GetConformer().GetPositions()
                 except Exception as e:
-                    logger.warning(f"Failed to generate 3D, replace with 2D: {e}")
+                    logger.warning(
+                        f"Failed to generate 3D, replace with 2D: {e}"
+                    )
                     coordinates = smiles_to_2d_coords(smiles)
 
             elif res == -1:
                 mol_tmp = Chem.MolFromSmiles(smiles)
-                AllChem.EmbedMolecule(mol_tmp, maxAttempts=5000, randomSeed=seed)
+                AllChem.EmbedMolecule(
+                    mol_tmp, maxAttempts=5000, randomSeed=seed
+                )
                 mol_tmp = AllChem.AddHs(mol_tmp, addCoords=True)
                 try:
                     AllChem.MMFFOptimizeMolecule(
@@ -67,7 +94,9 @@ def smiles_to_3d_coords(smiles, n_conformer):
                     )  # some conformer can not use MMFF optimize
                     coordinates = mol_tmp.GetConformer().GetPositions()
                 except Exception as e:
-                    logger.warning(f"Failed to generate 3D, replace with 2D: {e}")
+                    logger.warning(
+                        f"Failed to generate 3D, replace with 2D: {e}"
+                    )
                     coordinates = smiles_to_2d_coords(smiles)
         except Exception as e:
             logger.warning(f"Failed to generate 3D, replace with 2D: {e}")
@@ -120,7 +149,9 @@ def rdkit_2d_features_normalized_generator(mol) -> np.ndarray:
     from rdkit import Chem
     from descriptastorus.descriptors import rdNormalizedDescriptors
 
-    smiles = Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
+    smiles = (
+        Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
+    )
     generator = rdNormalizedDescriptors.RDKit2DNormalized()
     features = generator.process(smiles)[1:]
     # replace nan values
@@ -148,7 +179,9 @@ def morgan_binary_features_generator(
     from rdkit.Chem import AllChem
 
     mol = Chem.MolFromSmiles(mol) if type(mol) == str else mol
-    features_vec = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=num_bits)
+    features_vec = AllChem.GetMorganFingerprintAsBitVect(
+        mol, radius, nBits=num_bits
+    )
     features = np.zeros((1,))
     DataStructs.ConvertToNumpyArray(features_vec, features)
 

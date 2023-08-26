@@ -23,9 +23,6 @@ class Trainer(BaseTrainer, ABC):
 
     Inherits from the BaseTrainer and provides specialized functionalities
     for training the ChemBERTa model with chemical data.
-
-    Attributes:
-        config (Config): Configuration settings for the trainer.
     """
 
     def __init__(

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 5th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Trainer function for TorchMD-Net.
 """
@@ -19,14 +19,35 @@ logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer):
+    """
+    Trainer class for the TorchMD-Net model.
+    """
+
     def __init__(
         self,
-        config,
+        config: Config,
         training_dataset=None,
         valid_dataset=None,
         test_dataset=None,
         collate_fn=None,
-    ):
+    ) -> None:
+        """
+        Initialize the Trainer class.
+
+        Parameters
+        ----------
+        config : Config
+            Configuration object with parameters for the Trainer.
+        training_dataset : torch.utils.data.Dataset, optional
+            Dataset for training.
+        valid_dataset : torch.utils.data.Dataset, optional
+            Dataset for validation.
+        test_dataset : torch.utils.data.Dataset, optional
+            Dataset for testing.
+        collate_fn : callable, optional
+            A function that collates data samples into batches, defaults to Collator with the provided config.
+
+        """
         collate_fn = collate_fn if collate_fn is not None else Collator(config)
 
         super().__init__(
@@ -39,9 +60,21 @@ class Trainer(BaseTrainer):
 
     @property
     def config(self) -> Config:
+        """
+        Get the config object for the Trainer.
+
+        Returns
+        -------
+        Config
+            Configuration object with parameters for the Trainer.
+        """
         return self._config
 
-    def initialize_model(self, *args, **kwargs):
-        ckpt = torch.load(self.config.checkpoint_path, map_location="cpu")
+    def initialize_model(self, *args, **kwargs) -> None:
+        """
+        Initialize the TorchMD-Net model from a checkpoint.
 
+        The model is loaded onto the CPU and its weights are initialized from a checkpoint.
+        """
+        ckpt = torch.load(self.config.checkpoint_path, map_location="cpu")
         self._model = TorchMDNET(self.config).load_from_checkpoint(ckpt)

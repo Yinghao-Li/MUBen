@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 12th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: IO functions
 """
@@ -35,6 +35,11 @@ __all__ = [
 
 
 def set_log_path(args, time):
+    """
+    Setup log path.
+    Notice that the log path is specified for muben and may not be
+    directly compatible with other projects.
+    """
     log_path = op.join(
         "logs",
         args.dataset_name,
@@ -49,8 +54,7 @@ def set_log_path(args, time):
 
 def set_logging(log_path: Optional[str] = None):
     """
-    setup logging
-    Last modified: 07/20/21
+    setup logging format
 
     Parameters
     ----------
@@ -191,7 +195,9 @@ def prettify_json(text, indent=2, collapse_level=4):
     text = regex.sub(pattern, " ", text)
     text = regex.sub(r"([\[({])+ +", r"\g<1>", text)
     text = regex.sub(
-        r"[\r\n]+ {%d}([])}])" % (indent * (collapse_level - 1)), r"\g<1>", text
+        r"[\r\n]+ {%d}([])}])" % (indent * (collapse_level - 1)),
+        r"\g<1>",
+        text,
     )
     text = regex.sub(r"(\S) +([])}])", r"\g<1>\g<2>", text)
     return text
@@ -221,6 +227,21 @@ def convert_arguments_from_argparse(args):
 
 
 def save_results(path, preds, variances, lbs, masks):
+    """
+    Save muben prediction results.
+
+    Parameters
+    ----------
+    path: path to save
+    preds: model predictions
+    variances: variances for regression tasks
+    lbs: ground truth labels
+    masks: label masks
+
+    Returns
+    -------
+    None
+    """
     if not path.endswith(".pt"):
         path = f"{path}.pt"
 
@@ -237,7 +258,15 @@ def save_results(path, preds, variances, lbs, masks):
     return None
 
 
-def load_results(result_paths):
+def load_results(result_paths: list[str]):
+    """
+    Load muben prediction results.
+
+    Parameters
+    ----------
+    result_paths : list[str]
+        paths to the result files
+    """
     lbs = masks = np.nan
     preds_list = list()
     variances_list = list()
@@ -268,11 +297,15 @@ def load_results(result_paths):
             except KeyError:
                 pass
         else:
-            raise ValueError(f"Undefined result version: {results.get('version', 1)}")
+            raise ValueError(
+                f"Undefined result version: {results.get('version', 1)}"
+            )
 
     # aggregate mean and variance
     preds = np.stack(preds_list).mean(axis=0)
-    if variances_list and not (np.asarray(variances_list) == None).any():  # regression
+    if (
+        variances_list and not (np.asarray(variances_list) == None).any()
+    ):  # regression
         # variances = np.mean(np.stack(preds_list) ** 2 + np.stack(variances_list), axis=0) - preds ** 2
         variances = np.stack(variances_list).mean(axis=0)
     else:
@@ -281,7 +314,9 @@ def load_results(result_paths):
     return preds, variances, lbs, masks
 
 
-def load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = False):
+def load_lmdb(
+    data_path, keys_to_load: list[str] = None, return_dict: bool = False
+):
     """
     Load the lmdb-formatted dataset splits used in Uni-Mol
 

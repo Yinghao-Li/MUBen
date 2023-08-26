@@ -10,7 +10,30 @@ from torch.nn import functional as F
 
 
 class LayerNorm(torch.nn.Module):
+    """
+    Custom implementation of Layer Normalization.
+
+    This layer applies layer normalization over a mini-batch of inputs.
+
+    Attributes
+    ----------
+    weight : torch.nn.Parameter
+        Scaling parameter learned during training if elementwise_affine is set to True.
+    bias : torch.nn.Parameter
+        Offset parameter learned during training if elementwise_affine is set to True.
+    """
+
     def __init__(self, normalized_shape, eps=1e-5, elementwise_affine=True):
+        """
+        Parameters
+        ----------
+        normalized_shape : int or tuple
+            Input shape from an expected input of size.
+        eps : float, optional
+            Value added to the denominator for numerical stability. Default is 1e-5.
+        elementwise_affine : bool, optional
+            Whether to learn elementwise scaling and offset. Default is True.
+        """
         super(LayerNorm, self).__init__()
         if isinstance(normalized_shape, numbers.Integral):
             normalized_shape = (normalized_shape,)
@@ -22,6 +45,7 @@ class LayerNorm(torch.nn.Module):
         self.reset_parameters()
 
         def torch_layer_norm(input):
+            """Internal function to compute layer normalization."""
             return F.layer_norm(
                 input,
                 self.normalized_shape,
@@ -33,6 +57,11 @@ class LayerNorm(torch.nn.Module):
         self.func = torch_layer_norm
 
     def reset_parameters(self):
+        """
+        Reset the parameters (weight and bias) of the layer normalization.
+
+        The weight is initialized with ones and the bias with zeros.
+        """
         init.ones_(self.weight)
         init.zeros_(self.bias)
 
@@ -40,6 +69,7 @@ class LayerNorm(torch.nn.Module):
         return self.func(input)
 
     def extra_repr(self):
-        return "{normalized_shape}, eps={eps}, " "elementwise_affine=True".format(
-            **self.__dict__
+        return (
+            "{normalized_shape}, eps={eps}, "
+            "elementwise_affine=True".format(**self.__dict__)
         )

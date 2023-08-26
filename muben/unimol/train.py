@@ -1,3 +1,11 @@
+"""
+# Author: Yinghao Li
+# Modified: August 26th, 2023
+# ---------------------------------------
+# Description: Trainer function for Uni-Mol.
+"""
+
+
 from abc import ABC
 
 import logging
@@ -18,6 +26,10 @@ logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer, ABC):
+    """
+    Trainer class responsible for training and managing the Uni-Mol model.
+    """
+
     def __init__(
         self,
         config,
@@ -27,6 +39,24 @@ class Trainer(BaseTrainer, ABC):
         collate_fn=None,
         dictionary=None,
     ):
+        """
+        Initialize the Trainer.
+
+        Parameters
+        ----------
+        config : Config
+            Configuration object containing various parameters.
+        training_dataset : Dataset, optional
+            Dataset for training.
+        valid_dataset : Dataset, optional
+            Dataset for validation.
+        test_dataset : Dataset, optional
+            Dataset for testing.
+        collate_fn : callable, optional
+            Function to collate data samples into batches.
+        dictionary : Dictionary, optional
+            Dictionary containing symbols used in the training data.
+        """
         # this should be before super.__init__ as we require self.dictionary to initialize model
         if dictionary is None:
             self.dictionary = Dictionary.load()
@@ -50,18 +80,31 @@ class Trainer(BaseTrainer, ABC):
         return self._config
 
     def initialize_model(self):
+        """
+        Load the UniMol model from a checkpoint.
+        """
         self._model = UniMol(self.config, self.dictionary)
 
         state = load_checkpoint_to_cpu(self.config.checkpoint_path)
-        model_loading_info = self._model.load_state_dict(state["model"], strict=False)
+        model_loading_info = self._model.load_state_dict(
+            state["model"], strict=False
+        )
         logger.info(model_loading_info)
         return self
 
     def initialize_optimizer(self):
+        """
+        Initialize the optimizer for the model.
+
+        Depending on the uncertainty estimation method, it initializes
+        either a standard AdamW optimizer or an SGLD optimizer.
+        """
         # Original implementation seems set weight decay to 0, which is weird.
         # We'll keep it as default here
         params = [p for p in self.model.parameters() if p.requires_grad]
-        self._optimizer = AdamW(params, lr=self._status.lr, betas=(0.9, 0.99), eps=1e-6)
+        self._optimizer = AdamW(
+            params, lr=self._status.lr, betas=(0.9, 0.99), eps=1e-6
+        )
 
         # for sgld compatibility
         if self.config.uncertainty_method == UncertaintyMethods.sgld:
@@ -71,14 +114,18 @@ class Trainer(BaseTrainer, ABC):
                 if "output_layer" in x[0]
             ]
             backbone_params = filter(
-                lambda p: id(p) not in output_param_ids, self._model.parameters()
+                lambda p: id(p) not in output_param_ids,
+                self._model.parameters(),
             )
             output_params = filter(
                 lambda p: id(p) in output_param_ids, self._model.parameters()
             )
 
             self._optimizer = AdamW(
-                backbone_params, lr=self._status.lr, betas=(0.9, 0.99), eps=1e-6
+                backbone_params,
+                lr=self._status.lr,
+                betas=(0.9, 0.99),
+                eps=1e-6,
             )
             sgld_optimizer = (
                 PSGLDOptimizer
@@ -94,13 +141,16 @@ class Trainer(BaseTrainer, ABC):
         return None
 
     def ts_session(self):
+        """
+        Reload Temperature Scaling training as the dataset is processed
+        differently for training and test in Uni-Mol.
+        """
         # update hyper parameters
         self._status.lr = self.config.ts_lr
         self._status.lr_scheduler_type = "constant"
         self._status.n_epochs = self.config.n_ts_epochs
-        self._status.valid_epoch_interval = (
-            0  # Can also set this to None; disable validation
-        )
+        # Can also set this to None; disable validation
+        self._status.valid_epoch_interval = 0
 
         self.model.to(self._device)
         self.freeze()
@@ -119,6 +169,9 @@ class Trainer(BaseTrainer, ABC):
         return self
 
     def process_logits(self, logits: np.ndarray):
+        """
+        Add the conformation aggregation to the parent method.
+        """
         preds = super().process_logits(logits)
 
         if isinstance(preds, np.ndarray):
@@ -148,16 +201,32 @@ class Trainer(BaseTrainer, ABC):
 
 def load_checkpoint_to_cpu(path, arg_overrides=None):
     """
-    Loads a checkpoint to CPU (with upgrading for backward compatibility).
+    Load a checkpoint to CPU.
 
-    There's currently no support for > 1 but < all processes loading the
-    checkpoint on each node.
+    If present, the function also applies overrides to arguments present
+    in the checkpoint.
+
+    Parameters
+    ----------
+    path : str
+        Path to the checkpoint file.
+    arg_overrides : dict, optional
+        Dictionary of arguments to be overridden in the loaded state.
+
+    Returns
+    -------
+    dict
+        Loaded state dictionary.
     """
     local_path = path
     with open(local_path, "rb") as f:
         state = torch.load(f, map_location=torch.device("cpu"))
 
-    if "args" in state and state["args"] is not None and arg_overrides is not None:
+    if (
+        "args" in state
+        and state["args"] is not None
+        and arg_overrides is not None
+    ):
         args = state["args"]
         for arg_name, arg_val in arg_overrides.items():
             setattr(args, arg_name, arg_val)

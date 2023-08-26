@@ -9,22 +9,56 @@ logger = logging.getLogger(__name__)
 
 
 class Collator:
+    """
+    A collator utility for creating batches from instances.
+
+    Attributes
+    ----------
+    _atom_pad_idx : int
+        Index used for padding atoms.
+    _task : str
+        The type of task.
+    _lbs_type : torch.dtype
+        The type for lbs (labels).
+    """
+
     def __init__(self, config, atom_pad_idx=0):
+        """
+        Initialize the Collator.
+
+        Parameters
+        ----------
+        config : object
+            Configuration object containing task type.
+        atom_pad_idx : int, optional
+            Index used for padding atoms. Default is 0.
+        """
         self._atom_pad_idx = atom_pad_idx
         self._task = config.task_type
         self._lbs_type = torch.float
 
     def __call__(self, instances) -> Batch:
         """
-        function call
+        Collate the given list of instances into a batch.
+
+        Parameters
+        ----------
+        instances : List[Instance]
+            List of instances to be collated.
 
         Returns
         -------
-        a Batch of instances
+        Batch
+            A batch object containing collated instances.
         """
-        atoms, coordinates, distances, edge_types, lbs, masks = unpack_instances(
-            instances
-        )
+        (
+            atoms,
+            coordinates,
+            distances,
+            edge_types,
+            lbs,
+            masks,
+        ) = unpack_instances(instances)
 
         lengths = [tk.shape[1] for tk in atoms]
         max_length = max(lengths)
@@ -49,7 +83,9 @@ class Collator:
                 torch.cat(
                     [
                         c,
-                        c.new(c.shape[0], max_length - c.shape[1], c.shape[2]).fill_(0),
+                        c.new(
+                            c.shape[0], max_length - c.shape[1], c.shape[2]
+                        ).fill_(0),
                     ],
                     dim=1,
                 )
@@ -60,7 +96,9 @@ class Collator:
         distances_batch = torch.cat(
             [
                 F.pad(
-                    d, (0, max_length - d.shape[1], 0, max_length - d.shape[1]), value=0
+                    d,
+                    (0, max_length - d.shape[1], 0, max_length - d.shape[1]),
+                    value=0,
                 )
                 for d in distances
             ],
@@ -69,7 +107,9 @@ class Collator:
         edge_types_batch = torch.cat(
             [
                 F.pad(
-                    e, (0, max_length - e.shape[1], 0, max_length - e.shape[1]), value=0
+                    e,
+                    (0, max_length - e.shape[1], 0, max_length - e.shape[1]),
+                    value=0,
                 )
                 for e in edge_types
             ],

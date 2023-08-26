@@ -8,7 +8,9 @@ import torch.nn.functional as F
 def softmax_dropout(
     input, dropout_prob, is_training=True, mask=None, bias=None, inplace=True
 ):
-    """softmax dropout, and mask, bias are optional.
+    """
+    softmax dropout, and mask, bias are optional.
+
     Args:
         input (torch.Tensor): input tensor
         dropout_prob (float): dropout probability
@@ -27,4 +29,6 @@ def softmax_dropout(
         input += mask
     if bias is not None:
         input += bias
-    return F.dropout(F.softmax(input, dim=-1), p=dropout_prob, training=is_training)
+    return F.dropout(
+        F.softmax(input, dim=-1), p=dropout_prob, training=is_training
+    )

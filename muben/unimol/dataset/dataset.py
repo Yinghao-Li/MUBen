@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 12th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Dataset class for Uni-Mol
 """
@@ -22,6 +22,23 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset(BaseDataset):
+    """
+    The Dataset class.
+
+    Attributes
+    ----------
+    _partition : str or None
+        Partition of the dataset (e.g., 'train', 'test').
+    _atoms : list or None
+        List of atom data for the dataset.
+    _coordinates : list or None
+        List of coordinates data for the dataset.
+    processing_pipeline : object or None
+        Object for processing data.
+    data_processor : function or None
+        Function to process data.
+    """
+
     def __init__(self):
         super().__init__()
 
@@ -33,7 +50,17 @@ class Dataset(BaseDataset):
 
     def __getitem__(self, idx):
         """
-        Re-define the getitem function to accommodate the random sampling during training
+        Retrieve a specific instance from the dataset.
+
+        Parameters
+        ----------
+        idx : int
+            Index of the instance to retrieve.
+
+        Returns
+        -------
+        dict
+            Dictionary containing features of the specific instance.
         """
         atoms, coordinates, distances, edge_types = self.data_processor(
             atoms=self._atoms[idx], coordinates=self._coordinates[idx]
@@ -49,14 +76,46 @@ class Dataset(BaseDataset):
         return feature_dict
 
     def set_processor_variant(self, variant: str):
+        """
+        Set the data processing variant.
+
+        Parameters
+        ----------
+        variant : str
+            Variant type, must be 'training' or 'inference'.
+
+        Returns
+        -------
+        Dataset
+            Updated Dataset object.
+        """
         assert variant in (
             "training",
             "inference",
         ), "Processor variant must be `training` or `inference`"
-        self.data_processor = getattr(self.processing_pipeline, f"process_{variant}")
+        self.data_processor = getattr(
+            self.processing_pipeline, f"process_{variant}"
+        )
         return self
 
     def prepare(self, config, partition, dictionary=None):
+        """
+        Prepare the dataset based on the given configuration.
+
+        Parameters
+        ----------
+        config : object
+            Configuration object containing necessary settings.
+        partition : str
+            Dataset partition (e.g., 'train', 'test').
+        dictionary : object, optional
+            Dictionary object for data processing.
+
+        Returns
+        -------
+        Dataset
+            Prepared Dataset object.
+        """
         self._partition = partition
 
         if not dictionary:
@@ -79,11 +138,17 @@ class Dataset(BaseDataset):
 
     def create_features(self, config):
         """
-        Create data features
+        Create or load data features for the dataset.
+
+        Parameters
+        ----------
+        config : object
+            Configuration object containing necessary settings.
 
         Returns
         -------
-        self
+        Dataset
+            Dataset object with loaded or created features.
         """
 
         self._atoms = list()
@@ -93,7 +158,9 @@ class Dataset(BaseDataset):
         unimol_feature_path = op.join(
             config.unimol_feature_dir, f"{self._partition}.lmdb"
         )
-        if op.exists(config.unimol_feature_dir) and op.exists(unimol_feature_path):
+        if op.exists(config.unimol_feature_dir) and op.exists(
+            unimol_feature_path
+        ):
             logger.info("Loading features form pre-processed Uni-Mol LMDB")
             if not config.random_split:
                 self._atoms, self._coordinates = load_lmdb(
@@ -101,7 +168,9 @@ class Dataset(BaseDataset):
                 )
 
             else:
-                unimol_data = load_unimol_preprocessed(config.unimol_feature_dir)
+                unimol_data = load_unimol_preprocessed(
+                    config.unimol_feature_dir
+                )
                 id2data_mapping = {
                     idx: (a, c)
                     for idx, a, c in zip(
@@ -110,13 +179,19 @@ class Dataset(BaseDataset):
                         unimol_data["coordinates"],
                     )
                 }
-                self._atoms = [id2data_mapping[idx][0] for idx in self._ori_ids]
-                self._coordinates = [id2data_mapping[idx][1] for idx in self._ori_ids]
+                self._atoms = [
+                    id2data_mapping[idx][0] for idx in self._ori_ids
+                ]
+                self._coordinates = [
+                    id2data_mapping[idx][1] for idx in self._ori_ids
+                ]
 
         else:
             logger.info("Generating Uni-Mol features.")
             s2c = partial(smiles_to_coords, n_conformer=10)
-            with get_context("fork").Pool(config.num_preprocess_workers) as pool:
+            with get_context("fork").Pool(
+                config.num_preprocess_workers
+            ) as pool:
                 for outputs in tqdm(
                     pool.imap(s2c, self._smiles), total=len(self._smiles)
                 ):
@@ -127,4 +202,7 @@ class Dataset(BaseDataset):
         return self
 
     def get_instances(self):
+        """
+        Disable this function as we are generating features on the fly.
+        """
         return None

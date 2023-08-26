@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Arguments and configuration for Uni-Mol
 """
@@ -25,7 +25,10 @@ class Arguments(BaseArguments):
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
         default="Uni-Mol",
-        metadata={"help": "The name of the model to be used.", "choices": MODEL_NAMES},
+        metadata={
+            "help": "The name of the model to be used.",
+            "choices": MODEL_NAMES,
+        },
     )
     # --- Dataset arguments ---
     unimol_feature_folder: Optional[str] = field(
@@ -53,7 +56,9 @@ class Arguments(BaseArguments):
     )
     grad_norm: Optional[float] = field(
         default=1,
-        metadata={"help": "Gradient norm. Default is 0 (do not clip gradient)"},
+        metadata={
+            "help": "Gradient norm. Default is 0 (do not clip gradient)"
+        },
     )
 
     # --- update model parameters from Uni-Mol ---
@@ -63,11 +68,15 @@ class Arguments(BaseArguments):
     )
 
     # --- Arguments from Uni-Mol original implementation ---
-    batch_size: Optional[int] = field(default=32, metadata={"help": "Batch size"})
+    batch_size: Optional[int] = field(
+        default=32, metadata={"help": "Batch size"}
+    )
 
     max_atoms: Optional[int] = field(
         default=256,
-        metadata={"help": "the maximum number of atoms in the input molecules."},
+        metadata={
+            "help": "the maximum number of atoms in the input molecules."
+        },
     )
 
     max_seq_len: Optional[int] = field(
@@ -91,7 +100,9 @@ class Arguments(BaseArguments):
 
     def __post_init__(self):
         super().__post_init__()
-        self.unimol_feature_dir = op.join(self.unimol_feature_folder, self.dataset_name)
+        self.unimol_feature_dir = op.join(
+            self.unimol_feature_folder, self.dataset_name
+        )
 
         self.pooler_dropout = self.dropout
 
@@ -110,6 +121,9 @@ class Arguments(BaseArguments):
         self._assign_default_model_args()
 
     def _assign_default_model_args(self):
+        """
+        Default hyper-parameters of the pre-trained Uni-Mol model, should not be changed.
+        """
         # Model architecture, should not be changed
         self.encoder_layers = 15
         self.encoder_embed_dim = 512
@@ -126,7 +140,9 @@ class Arguments(BaseArguments):
         self.max_seq_len = getattr(self, "max_seq_len", 512)
 
         self.activation_fn = getattr(self, "activation_fn", "gelu")
-        self.pooler_activation_fn = getattr(self, "pooler_activation_fn", "Tanh")
+        self.pooler_activation_fn = getattr(
+            self, "pooler_activation_fn", "Tanh"
+        )
 
         self.post_ln = getattr(self, "post_ln", False)
         self.masked_token_loss = getattr(self, "masked_token_loss", -1.0)
@@ -140,4 +156,9 @@ class Arguments(BaseArguments):
 
 @dataclass
 class Config(Arguments, BaseConfig):
+    """
+    Configuration class for Uni-Mol.
+    """
+
+    # The number of conformations; default is 11 and should not be changed
     n_conformation = 11

@@ -1,8 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 6th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Modified from https://github.com/shehzaidi/pre-training-via-denoising.
+# Description: Equivariant Transformer.
+# Reference: Modified from https://github.com/shehzaidi/pre-training-via-denoising.
 """
 
 import torch
@@ -124,7 +125,11 @@ class TorchMDET(nn.Module):
         )
         self.neighbor_embedding = (
             NeighborEmbedding(
-                hidden_channels, num_rbf, cutoff_lower, cutoff_upper, self.max_z
+                hidden_channels,
+                num_rbf,
+                cutoff_lower,
+                cutoff_upper,
+                self.max_z,
             ).jittable()
             if neighbor_embedding
             else None
@@ -154,6 +159,9 @@ class TorchMDET(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """
+        Inintialize the model parameters.
+        """
         self.embedding.reset_parameters()
         self.distance_expansion.reset_parameters()
         if self.neighbor_embedding is not None:
@@ -165,6 +173,31 @@ class TorchMDET(nn.Module):
             self.out_norm_vec.reset_parameters()
 
     def forward(self, z, pos, batch):
+        """
+        Forward pass through the model.
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            Atomic numbers of shape (N,).
+        pos : torch.Tensor
+            Atomic positions of shape (N, 3).
+        batch : torch.Tensor
+            Batch indication vector of shape (N,).
+
+        Returns
+        -------
+        x : torch.Tensor
+            Atomic features of shape (N, hidden_channels).
+        vec : torch.Tensor
+            Atomic vector features of shape (N, 3, hidden_channels).
+        z : torch.Tensor
+            Atomic numbers of shape (N,).
+        pos : torch.Tensor
+            Atomic positions of shape (N, 3).
+        batch : torch.Tensor
+            Batch indication vector of shape (N,).
+        """
         x = self.embedding(z)
 
         edge_index, edge_weight, edge_vec = self.distance(pos, batch)
@@ -179,12 +212,16 @@ class TorchMDET(nn.Module):
         )
 
         if self.neighbor_embedding is not None:
-            x = self.neighbor_embedding(z, x, edge_index, edge_weight, edge_attr)
+            x = self.neighbor_embedding(
+                z, x, edge_index, edge_weight, edge_attr
+            )
 
         vec = torch.zeros(x.size(0), 3, x.size(1), device=x.device)
 
         for attn in self.attention_layers:
-            dx, dvec = attn(x, vec, edge_index, edge_weight, edge_attr, edge_vec)
+            dx, dvec = attn(
+                x, vec, edge_index, edge_weight, edge_attr, edge_vec
+            )
             x = x + dx
             vec = vec + dvec
         x = self.out_norm(x)
@@ -212,6 +249,29 @@ class TorchMDET(nn.Module):
 
 
 class EquivariantMultiHeadAttention(MessagePassing):
+    """
+    An implementation of Equivariant Multi-Head Attention.
+
+    Parameters
+    ----------
+    hidden_channels : int
+        Number of hidden channels.
+    num_rbf : int
+        Number of radial basis functions.
+    distance_influence : str
+        Determines the influence of distance either on "keys", "values", "both", or neither.
+    num_heads : int
+        Number of attention heads.
+    activation : callable
+        Activation function.
+    attn_activation : callable
+        Attention activation function.
+    cutoff_lower : float
+        Lower bound of the cosine cutoff.
+    cutoff_upper : float
+        Upper bound of the cosine cutoff.
+    """
+
     def __init__(
         self,
         hidden_channels,
@@ -223,7 +283,9 @@ class EquivariantMultiHeadAttention(MessagePassing):
         cutoff_lower,
         cutoff_upper,
     ):
-        super(EquivariantMultiHeadAttention, self).__init__(aggr="add", node_dim=0)
+        super(EquivariantMultiHeadAttention, self).__init__(
+            aggr="add", node_dim=0
+        )
         assert hidden_channels % num_heads == 0, (
             f"The number of hidden channels ({hidden_channels}) "
             f"must be evenly divisible by the number of "
@@ -245,7 +307,9 @@ class EquivariantMultiHeadAttention(MessagePassing):
         self.v_proj = nn.Linear(hidden_channels, hidden_channels * 3)
         self.o_proj = nn.Linear(hidden_channels, hidden_channels * 3)
 
-        self.vec_proj = nn.Linear(hidden_channels, hidden_channels * 3, bias=False)
+        self.vec_proj = nn.Linear(
+            hidden_channels, hidden_channels * 3, bias=False
+        )
 
         self.dk_proj = None
         if distance_influence in ["keys", "both"]:
@@ -258,6 +322,7 @@ class EquivariantMultiHeadAttention(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """Initialize the parameters of the attention layer."""
         self.layernorm.reset_parameters()
         nn.init.xavier_uniform_(self.q_proj.weight)
         self.q_proj.bias.data.fill_(0)
@@ -276,22 +341,51 @@ class EquivariantMultiHeadAttention(MessagePassing):
             self.dv_proj.bias.data.fill_(0)
 
     def forward(self, x, vec, edge_index, r_ij, f_ij, d_ij):
+        """
+        Forward propagation function.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Node features.
+        vec : torch.Tensor
+            Vector representation.
+        edge_index : torch.Tensor
+            Edge indices.
+        r_ij : torch.Tensor
+            Pairwise distances.
+        f_ij : torch.Tensor
+            Feature distances.
+        d_ij : torch.Tensor
+            Directional distances.
+
+        Returns
+        -------
+        Tuple[torch.Tensor, torch.Tensor]
+            Tuple containing the updated node features and vector representation.
+        """
         x = self.layernorm(x)
         q = self.q_proj(x).reshape(-1, self.num_heads, self.head_dim)
         k = self.k_proj(x).reshape(-1, self.num_heads, self.head_dim)
         v = self.v_proj(x).reshape(-1, self.num_heads, self.head_dim * 3)
 
-        vec1, vec2, vec3 = torch.split(self.vec_proj(vec), self.hidden_channels, dim=-1)
+        vec1, vec2, vec3 = torch.split(
+            self.vec_proj(vec), self.hidden_channels, dim=-1
+        )
         vec = vec.reshape(-1, 3, self.num_heads, self.head_dim)
         vec_dot = (vec1 * vec2).sum(dim=1)
 
         dk = (
-            self.act(self.dk_proj(f_ij)).reshape(-1, self.num_heads, self.head_dim)
+            self.act(self.dk_proj(f_ij)).reshape(
+                -1, self.num_heads, self.head_dim
+            )
             if self.dk_proj is not None
             else None
         )
         dv = (
-            self.act(self.dv_proj(f_ij)).reshape(-1, self.num_heads, self.head_dim * 3)
+            self.act(self.dv_proj(f_ij)).reshape(
+                -1, self.num_heads, self.head_dim * 3
+            )
             if self.dv_proj is not None
             else None
         )
@@ -319,6 +413,33 @@ class EquivariantMultiHeadAttention(MessagePassing):
         return dx, dvec
 
     def message(self, q_i, k_j, v_j, vec_j, dk, dv, r_ij, d_ij):
+        """
+        Compute the message for the attention mechanism.
+
+        Parameters
+        ----------
+        q_i : torch.Tensor
+            Query tensor.
+        k_j : torch.Tensor
+            Key tensor.
+        v_j : torch.Tensor
+            Value tensor.
+        vec_j : torch.Tensor
+            Vector representation.
+        dk : Optional[torch.Tensor]
+            Distance keys tensor. None if not used.
+        dv : Optional[torch.Tensor]
+            Distance values tensor. None if not used.
+        r_ij : torch.Tensor
+            Pairwise distances.
+        d_ij : torch.Tensor
+            Directional distances.
+
+        Returns
+        -------
+        Tuple[torch.Tensor, torch.Tensor]
+            Tuple containing the message for node features and vector representation.
+        """
         # attention mechanism
         if dk is None:
             attn = (q_i * k_j).sum(dim=-1)
@@ -348,6 +469,25 @@ class EquivariantMultiHeadAttention(MessagePassing):
         ptr: Optional[torch.Tensor],
         dim_size: Optional[int],
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Aggregate the messages.
+
+        Parameters
+        ----------
+        features : Tuple[torch.Tensor, torch.Tensor]
+            Tuple containing node features and vector representation.
+        index : torch.Tensor
+            Index tensor.
+        ptr : Optional[torch.Tensor]
+            Pointer tensor.
+        dim_size : Optional[int]
+            Dimension size.
+
+        Returns
+        -------
+        Tuple[torch.Tensor, torch.Tensor]
+            Tuple containing the aggregated node features and vector representation.
+        """
         x, vec = features
         x = scatter(x, index, dim=self.node_dim, dim_size=dim_size)
         vec = scatter(vec, index, dim=self.node_dim, dim_size=dim_size)
@@ -360,9 +500,36 @@ class EquivariantMultiHeadAttention(MessagePassing):
 
 
 class EquivariantLayerNorm(nn.Module):
-    r"""Rotationally-equivariant Vector Layer Normalization
-    Expects inputs with shape (N, n, d), where N is batch size, n is vector dimension, d is width/number of vectors.
     """
+    A rotationally-equivariant Vector Layer Normalization.
+
+    This layer expects inputs with shape (N, n, d), where:
+    - N is batch size
+    - n is vector dimension
+    - d is width/number of vectors
+
+    Attributes
+    ----------
+    normalized_shape : Tuple[int, ...]
+    eps : float
+        A small number to avoid division by zero.
+    elementwise_linear : bool
+        Whether to use element-wise linearity.
+
+    Parameters
+    ----------
+    normalized_shape : int
+        Size of the normalized shape.
+    eps : float, optional, default=1e-5
+        A small number to avoid division by zero.
+    elementwise_linear : bool, optional, default=True
+        Whether to use element-wise linearity.
+    device : str or torch.device, optional
+        The device of the tensors.
+    dtype : torch.dtype, optional
+        The data type of the tensors.
+    """
+
     __constants__ = ["normalized_shape", "elementwise_linear"]
     normalized_shape: Tuple[int, ...]
     eps: float
@@ -394,22 +561,28 @@ class EquivariantLayerNorm(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
+        """Reset the parameters of the layer."""
         if self.elementwise_linear:
             nn.init.ones_(self.weight)
 
-    def mean_center(self, input):
+    def mean_center(self, input) -> torch.Tensor:
+        """Center the mean of the input tensor."""
         return input - input.mean(-1, keepdim=True)
 
-    def covariance(self, input):
+    def covariance(self, input) -> torch.Tensor:
+        """Compute the covariance of the input tensor."""
         return 1 / self.normalized_shape[0] * input @ input.transpose(-1, -2)
 
     def symsqrtinv(self, matrix):
-        """Compute the inverse square root of a positive definite matrix.
+        """
+        Compute the inverse square root of a positive definite matrix.
 
         Based on https://github.com/pytorch/pytorch/issues/25481
         """
         _, s, v = matrix.svd()
-        good = s > s.max(-1, True).values * s.size(-1) * torch.finfo(s.dtype).eps
+        good = (
+            s > s.max(-1, True).values * s.size(-1) * torch.finfo(s.dtype).eps
+        )
         components = good.sum(-1)
         common = components.max()
         unbalanced = common != components.min()
@@ -420,9 +593,12 @@ class EquivariantLayerNorm(nn.Module):
                 good = good[..., :common]
         if unbalanced:
             s = s.where(good, torch.zeros((), device=s.device, dtype=s.dtype))
-        return (v * 1 / torch.sqrt(s + self.eps).unsqueeze(-2)) @ v.transpose(-2, -1)
+        return (v * 1 / torch.sqrt(s + self.eps).unsqueeze(-2)) @ v.transpose(
+            -2, -1
+        )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Compute the forward pass of the layer normalization."""
         inputs = inputs.to(
             torch.float64
         )  # Need double precision for accurate inversion.
@@ -438,11 +614,12 @@ class EquivariantLayerNorm(nn.Module):
         )
         covar = self.covariance(inputs) + self.eps * reg_matrix
         covar_sqrtinv = self.symsqrtinv(covar)
-        return (covar_sqrtinv @ inputs).to(self.weight.dtype) * self.weight.reshape(
-            1, 1, self.normalized_shape[0]
-        )
+        return (covar_sqrtinv @ inputs).to(
+            self.weight.dtype
+        ) * self.weight.reshape(1, 1, self.normalized_shape[0])
 
     def extra_repr(self) -> str:
-        return "{normalized_shape}, " "elementwise_linear={elementwise_linear}".format(
-            **self.__dict__
+        return (
+            "{normalized_shape}, "
+            "elementwise_linear={elementwise_linear}".format(**self.__dict__)
         )

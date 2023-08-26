@@ -23,13 +23,6 @@ class Trainer(BaseTrainer):
 
     This class facilitates the training, validation, and testing of the DNN model.
     It extends the functionality provided by the BaseTrainer from the muben library.
-
-    Attributes
-    ----------
-    config : Config
-        Configuration parameters for the trainer.
-    _model : DNN
-        Instance of the DNN model to be trained.
     """
 
     def __init__(

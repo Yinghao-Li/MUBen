@@ -1,8 +1,12 @@
 """
 # Author: Yinghao Li
-# Modified: August 5th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Collate function for TorchMD-NET dataset
+# Description:
+
+This module provides a Collator class for the TorchMD-NET dataset. The Collator class 
+facilitates the aggregation of individual data instances into a batch format suitable for 
+model training and inference.
 """
 
 
@@ -17,17 +21,48 @@ logger = logging.getLogger(__name__)
 
 
 class Collator:
+    """
+    Collator class for aggregating individual data instances into a batch.
+
+    The Collator class defines the necessary functionality to transform a list of instances
+    into a batch that can be used for training or inference with the TorchMD-NET model.
+
+    Attributes
+    ----------
+    _task : str
+        The type of task (e.g., "regression", "classification").
+    _lbs_type : torch.dtype
+        Data type for labels in the batch. Defaults to torch.float.
+    """
+
     def __init__(self, config):
+        """
+        Initialize the Collator class.
+
+        Parameters
+        ----------
+        config : object
+            Configuration object that defines the task type of the collator.
+        """
         self._task = config.task_type
         self._lbs_type = torch.float
 
     def __call__(self, instances) -> Batch:
         """
-        function call
+        Convert a list of instances into a batch format.
+
+        This method unpacks the instances and aggregates the individual attributes
+        (atoms, coordinates, labels, masks) into a batch format.
+
+        Parameters
+        ----------
+        instances : list
+            List of individual data instances.
 
         Returns
         -------
-        a Batch of instances
+        Batch
+            Aggregated batch of instances.
         """
         atoms, coords, lbs, masks = unpack_instances(instances)
 
@@ -42,7 +77,9 @@ class Collator:
         atoms_batch = torch.tensor(
             list(itertools.chain.from_iterable(atoms)), dtype=torch.long
         )
-        coords_batch = torch.from_numpy(np.concatenate(coords, axis=0)).to(torch.float)
+        coords_batch = torch.from_numpy(np.concatenate(coords, axis=0)).to(
+            torch.float
+        )
 
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))

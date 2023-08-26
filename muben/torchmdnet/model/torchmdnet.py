@@ -1,9 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 5th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Implementation of (adjusted) TorchMD-NET.
-               Modified from https://github.com/shehzaidi/pre-training-via-denoising.
+# Reference: Modified from https://github.com/shehzaidi/pre-training-via-denoising.
 """
 
 
@@ -24,7 +24,34 @@ logger = logging.getLogger(__name__)
 
 
 class TorchMDNET(nn.Module):
+    """
+    Modified TorchMD-NET model implementation for molecular property prediction.
+
+    Attributes
+    ----------
+    representation_model : nn.Module
+        The primary representation model.
+    output_model : EquivariantScalar
+        Scalar model for output.
+    output_model_noise : EquivariantVectorOutput
+        Vector model for noise output.
+    dropout : nn.Dropout
+        Dropout layer.
+    activation : nn.Module
+        Activation function module.
+    linear : nn.Linear
+        Linear transformation layer.
+    output_layer : OutputLayer
+        Layer for producing the final output.
+    """
+
     def __init__(self, config):
+        """
+        Parameters
+        ----------
+        config : object
+            Configuration object with model parameters and hyperparameters.
+        """
         super().__init__()
 
         self.representation_model = TorchMDET(
@@ -78,17 +105,35 @@ class TorchMDNET(nn.Module):
 
     def load_from_checkpoint(self, ckpt):
         state_dict = {
-            re.sub(r"^model\.", "", k): v for k, v in ckpt["state_dict"].items()
+            re.sub(r"^model\.", "", k): v
+            for k, v in ckpt["state_dict"].items()
         }
         loading_return = self.load_state_dict(state_dict, strict=False)
 
         if len(loading_return.unexpected_keys) > 0:
-            logger.warning(f"Unexpected model layers: {loading_return.unexpected_keys}")
+            logger.warning(
+                f"Unexpected model layers: {loading_return.unexpected_keys}"
+            )
         if len(loading_return.missing_keys) > 0:
-            logger.warning(f"Missing model layers: {loading_return.missing_keys}")
+            logger.warning(
+                f"Missing model layers: {loading_return.missing_keys}"
+            )
         return self
 
     def forward(self, batch):
+        """
+        Compute the forward pass of the model.
+
+        Parameters
+        ----------
+        batch : torch.Tensor
+            Input feature including atom ids, coordinates and batch ids.
+
+        Returns
+        -------
+        torch.Tensor
+            Model output tensor.
+        """
         atoms = batch.atoms
         coords = batch.coords
         mol_ids = batch.mol_ids
@@ -100,7 +145,9 @@ class TorchMDNET(nn.Module):
         )
 
         # apply the output network
-        hidden = self.output_model.pre_reduce(hidden, v, atoms, coords, mol_ids)
+        hidden = self.output_model.pre_reduce(
+            hidden, v, atoms, coords, mol_ids
+        )
         # aggregate atoms
         hidden = scatter(hidden, mol_ids, dim=0, reduce="add")
 
@@ -109,42 +156,3 @@ class TorchMDNET(nn.Module):
         )
 
         return out
-
-
-class AccumulatedNormalization(nn.Module):
-    """Running normalization of a tensor."""
-
-    def __init__(self, accumulator_shape: tuple[int, ...], epsilon: float = 1e-8):
-        super(AccumulatedNormalization, self).__init__()
-
-        self._epsilon = epsilon
-        self.register_buffer("acc_sum", torch.zeros(accumulator_shape))
-        self.register_buffer("acc_squared_sum", torch.zeros(accumulator_shape))
-        self.register_buffer("acc_count", torch.zeros((1,)))
-        self.register_buffer("num_accumulations", torch.zeros((1,)))
-
-    def update_statistics(self, batch: torch.Tensor):
-        batch_size = batch.shape[0]
-        self.acc_sum += batch.sum(dim=0)
-        self.acc_squared_sum += batch.pow(2).sum(dim=0)
-        self.acc_count += batch_size
-        self.num_accumulations += 1
-
-    @property
-    def acc_count_safe(self):
-        return self.acc_count.clamp(min=1)
-
-    @property
-    def mean(self):
-        return self.acc_sum / self.acc_count_safe
-
-    @property
-    def std(self):
-        return torch.sqrt(
-            (self.acc_squared_sum / self.acc_count_safe) - self.mean.pow(2)
-        ).clamp(min=self._epsilon)
-
-    def forward(self, batch: torch.Tensor):
-        if self.training:
-            self.update_statistics(batch)
-        return (batch - self.mean) / self.std

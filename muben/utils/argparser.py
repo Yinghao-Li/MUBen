@@ -1,8 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 15th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Modified from huggingface/transformers implementation
+# Description: Argument Parser.
+# Reference: Modified from huggingface/transformers implementation
 """
 
 
@@ -88,7 +89,9 @@ class ArgumentParser(BaseArgumentParser):
     dataclass_types: Iterable[DataClassType]
 
     def __init__(
-        self, dataclass_types: Union[DataClassType, Iterable[DataClassType]], **kwargs
+        self,
+        dataclass_types: Union[DataClassType, Iterable[DataClassType]],
+        **kwargs,
     ):
         """
         Args:
@@ -108,7 +111,9 @@ class ArgumentParser(BaseArgumentParser):
             self._add_dataclass_arguments(dtype)
 
     @staticmethod
-    def _parse_dataclass_field(parser: BaseArgumentParser, field: dataclasses.Field):
+    def _parse_dataclass_field(
+        parser: BaseArgumentParser, field: dataclasses.Field
+    ):
         field_name = f"--{field.name}"
         kwargs = field.metadata.copy()
         # field.metadata is not used at all by Data Classes,
@@ -125,10 +130,12 @@ class ArgumentParser(BaseArgumentParser):
 
         origin_type = getattr(field.type, "__origin__", field.type)
         if origin_type is Union or (
-            hasattr(types, "UnionType") and isinstance(origin_type, types.UnionType)
+            hasattr(types, "UnionType")
+            and isinstance(origin_type, types.UnionType)
         ):
             if str not in field.type.__args__ and (
-                len(field.type.__args__) != 2 or type(None) not in field.type.__args__
+                len(field.type.__args__) != 2
+                or type(None) not in field.type.__args__
             ):
                 raise ValueError(
                     "Only `Union[X, NoneType]` (i.e., `Optional[X]`) is allowed for `Union` because"
@@ -177,11 +184,14 @@ class ArgumentParser(BaseArgumentParser):
             # Hack because type=bool in argparse does not behave as we want.
             kwargs["type"] = string_to_bool
             if field.type is bool or (
-                field.default is not None and field.default is not dataclasses.MISSING
+                field.default is not None
+                and field.default is not dataclasses.MISSING
             ):
                 # Default value is False if we have no default when of type bool.
                 default = (
-                    False if field.default is dataclasses.MISSING else field.default
+                    False
+                    if field.default is dataclasses.MISSING
+                    else field.default
                 )
                 # This is the value that will get picked if we don't include --field_name in any way
                 kwargs["default"] = default
@@ -295,7 +305,11 @@ class ArgumentParser(BaseArgumentParser):
                 - The potential list of remaining argument strings. (same as argparse.ArgumentParser.parse_known_args)
         """
 
-        if args_file_flag or args_filename or (look_for_args_file and len(sys.argv)):
+        if (
+            args_file_flag
+            or args_filename
+            or (look_for_args_file and len(sys.argv))
+        ):
             args_files = []
 
             if args_filename:
@@ -307,11 +321,15 @@ class ArgumentParser(BaseArgumentParser):
             if args_file_flag:
                 # Create special parser just to extract the args_file_flag values
                 args_file_parser = BaseArgumentParser()
-                args_file_parser.add_argument(args_file_flag, type=str, action="append")
+                args_file_parser.add_argument(
+                    args_file_flag, type=str, action="append"
+                )
 
                 # Use only remaining args for further parsing (remove the args_file_flag)
                 cfg, args = args_file_parser.parse_known_args(args=args)
-                cmd_args_file_paths = vars(cfg).get(args_file_flag.lstrip("-"), None)
+                cmd_args_file_paths = vars(cfg).get(
+                    args_file_flag.lstrip("-"), None
+                )
 
                 if cmd_args_file_paths:
                     args_files.extend([Path(p) for p in cmd_args_file_paths])
@@ -323,7 +341,11 @@ class ArgumentParser(BaseArgumentParser):
 
             # in case of duplicate arguments the last one has precedence
             # args specified via the command line should overwrite args from files, so we add them last
-            args = file_args + args if args is not None else file_args + sys.argv[1:]
+            args = (
+                file_args + args
+                if args is not None
+                else file_args + sys.argv[1:]
+            )
         namespace, remaining_args = self.parse_known_args(args=args)
         outputs = []
         for dtype in self.dataclass_types:
