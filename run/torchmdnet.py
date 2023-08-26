@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 15th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with TorchMD-NET backbone model.
@@ -24,8 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 def main(args: Arguments):
+    # --- construct and validate configuration ---
     config = Config().from_args(args).get_meta().validate().log()
 
+    # --- initialize wandb ---
     if args.apply_wandb and args.wandb_api_key:
         wandb.login(key=args.wandb_api_key)
 
@@ -33,36 +35,29 @@ def main(args: Arguments):
         project=args.wandb_project,
         name=args.wandb_name,
         config=config.__dict__,
-        mode='online' if args.apply_wandb else 'disabled'
+        mode="online" if args.apply_wandb else "disabled",
     )
 
-    training_dataset = Dataset().prepare(
-        config=config,
-        partition="train"
-    )
-    valid_dataset = Dataset().prepare(
-        config=config,
-        partition="valid"
-    )
-    test_dataset = Dataset().prepare(
-        config=config,
-        partition="test"
-    )
+    # --- prepare dataset ---
+    training_dataset = Dataset().prepare(config=config, partition="train")
+    valid_dataset = Dataset().prepare(config=config, partition="valid")
+    test_dataset = Dataset().prepare(config=config, partition="test")
 
+    # --- initialize trainer ---
     trainer = Trainer(
         config=config,
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
-        test_dataset=test_dataset
+        test_dataset=test_dataset,
     )
 
+    # --- run training and testing ---
     trainer.run()
 
     return None
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
@@ -70,11 +65,11 @@ if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.
-        arguments, = parser.parse_json_file(
+        (arguments,) = parser.parse_json_file(
             json_file=os.path.abspath(sys.argv[1])
         )
     else:
-        arguments, = parser.parse_args_into_dataclasses()
+        (arguments,) = parser.parse_args_into_dataclasses()
 
     if not getattr(arguments, "log_path", None):
         arguments.log_path = set_log_path(arguments, _time)
