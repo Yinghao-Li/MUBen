@@ -1,10 +1,13 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Implements SWA and SWAG algorithms: https://arxiv.org/abs/1902.02476
-               Modified from the PyTorch implementation at torch.optim.swa_utils.py
-               and the original SWAG repo: https://github.com/wjmaddox/swa_gaussian/blob/master/swag/posteriors/swag.py
+# Description:
+Implements the SWA (Stochastic Weight Averaging) and SWAG (Stochastic Weight Averaging Gaussian) algorithms.
+
+# Reference: https://arxiv.org/abs/1902.02476
+This implementation is based on the PyTorch version at torch.optim.swa_utils.py and the original
+SWAG repository at https://github.com/wjmaddox/swa_gaussian/blob/master/swag/posteriors/swag.py
 """
 
 import torch
@@ -74,7 +77,9 @@ class SWAModel(Module):
         for name, param in self.module.named_parameters():
             name = regex.sub(r"\.", "_", name)
             self.register_buffer(f"{name}_Mean", torch.zeros_like(param.data))
-            self.register_buffer(f"{name}_SqMean", torch.zeros_like(param.data))
+            self.register_buffer(
+                f"{name}_SqMean", torch.zeros_like(param.data)
+            )
             self.register_buffer(
                 f"{name}_CovMatSqrt", torch.zeros((1, param.data.numel()))
             )
@@ -87,6 +92,13 @@ class SWAModel(Module):
         return self.module(*args, **kwargs)
 
     def update_parameters(self, model):
+        """
+        Updates the SWA parameters based on the provided model's parameters.
+
+        Args:
+            model (torch.nn.Module): Model whose parameters are used to update the SWA model.
+        """
+
         for name, params in model.named_parameters():
             name_ = regex.sub(r"\.", "_", name)
 
@@ -101,16 +113,18 @@ class SWAModel(Module):
 
             else:
                 # first moment
-                mean = mean * n_averaged / (n_averaged + 1.0) + params.data.cpu() / (
+                mean = mean * n_averaged / (
                     n_averaged + 1.0
-                )
+                ) + params.data.cpu() / (n_averaged + 1.0)
                 # second moment
                 sq_mean = sq_mean * n_averaged / (
                     n_averaged + 1.0
                 ) + params.data.square().cpu() / (n_averaged + 1.0)
                 # block covariance matrices, store deviation from current mean
                 dev = (params.data.cpu() - mean).view(-1, 1)
-                cov_mat_sqrt = torch.cat((cov_mat_sqrt, dev.view(-1, 1).T), dim=0)
+                cov_mat_sqrt = torch.cat(
+                    (cov_mat_sqrt, dev.view(-1, 1).T), dim=0
+                )
                 # remove first column if we have stored too many models
                 if cov_mat_sqrt.shape[0] > self.k_models:
                     cov_mat_sqrt = cov_mat_sqrt[1:, :]
@@ -124,6 +138,12 @@ class SWAModel(Module):
         return self
 
     def sample_parameters(self):
+        """
+        Samples parameters for the SWA model using the mean and covariance matrix.
+
+        Returns:
+            SWAModel: SWA model with sampled parameters.
+        """
         scale = torch.sqrt(torch.tensor(0.5))
 
         for name, _ in self.module.named_parameters():
@@ -138,9 +158,9 @@ class SWAModel(Module):
             scaled_diag_sample = scale * torch.sqrt(var) * eps
 
             eps = torch.randn((cov_mat_sqrt.shape[0], 1))
-            cov_sample = (scale / (self.k_models - 1) ** 0.5) * cov_mat_sqrt.T.matmul(
-                eps
-            ).view_as(mean)
+            cov_sample = (
+                scale / (self.k_models - 1) ** 0.5
+            ) * cov_mat_sqrt.T.matmul(eps).view_as(mean)
 
             w = mean + scaled_diag_sample + cov_sample
 

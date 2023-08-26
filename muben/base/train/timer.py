@@ -1,8 +1,12 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Simple training timer.
+# Description:
+
+Simple training timer to measure and record the execution time 
+of different sections of the training process. It supports both 
+CUDA and CPU timings.
 """
 
 import time
@@ -14,6 +18,14 @@ __all__ = ["Timer"]
 
 class Timer:
     def __init__(self, device="cpu"):
+        """
+        Initialize the Timer object.
+
+        Parameters
+        ----------
+        device : str, optional
+            Device type to determine if CUDA is enabled, default is "cpu".
+        """
         self._cuda_enabled = torch.device(device).type == "cuda"
         self.start = None
         self.end = None
@@ -22,6 +34,15 @@ class Timer:
         self.time_elapsed_cache = list()
 
     def init(self, device=None):
+        """
+        Initialize or reinitialize the timer's properties.
+
+        Parameters
+        ----------
+        device : str, optional
+            Device type to determine if CUDA is enabled. If not provided,
+            retains the existing setting.
+        """
         self._cuda_enabled = (
             torch.device(device).type == "cuda"
             if device is not None
@@ -34,17 +55,44 @@ class Timer:
         self.time_elapsed_cache = list()
 
     def clean_cache(self):
+        """
+        Reset the elapsed time cache.
+        """
         self.time_elapsed_cache = list()
 
     @property
     def is_empty(self):
+        """Check if the cache is empty.
+
+        Returns
+        -------
+        bool
+            True if cache is empty, otherwise False.
+        """
         return True if not self.time_elapsed_cache else False
 
     @property
     def time_elapsed_avg(self):
+        """
+        Calculate the average of elapsed times in the cache.
+
+        Returns
+        -------
+        float or None
+            The average elapsed time if cache is not empty, otherwise None.
+        """
         return np.mean(self.time_elapsed_cache) if not self.is_empty else None
 
     def on_measurement_start(self):
+        """
+        Start the time measurement. Utilizes CUDA events if CUDA is enabled,
+        otherwise uses Python's time module.
+
+        Returns
+        -------
+        Timer
+            The current Timer object.
+        """
         if self._cuda_enabled:
             self.start = torch.cuda.Event(enable_timing=True)
             self.end = torch.cuda.Event(enable_timing=True)
@@ -57,11 +105,12 @@ class Timer:
 
     def on_measurement_end(self):
         """
-        Callback function for the time measurement end event.
+        End the time measurement and record the elapsed time.
 
         Returns
         -------
-        bool: whether the elapsed time is recorded
+        bool
+            True if the elapsed time is successfully recorded, otherwise False.
         """
         if not self.started_flag:
             return False

@@ -1,9 +1,11 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: The scaler for the regression task, adapted from
-               https://github.com/chemprop/chemprop/blob/master/chemprop/data/scaler.py
+# Description: 
+
+The scaler for the regression task, adapted from
+https://github.com/chemprop/chemprop/blob/master/chemprop/data/scaler.py
 """
 
 import numpy as np
@@ -57,8 +59,12 @@ class StandardScaler:
         self.means = np.where(
             np.isnan(self.means), np.zeros(self.means.shape), self.means
         )
-        self.stds = np.where(np.isnan(self.stds), np.ones(self.stds.shape), self.stds)
-        self.stds = np.where(self.stds == 0, np.ones(self.stds.shape), self.stds)
+        self.stds = np.where(
+            np.isnan(self.stds), np.ones(self.stds.shape), self.stds
+        )
+        self.stds = np.where(
+            self.stds == 0, np.ones(self.stds.shape), self.stds
+        )
 
         return self
 
@@ -77,12 +83,16 @@ class StandardScaler:
         x = np.array(x).astype(float)
         transformed_with_nan = (x - self.means) / self.stds
         transformed_with_none = np.where(
-            np.isnan(transformed_with_nan), self.replace_nan_token, transformed_with_nan
+            np.isnan(transformed_with_nan),
+            self.replace_nan_token,
+            transformed_with_nan,
         )
 
         return transformed_with_none
 
-    def inverse_transform(self, x: np.ndarray, var: Optional[np.ndarray] = None):
+    def inverse_transform(
+        self, x: np.ndarray, var: Optional[np.ndarray] = None
+    ):
         """
         Performs the inverse transformation by multiplying by the standard deviations and adding the means.
 
@@ -95,7 +105,9 @@ class StandardScaler:
         -------
         The inverse transformed data.
         """
-        assert isinstance(x, np.ndarray), TypeError("x is required to be numpy array!")
+        assert isinstance(x, np.ndarray), TypeError(
+            "x is required to be numpy array!"
+        )
         if var is not None:
             assert isinstance(x, np.ndarray), TypeError(
                 "x is required to be numpy array!"

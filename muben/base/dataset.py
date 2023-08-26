@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 12th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Base classes for dataset creation and batch processing.
 """
@@ -24,6 +24,17 @@ __all__ = ["Dataset", "Batch", "pack_instances", "unpack_instances"]
 
 
 class Dataset(TorchDataset):
+    """
+    Custom Dataset class to handle data storage, manipulation, and preprocessing operations.
+
+    Attributes:
+        _smiles (Union[list[str], None]): Chemical structures represented as strings.
+        _lbs (Union[np.ndarray, None]): Label data.
+        _masks (Union[np.ndarray, None]): Data masks.
+        _ori_ids (Union[np.ndarray, None]): Original IDs, specifically useful for randomly split datasets.
+        data_instances: Packed instances of data.
+    """
+
     def __init__(self):
         super().__init__()
 
@@ -44,6 +55,9 @@ class Dataset(TorchDataset):
 
     @cached_property
     def masks(self) -> np.ndarray:
+        """
+        Return masks, and if not present, generate masks with ones.
+        """
         return (
             self._masks
             if self._masks is not None
@@ -89,11 +103,17 @@ class Dataset(TorchDataset):
         )
         preprocessed_path = os.path.normpath(
             os.path.join(
-                config.data_dir, "processed", method_identifier, f"{partition}.pt"
+                config.data_dir,
+                "processed",
+                method_identifier,
+                f"{partition}.pt",
             )
         )
         # Load Pre-processed dataset if exist
-        if os.path.exists(preprocessed_path) and not config.ignore_preprocessed_dataset:
+        if (
+            os.path.exists(preprocessed_path)
+            and not config.ignore_preprocessed_dataset
+        ):
             logger.info(f"Loading pre-processed dataset {preprocessed_path}")
             self.load(preprocessed_path)
         # else, load dataset from csv and generate features
@@ -142,7 +162,9 @@ class Dataset(TorchDataset):
             if regex.match(f"^_[a-z]", attr):
                 attr_dict[attr] = value
 
-        os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
+        os.makedirs(
+            os.path.dirname(os.path.normpath(file_path)), exist_ok=True
+        )
         torch.save(attr_dict, file_path)
 
         return self
@@ -163,7 +185,9 @@ class Dataset(TorchDataset):
 
         for attr, value in attr_dict.items():
             if attr not in self.__dict__:
-                logger.warning(f"Attribute {attr} is not natively defined in dataset!")
+                logger.warning(
+                    f"Attribute {attr} is not natively defined in dataset!"
+                )
 
             setattr(self, attr, value)
 
@@ -173,7 +197,9 @@ class Dataset(TorchDataset):
         """
         Read data from csv files
         """
-        file_path = os.path.normpath(os.path.join(data_dir, f"{partition}.csv"))
+        file_path = os.path.normpath(
+            os.path.join(data_dir, f"{partition}.csv")
+        )
         logger.info(f"Loading dataset {file_path}")
 
         if not (file_path and os.path.exists(file_path)):
@@ -195,6 +221,10 @@ class Dataset(TorchDataset):
 
 
 class Batch:
+    """
+    A batch of data instances, each is initialized with a dict with attribute names as keys
+    """
+
     def __init__(self, **kwargs):
         self.size = 0
         super().__init__()
@@ -206,17 +236,25 @@ class Batch:
             self.register_tensor_members(k, v)
 
     def register_tensor_members(self, k, v):
+        """
+        Register tensor members to the batch
+        """
         if isinstance(v, torch.Tensor) or callable(getattr(v, "to", None)):
             self._tensor_members[k] = v
 
     def to(self, device):
+        """
+        Move all tensor members to the target device
+        """
         for k, v in self._tensor_members.items():
             setattr(self, k, v.to(device))
         return self
 
     def __len__(self):
         return (
-            len(tuple(self._tensor_members.values())[0]) if not self.size else self.size
+            len(tuple(self._tensor_members.values())[0])
+            if not self.size
+            else self.size
         )
 
 
@@ -236,7 +274,9 @@ def pack_instances(**kwargs) -> list[dict]:
     return instance_list
 
 
-def unpack_instances(instance_list: list[dict], attr_names: Optional[list[str]] = None):
+def unpack_instances(
+    instance_list: list[dict], attr_names: Optional[list[str]] = None
+):
     """
     Convert a list of dict-type instances to a list of value lists,
     each contains all values within a batch of each attribute
@@ -249,6 +289,8 @@ def unpack_instances(instance_list: list[dict], attr_names: Optional[list[str]] 
     """
     if not attr_names:
         attr_names = list(instance_list[0].keys())
-    attribute_tuple = [[inst[name] for inst in instance_list] for name in attr_names]
+    attribute_tuple = [
+        [inst[name] for inst in instance_list] for name in attr_names
+    ]
 
     return attribute_tuple

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -42,17 +42,23 @@ class Arguments:
     )
     disable_wandb: Optional[bool] = field(
         default=False,
-        metadata={"help": "Disable WandB even if relevant arguments are filled."},
+        metadata={
+            "help": "Disable WandB even if relevant arguments are filled."
+        },
     )
 
     # --- IO arguments ---
-    dataset_name: Optional[str] = field(default="", metadata={"help": "Dataset Name."})
+    dataset_name: Optional[str] = field(
+        default="", metadata={"help": "Dataset Name."}
+    )
     data_folder: Optional[str] = field(
         default="", metadata={"help": "The folder containing all datasets."}
     )
     data_seed: Optional[int] = field(
         default=None,
-        metadata={"help": "Seed used while constructing the random split dataset"},
+        metadata={
+            "help": "Seed used while constructing the random split dataset"
+        },
     )
     result_folder: Optional[str] = field(
         default="./output", metadata={"help": "where to save model outputs."}
@@ -84,9 +90,12 @@ class Arguments:
 
     # --- Model Arguments ---
     model_name: Optional[str] = field(
-        default="DNN", metadata={"help": "Name of the model", "choices": MODEL_NAMES}
+        default="DNN",
+        metadata={"help": "Name of the model", "choices": MODEL_NAMES},
     )
-    dropout: Optional[float] = field(default=0.1, metadata={"help": "Dropout ratio."})
+    dropout: Optional[float] = field(
+        default=0.1, metadata={"help": "Dropout ratio."}
+    )
     binary_classification_with_softmax: Optional[bool] = field(
         default=False,
         metadata={
@@ -121,17 +130,23 @@ class Arguments:
             "help": "Ignore the model checkpoints from no-uncertainty training processes."
         },
     )
-    batch_size: Optional[int] = field(default=32, metadata={"help": "Batch size."})
+    batch_size: Optional[int] = field(
+        default=32, metadata={"help": "Batch size."}
+    )
     batch_size_inference: Optional[int] = field(
         default=None, metadata={"help": "Inference batch size."}
     )
     n_epochs: Optional[int] = field(
         default=50, metadata={"help": "How many epochs to train the model."}
     )
-    lr: Optional[float] = field(default=1e-4, metadata={"help": "Learning Rate."})
+    lr: Optional[float] = field(
+        default=1e-4, metadata={"help": "Learning Rate."}
+    )
     grad_norm: Optional[float] = field(
         default=0,
-        metadata={"help": "Gradient norm. Default is 0 (do not clip gradient)"},
+        metadata={
+            "help": "Gradient norm. Default is 0 (do not clip gradient)"
+        },
     )
     lr_scheduler_type: Optional[str] = field(
         default="constant",
@@ -153,10 +168,13 @@ class Arguments:
     )
     seed: Optional[int] = field(
         default=0,
-        metadata={"help": "Random seed that will be set at the beginning of training."},
+        metadata={
+            "help": "Random seed that will be set at the beginning of training."
+        },
     )
     debug: Optional[bool] = field(
-        default=False, metadata={"help": "Debugging mode with fewer training data"}
+        default=False,
+        metadata={"help": "Debugging mode with fewer training data"},
     )
     deploy: Optional[bool] = field(
         default=False,
@@ -218,7 +236,9 @@ class Arguments:
     # --- SWAG Arguments ---
     swa_lr_decay: Optional[float] = field(
         default=0.5,
-        metadata={"help": "The learning rate decay coefficient during SWA training."},
+        metadata={
+            "help": "The learning rate decay coefficient during SWA training."
+        },
     )
     n_swa_epochs: Optional[int] = field(
         default=20, metadata={"help": "The number of SWA training epochs."}
@@ -234,11 +254,15 @@ class Arguments:
     # --- Temperature Scaling Arguments ---
     ts_lr: Optional[float] = field(
         default=0.01,
-        metadata={"help": "The learning rate to train temperature scaling parameters."},
+        metadata={
+            "help": "The learning rate to train temperature scaling parameters."
+        },
     )
     n_ts_epochs: Optional[int] = field(
         default=20,
-        metadata={"help": "The number of Temperature Scaling training epochs."},
+        metadata={
+            "help": "The number of Temperature Scaling training epochs."
+        },
     )
 
     # --- Focal Loss Arguments ---
@@ -271,7 +295,8 @@ class Arguments:
         },
     )
     sgld_sampling_interval: Optional[int] = field(
-        default=2, metadata={"help": "The number of epochs per sampling operation."}
+        default=2,
+        metadata={"help": "The number of epochs per sampling operation."},
     )
 
     # --- Evidential Networks Arguments ---
@@ -287,16 +312,20 @@ class Arguments:
 
     # --- Device Arguments ---
     no_cuda: Optional[bool] = field(
-        default=False, metadata={"help": "Disable CUDA even when it is available."}
+        default=False,
+        metadata={"help": "Disable CUDA even when it is available."},
     )
     no_mps: Optional[bool] = field(
-        default=False, metadata={"help": "Disable MPS even when it is available."}
+        default=False,
+        metadata={"help": "Disable MPS even when it is available."},
     )
     num_workers: Optional[int] = field(
-        default=0, metadata={"help": "The number of threads to process the dataset."}
+        default=0,
+        metadata={"help": "The number of threads to process the dataset."},
     )
     num_preprocess_workers: Optional[int] = field(
-        default=8, metadata={"help": "The number of threads to process the dataset."}
+        default=8,
+        metadata={"help": "The number of threads to process the dataset."},
     )
     pin_memory: Optional[bool] = field(
         default=False, metadata={"help": "Pin memory for data loader."}
@@ -306,6 +335,9 @@ class Arguments:
     )
 
     def __post_init__(self):
+        """
+        Post initialization for creating derived attributes
+        """
         if self.model_name != "DNN":
             self.feature_type = "none"
             model_name_and_feature = self.model_name
@@ -368,19 +400,19 @@ class Config(Arguments):
     classes = None  # all possible classification classes
     task_type = "classification"  # classification or regression
     n_tasks = None  # how many tasks (sets of labels to predict)
-    eval_metric = (
-        None  # which metric for evaluating valid and test performance *during training*
-    )
-    random_split = (
-        False  # whether the dataset is split randomly; False indicates scaffold split
-    )
+    eval_metric = None  # which metric for evaluating valid and test performance *during training*
+    random_split = False  # whether the dataset is split randomly; False indicates scaffold split
 
     @cached_property
     def n_lbs(self):
+        """
+        The number of labels to predict
+        """
         if self.task_type == "classification":
             if (
                 len(self.classes) == 2
-                and not self.uncertainty_method == UncertaintyMethods.evidential
+                and not self.uncertainty_method
+                == UncertaintyMethods.evidential
             ):
                 return 1
             else:
@@ -406,6 +438,9 @@ class Config(Arguments):
         meta_dir: Optional[str] = None,
         meta_file_name: Optional[str] = "meta.json",
     ):
+        """
+        Load meta file and update attributes
+        """
         if meta_dir is not None:
             meta_dir = meta_dir
         elif "data_dir" in dir(self):
@@ -552,6 +587,9 @@ class Config(Arguments):
         return self
 
     def log(self):
+        """
+        Log all configurations
+        """
         elements = {
             attr: getattr(self, attr)
             for attr in dir(self)
@@ -590,7 +628,8 @@ class Config(Arguments):
                 json.dump(asdict(self), f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.exception(
-                f"Cannot save config file to {file_path}; " f"encountered Error {e}"
+                f"Cannot save config file to {file_path}; "
+                f"encountered Error {e}"
             )
             raise e
         return self

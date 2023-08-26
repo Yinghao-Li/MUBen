@@ -1,8 +1,13 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Validation and prediction test metrics
+# Description:
+
+Validation and Prediction Test Metrics
+
+This module contains utility functions to compute various performance metrics 
+for both classification and regression models.
 """
 
 
@@ -16,7 +21,10 @@ from sklearn.metrics import (
 )
 from typing import Union, List
 
-__all__ = ["calculate_binary_classification_metrics", "calculate_regression_metrics"]
+__all__ = [
+    "calculate_binary_classification_metrics",
+    "calculate_regression_metrics",
+]
 
 
 def calculate_binary_classification_metrics(
@@ -26,25 +34,31 @@ def calculate_binary_classification_metrics(
     metrics: Union[str, List[str]],
 ) -> dict:
     """
-    Calculate the classification metrics
+    Calculate various classification metrics for binary classification.
 
     Parameters
     ----------
-    lbs: true labels, with shape (dataset_size, n_tasks)
-    probs: predicted logits, of shape (dataset_size, n_tasks, [n_lbs])
-    masks: label masks, of shape (dataset_size, n_tasks), should be bool values
-    metrics: which metric to calculate
+    lbs : np.ndarray
+        True labels with shape (dataset_size, n_tasks).
+    probs : np.ndarray
+        Predicted logits, of shape (dataset_size, n_tasks, [n_lbs]).
+    masks : np.ndarray
+        Boolean array indicating the presence of a label, of shape (dataset_size, n_tasks).
+    metrics : Union[str, List[str]]
+        Metrics to compute, options: "roc_auc", "prc_auc".
 
     Returns
     -------
-    classification metrics
+    dict
+        Computed classification metrics.
     """
+
     if isinstance(metrics, str):
         metrics = [metrics]
 
     results = dict()
     for metric in metrics:
-        if len(lbs.shape) == 1:  # only one task
+        if len(lbs.shape) == 1:  # Handling for single task
             lbs = lbs[masks]
             probs = probs[masks]
 
@@ -60,16 +74,16 @@ def calculate_binary_classification_metrics(
             else:
                 raise NotImplementedError("Metric is not implemented")
 
-        else:  # multiple classification tasks
-            # swap n_tasks and dataset size
-            lbs = lbs.swapaxes(0, 1)
-            probs = probs.swapaxes(0, 1)
-            masks = masks.swapaxes(0, 1)
-
+        else:  # Handling for multiple tasks
+            lbs, probs, masks = (
+                lbs.swapaxes(0, 1),
+                probs.swapaxes(0, 1),
+                masks.swapaxes(0, 1),
+            )
             vals = list()
+
             for lbs_, probs_, masks_ in zip(lbs, probs, masks):
-                lbs_ = lbs_[masks_]
-                probs_ = probs_[masks_]
+                lbs_, probs_ = lbs_[masks_], probs_[masks_]
 
                 if len(lbs_) < 1:
                     continue
@@ -101,19 +115,25 @@ def calculate_regression_metrics(
     metrics: Union[str, List[str]],
 ) -> dict:
     """
-    Calculate the regression metrics
+    Calculate various regression metrics.
 
     Parameters
     ----------
-    lbs: true labels, with shape (dataset_size, n_tasks)
-    preds: predicted values, of shape (dataset_size, n_tasks)
-    masks: label masks, of shape (dataset_size, n_tasks), should be bool values
-    metrics: which metric to calculate
+    lbs : np.ndarray
+        True labels with shape (dataset_size, n_tasks).
+    preds : np.ndarray
+        Predicted values, of shape (dataset_size, n_tasks).
+    masks : np.ndarray
+        Boolean array indicating the presence of a label, of shape (dataset_size, n_tasks).
+    metrics : Union[str, List[str]]
+        Metrics to compute, options: "rmse", "mae".
 
     Returns
     -------
-    classification metrics
+    dict
+        Computed regression metrics.
     """
+
     if isinstance(metrics, str):
         metrics = [metrics]
 

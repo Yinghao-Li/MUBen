@@ -1,8 +1,15 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Base trainer functions.
+# Description:
+
+Base trainer functions to facilitate training, validation, and testing 
+of machine learning models. This Trainer class is designed to seamlessly 
+integrate with various datasets, loss functions, metrics, and uncertainty 
+estimation methods. It provides convenient mechanisms to standardize, 
+initialize and manage training states, and is also integrated with logging 
+and Weights & Biases (wandb) for experiment tracking.
 """
 
 import copy
@@ -61,6 +68,24 @@ class Trainer:
         collate_fn=None,
         scalar=None,
     ):
+        """
+        Initialize the Trainer object.
+
+        Parameters
+        ----------
+        config : Config
+            Configuration object containing all necessary parameters for training.
+        training_dataset : Dataset, optional
+            Dataset for training the model.
+        valid_dataset : Dataset, optional
+            Dataset for validating the model.
+        test_dataset : Dataset, optional
+            Dataset for testing the model.
+        collate_fn : function, optional
+            Function to collate data samples into batches.
+        scalar : StandardScaler, optional
+            Scaler for standardizing input data.
+        """
         self._config = config
         self._training_dataset = training_dataset
         self._valid_dataset = valid_dataset
@@ -127,36 +152,91 @@ class Trainer:
 
     @property
     def model(self):
-        # return the scaled model if it exits
+        """
+        Retrieve the scaled model if available, else return the base model.
+
+        Returns
+        -------
+        torch.nn.Module
+            The model (possibly scaled).
+        """
         if self._ts_model:
             return self._ts_model
         return self._model
 
     @property
     def config(self) -> Config:
+        """
+        Retrieve the configuration of the Trainer.
+
+        Returns
+        -------
+        Config
+            The configuration object.
+        """
         return self._config
 
     @property
     def n_model_parameters(self):
-        return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        """
+        Compute the total number of trainable parameters in the model.
+
+        Returns
+        -------
+        int
+            Total number of trainable parameters.
+        """
+        return sum(
+            p.numel() for p in self.model.parameters() if p.requires_grad
+        )
 
     @property
     def n_update_steps_per_epoch(self):
-        return int(np.ceil(len(self._training_dataset) / self.config.batch_size))
+        """
+        Calculate the number of update steps required per epoch, based on
+        the size of the training dataset and batch size.
+
+        Returns
+        -------
+        int
+            Number of update steps per epoch.
+        """
+        return int(
+            np.ceil(len(self._training_dataset) / self.config.batch_size)
+        )
 
     @property
     def backbone_params(self):
+        """
+        Retrieve the parameters of the model's backbone (excluding the output layer).
+
+        Returns
+        -------
+        list
+            List of parameters of the model's backbone.
+        """
         output_param_ids = [
-            id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]
+            id(x[1])
+            for x in self._model.named_parameters()
+            if "output_layer" in x[0]
         ]
         backbone_params = list(
-            filter(lambda p: id(p) not in output_param_ids, self._model.parameters())
+            filter(
+                lambda p: id(p) not in output_param_ids,
+                self._model.parameters(),
+            )
         )
         return backbone_params
 
     def initialize(self):
         """
-        Initialize trainer status
+        Initialize the trainer's status and its key components including the model,
+        optimizer, learning rate scheduler, and loss function.
+
+        Returns
+        -------
+        self : Trainer
+            Initialized Trainer instance.
         """
         self.initialize_model()
         self.initialize_optimizer()
@@ -171,11 +251,26 @@ class Trainer:
         return self
 
     def initialize_model(self, *args, **kwargs):
+        """
+        Abstract method to initialize the model. Implementations are expected in
+        subclasses of Trainer.
+
+        Raises
+        ------
+        NotImplementedError
+            If the method is not implemented.
+        """
         raise NotImplementedError
 
     def initialize_optimizer(self, *args, **kwargs):
         """
-        Initialize model optimizer
+        Initialize the model's optimizer based on the set configurations.
+        Special handling is provided for SGLD-based uncertainty methods.
+
+        Returns
+        -------
+        self : Trainer
+            Updated Trainer instance with initialized optimizer.
         """
         params = [p for p in self.model.parameters() if p.requires_grad]
         self._optimizer = AdamW(params, lr=self._status.lr)
@@ -188,7 +283,8 @@ class Trainer:
                 if "output_layer" in x[0]
             ]
             backbone_params = filter(
-                lambda p: id(p) not in output_param_ids, self._model.parameters()
+                lambda p: id(p) not in output_param_ids,
+                self._model.parameters(),
             )
             output_params = filter(
                 lambda p: id(p) in output_param_ids, self._model.parameters()
@@ -210,12 +306,20 @@ class Trainer:
 
     def initialize_scheduler(self):
         """
-        Initialize learning rate scheduler
+        Initialize the learning rate scheduler based on the number of training steps
+        and the specified warmup ratio.
+
+        Returns
+        -------
+        self : Trainer
+            Updated Trainer instance with initialized scheduler.
         """
         n_training_steps = int(
             np.ceil(self.n_update_steps_per_epoch * self._status.n_epochs)
         )
-        n_warmup_steps = int(np.ceil(n_training_steps * self.config.warmup_ratio))
+        n_warmup_steps = int(
+            np.ceil(n_training_steps * self.config.warmup_ratio)
+        )
 
         self._scheduler = get_scheduler(
             self._status.lr_scheduler_type,
@@ -226,12 +330,29 @@ class Trainer:
         return self
 
     def initialize_loss(self, disable_focal_loss=False):
+        """
+        Initialize the loss function based on the task type and uncertainty method
+        specified in the configuration.
+
+        Parameters
+        ----------
+        disable_focal_loss : bool, optional
+            If True, disables the use of focal loss, even if the uncertainty method
+            specifies it. Defaults to False.
+
+        Returns
+        -------
+        self : Trainer
+            Updated Trainer instance with initialized loss function.
+        """
         # Notice that the reduction should always be 'none' here for the following masking operation
         if self.config.task_type == "classification":
             # evidential classification
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
                 self._loss_fn = EvidentialClassificationLoss(
-                    n_classes=2 if self.config.n_lbs == 1 else self.config.n_lbs,
+                    n_classes=2
+                    if self.config.n_lbs == 1
+                    else self.config.n_lbs,
                     n_steps_per_epoch=self.n_update_steps_per_epoch,
                     annealing_epochs=self.config.evidential_clx_loss_annealing_epochs,
                     device=self._device,
@@ -247,7 +368,8 @@ class Trainer:
         else:
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
                 self._loss_fn = EvidentialRegressionLoss(
-                    coeff=self.config.evidential_reg_loss_weight, reduction="none"
+                    coeff=self.config.evidential_reg_loss_weight,
+                    reduction="none",
                 )
             elif self.config.regression_with_variance:
                 self._loss_fn = GaussianNLLLoss(reduction="none")
@@ -270,8 +392,13 @@ class Trainer:
 
     def standardize_training_lbs(self):
         """
-        Convert the label distribution in the training dataset to standard Gaussian.
-        Notice that this function only works for regression tasks
+        Standardize the label distribution of the training dataset to a standerd Gaussian
+        distribution. This function is applicable only for regression tasks.
+
+        Returns
+        -------
+        self : Trainer
+            Updated Trainer instance with standardized training labels.
         """
         if self.config.task_type == "classification":
             return self
@@ -314,11 +441,18 @@ class Trainer:
 
     def set_mode(self, mode: str):
         """
-        Specify training mode using string.
+        Set the training mode for the model. Depending on the mode, the model
+        can either be set to training, evaluation, or testing.
 
         Parameters
         ----------
-        mode: train or valid
+        mode : str
+            Mode to set the model into. Should be one of 'train', 'eval', or 'test'.
+
+        Returns
+        -------
+        self : Trainer
+            Updated Trainer instance with the model set to the specified mode.
         """
 
         if mode == "train":
@@ -336,13 +470,16 @@ class Trainer:
                     if m.__class__.__name__.startswith("Dropout"):
                         m.train()
         else:
-            raise ValueError(f"Argument `mode` should be 'train', 'eval' or 'test'.")
+            raise ValueError(
+                f"Argument `mode` should be 'train', 'eval' or 'test'."
+            )
 
         return self
 
     def run(self):
         """
-        Run the training and evaluation process. This is the main/entry function of the Trainer class.
+        Execute the training and evaluation process based on the specified uncertainty
+        method. This method serves as the main entry point for the entire training process.
 
         Returns
         -------
@@ -379,15 +516,17 @@ class Trainer:
 
     def run_single_shot(self, apply_test=True):
         """
-        Run the training and evaluation pipeline once. No pre- or post-processing is applied.
+        Run the training and evaluation pipeline for a single iteration.
 
         Parameters
         ----------
-        apply_test: whether run the test function in the process.
+        apply_test : bool, optional
+            Whether to run the test function as part of the process. Default is True.
 
         Returns
         -------
-        self
+        Trainer
+            Self reference to the Trainer object.
         """
 
         set_seed(self.config.seed)
@@ -410,7 +549,13 @@ class Trainer:
 
     def run_ensembles(self):
         """
-        Run an ensemble of models. Used as the implementation of the Model Ensembles for uncertainty estimation.
+        Train and evaluate an ensemble of models.
+        This is primarily used for uncertainty estimation through model ensembles.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
         """
 
         for ensemble_idx in range(self.config.n_ensembles):
@@ -428,7 +573,9 @@ class Trainer:
                 f"seed-{individual_seed}",
             )
             self._status.result_dir_no_uncertainty = op.join(
-                op.dirname(op.normpath(self._status.result_dir_no_uncertainty)),
+                op.dirname(
+                    op.normpath(self._status.result_dir_no_uncertainty)
+                ),
                 f"seed-{individual_seed}",
             )
 
@@ -450,7 +597,13 @@ class Trainer:
 
     def run_swag(self):
         """
-        Run the training and evaluation pipeline with SWAG uncertainty estimation method.
+        Execute the training and evaluation pipeline using the SWAG (Stochastic Weight Averaging Gaussian)
+        method for uncertainty estimation.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
         """
 
         # Train the model with early stopping.
@@ -471,13 +624,22 @@ class Trainer:
         return self
 
     def swa_session(self):
+        """
+        Execute the SWA session. This function should be inherited by
+        child classes if special handling for optimizer or model initialization
+        if required.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
+        """
         # update hyper parameters
         self._status.lr *= self.config.swa_lr_decay
         self._status.lr_scheduler_type = "constant"
         self._status.n_epochs = self.config.n_swa_epochs
-        self._status.valid_epoch_interval = (
-            0  # Can also set this to None; disable validation
-        )
+        # Can also set this to None; disable validation
+        self._status.valid_epoch_interval = 0
 
         self.initialize_optimizer()
         self.initialize_scheduler()
@@ -495,7 +657,12 @@ class Trainer:
 
     def run_temperature_scaling(self):
         """
-        Run the training and evaluation pipeline with temperature scaling.
+        Execute the training and evaluation pipeline with temperature scaling as a post-processing step.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
         """
 
         # Train the model with early stopping.
@@ -516,6 +683,14 @@ class Trainer:
         return self
 
     def ts_session(self):
+        """
+        Execute the temperature scaling session.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
+        """
         # update hyper parameters
         self._status.lr = self.config.ts_lr
         self._status.lr_scheduler_type = "constant"
@@ -539,8 +714,13 @@ class Trainer:
 
     def run_iso_calibration(self):
         """
-        Run the isotonic calibration process proposed in
-        `Accurate Uncertainties for Deep Learning Using Calibrated Regression`.
+        Perform isotonic calibration as described in the paper:
+        'Accurate Uncertainties for Deep Learning Using Calibrated Regression'.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
         """
         # Train the model with early stopping.
         self.run_single_shot(apply_test=False)
@@ -569,7 +749,13 @@ class Trainer:
 
     def run_focal_loss(self):
         """
-        Run the training and evaluation pipeline with focal loss.
+        Run the training and evaluation pipeline utilizing the focal loss.
+        Temperature scaling can be applied post-training if specified in the configuration.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
         """
         # Train the model with early stopping. Do not need to load state dict as it is done during test
         self.run_single_shot()
@@ -590,7 +776,13 @@ class Trainer:
 
     def run_sgld(self):
         """
-        Run the training and evaluation steps with stochastic gradient Langevin Dynamics
+        Execute the training and evaluation procedures with Stochastic Gradient Langevin Dynamics (SGLD)
+        for uncertainty estimation.
+
+        Returns
+        -------
+        Trainer
+            Self reference to the Trainer object.
         """
         self.run_single_shot(apply_test=False)
         self._load_model_state_dict()
@@ -619,12 +811,14 @@ class Trainer:
 
     def train(self, use_valid_dataset=False):
         """
-        Run the training process
+        Execute the training process for the model.
 
         Parameters
         ----------
-        use_valid_dataset: whether to use the validation dataset to train the model.
-            This argument could be true during temperature scaling.
+        use_valid_dataset : bool, optional
+            Determines if the validation dataset should be used for training.
+            This can be set to True during processes like temperature scaling.
+            Default is False.
 
         Returns
         -------
@@ -633,7 +827,9 @@ class Trainer:
 
         self.model.to(self._device)
         data_loader = self.get_dataloader(
-            self.training_dataset if not use_valid_dataset else self.valid_dataset,
+            self.training_dataset
+            if not use_valid_dataset
+            else self.valid_dataset,
             shuffle=True,
             batch_size=self.config.batch_size,
         )
@@ -652,7 +848,8 @@ class Trainer:
                 }
             )
             wandb.log(
-                data={"train/loss": training_loss}, step=self._status.train_log_idx
+                data={"train/loss": training_loss},
+                step=self._status.train_log_idx,
             )
 
             # Compatibility with SWAG
@@ -664,7 +861,9 @@ class Trainer:
                 and (epoch_idx + 1) % self.config.sgld_sampling_interval == 0
             ):
                 self.model.to("cpu")
-                self._sgld_model_buffer.append(copy.deepcopy(self.model.state_dict()))
+                self._sgld_model_buffer.append(
+                    copy.deepcopy(self.model.state_dict())
+                )
                 self.model.to(self._device)
 
             if (
@@ -674,7 +873,9 @@ class Trainer:
                 self.eval_and_save()
 
             if self._status.n_eval_no_improve > self.config.valid_tolerance:
-                logger.warning("Quit training because of exceeding valid tolerance!")
+                logger.warning(
+                    "Quit training because of exceeding valid tolerance!"
+                )
                 self._status.n_eval_no_improve = 0
                 break
 
@@ -682,15 +883,17 @@ class Trainer:
 
     def training_epoch(self, data_loader):
         """
-        Train the model for one epoch
+        Perform a single epoch of training for the model using the provided data loader.
 
         Parameters
         ----------
-        data_loader: data loader
+        data_loader : DataLoader
+            DataLoader object that provides batches of training data.
 
         Returns
         -------
-        averaged training loss
+        float
+            Average training loss for the epoch.
         """
 
         self.set_mode("train")
@@ -707,16 +910,23 @@ class Trainer:
                 self._sgld_optimizer.zero_grad()
 
             # measure training time for a full batch
-            if self.config.time_training and len(batch) == self.config.batch_size:
+            if (
+                self.config.time_training
+                and len(batch) == self.config.batch_size
+            ):
                 self._timer.on_measurement_start()
 
             logits = self.model(batch)
-            loss = self.get_loss(logits, batch, n_steps_per_epoch=len(data_loader))
+            loss = self.get_loss(
+                logits, batch, n_steps_per_epoch=len(data_loader)
+            )
 
             loss.backward()
 
             if self.config.grad_norm > 0:
-                nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_norm)
+                nn.utils.clip_grad_norm_(
+                    self.model.parameters(), self.config.grad_norm
+                )
 
             self._optimizer.step()
             if self._sgld_optimizer is not None:  # for sgld compatibility
@@ -736,29 +946,38 @@ class Trainer:
 
     def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
         """
-        Children trainers can directly reload this function instead of
-        reloading `training epoch`, which could be more complicated
+        Compute the loss for a batch of data. This function can be overridden
+        by child trainers to implement custom loss computation logic.
 
         Parameters
         ----------
-        logits: logits predicted by the model
-        batch: batched training data
-        n_steps_per_epoch: how many batches in a training epoch; only used for BBP.
+        logits : torch.Tensor
+            The predictions or logits produced by the model for the given batch.
+        batch : Batch
+            The batch of training data.
+        n_steps_per_epoch : int, optional
+            Represents the number of batches in a training epoch. This is used
+            specifically when uncertainty method is Bayesian Backpropagation (BBP).
+            Default is None.
 
         Returns
         -------
-        loss, torch.Tensor
+        torch.Tensor
+            The computed loss for the batch.
         """
 
         # modify data shapes to accommodate different tasks
-        lbs, masks = batch.lbs, batch.masks  # so that we don't mess up batch instances
+        lbs, masks = (
+            batch.lbs,
+            batch.masks,
+        )  # so that we don't mess up batch instances
         bool_masks = masks.to(torch.bool)
         masked_lbs = lbs[bool_masks]
 
         if self.config.task_type == "classification":
-            masked_logits = logits.view(-1, self.config.n_tasks, self.config.n_lbs)[
-                bool_masks
-            ]
+            masked_logits = logits.view(
+                -1, self.config.n_tasks, self.config.n_lbs
+            )[bool_masks]
 
             if self.config.n_lbs == 1:  # binary classification
                 masked_logits = masked_logits.squeeze(-1)
@@ -768,11 +987,13 @@ class Trainer:
                 # gamma, nu, alpha, beta
                 masked_logits = logits[bool_masks]
             else:
-                assert self.config.regression_with_variance, NotImplementedError
+                assert (
+                    self.config.regression_with_variance
+                ), NotImplementedError
                 # mean and var for the last dimension
-                masked_logits = logits.view(-1, self.config.n_tasks, self.config.n_lbs)[
-                    bool_masks
-                ]
+                masked_logits = logits.view(
+                    -1, self.config.n_tasks, self.config.n_lbs
+                )[bool_masks]
 
         else:
             raise ValueError
@@ -785,20 +1006,26 @@ class Trainer:
             self.config.uncertainty_method == UncertaintyMethods.bbp
             and n_steps_per_epoch is not None
         ):
-            loss += self.model.output_layer.kld / n_steps_per_epoch / len(batch)
+            loss += (
+                self.model.output_layer.kld / n_steps_per_epoch / len(batch)
+            )
         return loss
 
     def inference(self, dataset, **kwargs):
         """
-        Run the forward inference for an entire dataset.
+        Conduct inference over an entire dataset using the model.
 
         Parameters
         ----------
-        dataset: dataset
+        dataset : Dataset
+            The dataset for which inference needs to be performed.
+        **kwargs
+            Additional keyword arguments.
 
         Returns
         -------
-        model outputs (logits or tuple of logits)
+        numpy.ndarray
+            Model outputs as logits or tuple of logits.
         """
 
         dataloader = self.get_dataloader(
@@ -823,20 +1050,24 @@ class Trainer:
         self, logits: np.ndarray
     ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
-        Post-process the output logits according to the training tasks or variants.
+        Process the output logits based on the training tasks or variants.
 
         Parameters
         ----------
-        logits
+        logits : numpy.ndarray
+            The raw logits produced by the model.
 
         Returns
         -------
-        processed model output logits
+        numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Processed logits or tuple containing processed logits based on the task type.
         """
 
         if self.config.task_type == "classification":
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
-                logits = logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
+                logits = logits.reshape(
+                    (-1, self.config.n_tasks, self.config.n_lbs)
+                )
 
                 evidence = logits * (logits > 0)  # relu
                 alpha = evidence + 1
@@ -849,7 +1080,9 @@ class Trainer:
         elif self.config.task_type == "regression":
             # reshape the logits if the task and output-lbs (with shape config.n_lbs) dimensions are tangled
             if self.config.n_tasks > 1 and len(logits.shape) == 2:
-                logits = logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
+                logits = logits.reshape(
+                    (-1, self.config.n_tasks, self.config.n_lbs)
+                )
 
             # get the mean and variance of the preds
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
@@ -868,11 +1101,26 @@ class Trainer:
                 return logits
 
         else:
-            raise ValueError(f"Unrecognized task type: {self.config.task_type}")
+            raise ValueError(
+                f"Unrecognized task type: {self.config.task_type}"
+            )
 
     def inverse_standardize_preds(
         self, preds: Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
     ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        """
+        Transform predictions back to their original scale if they have been standardized.
+
+        Parameters
+        ----------
+        preds : numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Model predictions. Can either be a single array or tuple containing two arrays.
+
+        Returns
+        -------
+        numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Inverse-standardized predictions.
+        """
         if self._scaler is None:
             return preds
 
@@ -885,9 +1133,32 @@ class Trainer:
             raise TypeError(f"Unsupported prediction type: {type(preds)}!")
 
     def evaluate(
-        self, dataset, n_run: Optional[int] = 1, return_preds: Optional[bool] = False
+        self,
+        dataset,
+        n_run: Optional[int] = 1,
+        return_preds: Optional[bool] = False,
     ):
-        if self._sgld_model_buffer is not None and len(self._sgld_model_buffer) > 0:
+        """
+        Evaluate the model's performance on the given dataset.
+
+        Parameters
+        ----------
+        dataset : Dataset
+            The dataset to evaluate the model on.
+        n_run : int, optional
+            Number of runs for evaluation, default is 1.
+        return_preds : bool, optional
+            Whether to return the predictions along with metrics, default is False.
+
+        Returns
+        -------
+        dict or (dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray])
+            Evaluation metrics or tuple containing metrics and predictions based on `return_preds`.
+        """
+        if (
+            self._sgld_model_buffer is not None
+            and len(self._sgld_model_buffer) > 0
+        ):
             n_run = len(self._sgld_model_buffer)
 
         if n_run == 1:
@@ -897,7 +1168,9 @@ class Trainer:
             if isinstance(preds, np.ndarray):
                 metrics = self.get_metrics(dataset.lbs, preds, dataset.masks)
             else:  # isinstance(preds, tuple)
-                metrics = self.get_metrics(dataset.lbs, preds[0], dataset.masks)
+                metrics = self.get_metrics(
+                    dataset.lbs, preds[0], dataset.masks
+                )
 
             return metrics if not return_preds else (metrics, preds)
 
@@ -911,7 +1184,9 @@ class Trainer:
             set_seed(individual_seed)
 
             if self._sgld_model_buffer:
-                self._model.load_state_dict(self._sgld_model_buffer[test_run_idx])
+                self._model.load_state_dict(
+                    self._sgld_model_buffer[test_run_idx]
+                )
                 self._model.to(self._device)
 
             if self._swa_model:
@@ -935,7 +1210,9 @@ class Trainer:
 
         preds_array = np.stack(preds_list)
         vars_array = None if not vars_list else np.stack(vars_list)
-        metrics = self.get_metrics(dataset.lbs, preds_array.mean(axis=0), dataset.masks)
+        metrics = self.get_metrics(
+            dataset.lbs, preds_array.mean(axis=0), dataset.masks
+        )
 
         if not return_preds:
             return metrics
@@ -946,7 +1223,8 @@ class Trainer:
 
     def eval_and_save(self):
         """
-        Evaluate the model and save it if its performance exceeds the previous highest
+        Evaluate the model's performance on the validation dataset and save it
+        if its performance is better than previous evaluations.
         """
         self.set_mode("eval")
         self._status.eval_log_idx += 1
@@ -971,6 +1249,19 @@ class Trainer:
         return None
 
     def test(self, load_best_model=True):
+        """
+        Test the model's performance on the test dataset.
+
+        Parameters
+        ----------
+        load_best_model : bool, optional
+            Whether to load the best model saved during training for testing, default is True.
+
+        Returns
+        -------
+        dict
+            Evaluation metrics for the test dataset.
+        """
         self.set_mode("test")
 
         if load_best_model and self._checkpoint_container.state_dict:
@@ -1007,6 +1298,23 @@ class Trainer:
         return metrics
 
     def get_metrics(self, lbs, preds, masks):
+        """
+        Calculate evaluation metrics based on the given labels, predictions, and masks.
+
+        Parameters
+        ----------
+        lbs : numpy.ndarray
+            Ground truth labels.
+        preds : numpy.ndarray
+            Model predictions.
+        masks : numpy.ndarray
+            Masks indicating valid entries in labels and predictions.
+
+        Returns
+        -------
+        dict
+            Computed metrics for evaluation.
+        """
         if masks.shape[-1] == 1 and len(masks.shape) > 1:
             masks = masks.squeeze(-1)
         bool_masks = masks.astype(bool)
@@ -1014,11 +1322,16 @@ class Trainer:
         if lbs.shape[-1] == 1 and len(lbs.shape) > 1:
             lbs = lbs.squeeze(-1)
 
-        if self.config.task_type == "classification" and self.config.n_tasks > 1:
+        if (
+            self.config.task_type == "classification"
+            and self.config.n_tasks > 1
+        ):
             preds = preds.reshape(-1, self.config.n_tasks, self.config.n_lbs)
             if self.config.n_lbs == 2:
                 preds = preds[..., -1:]
-        if preds.shape[-1] == 1 and len(preds.shape) > 1:  # remove tailing axis
+        if (
+            preds.shape[-1] == 1 and len(preds.shape) > 1
+        ):  # remove tailing axis
             preds = preds.squeeze(-1)
 
         if self.config.task_type == "classification":
@@ -1035,7 +1348,19 @@ class Trainer:
     @staticmethod
     def log_results(metrics: dict, logging_func=logger.info):
         """
-        Print evaluation metrics to the logging destination
+        Log evaluation metrics to the specified logging function.
+
+        Parameters
+        ----------
+        metrics : dict
+            Dictionary containing evaluation metrics to be logged.
+        logging_func : function, optional
+            Logging function to which metrics will be sent.
+            Defaults to `logger.info`.
+
+        Returns
+        -------
+        None
         """
         for k, v in metrics.items():
             try:
@@ -1045,6 +1370,14 @@ class Trainer:
         return None
 
     def freeze(self):
+        """
+        Freeze all model parameters, preventing them from being updated during training.
+
+        Returns
+        -------
+        Trainer
+            Returns the current instance with model parameters frozen.
+        """
         for parameter in self.model.parameters():
             parameter.requires_grad = False
 
@@ -1052,6 +1385,14 @@ class Trainer:
         return self
 
     def unfreeze(self):
+        """
+        Unfreeze all model parameters, allowing them to be updated during training.
+
+        Returns
+        -------
+        Trainer
+            Returns the current instance with model parameters unfrozen.
+        """
         for parameter in self.model.parameters():
             parameter.requires_grad = True
 
@@ -1059,6 +1400,14 @@ class Trainer:
         return self
 
     def freeze_backbone(self):
+        """
+        Freeze the backbone parameters of the model, preventing them from being updated during training.
+
+        Returns
+        -------
+        Trainer
+            Returns the current instance with backbone parameters frozen.
+        """
         for params in self.backbone_params:
             params.requires_grad = False
 
@@ -1066,6 +1415,14 @@ class Trainer:
         return self
 
     def unfreeze_backbone(self):
+        """
+        Unfreeze the backbone parameters of the model, allowing them to be updated during training.
+
+        Returns
+        -------
+        Trainer
+            Returns the current instance with backbone parameters unfrozen.
+        """
         for params in self.backbone_params:
             params.requires_grad = True
 
@@ -1073,6 +1430,17 @@ class Trainer:
         return self
 
     def save_checkpoint(self):
+        """
+        Save the current model state as a checkpoint.
+
+        If the `disable_result_saving` flag is set in the configuration,
+        a warning will be logged and no save operation will be performed.
+
+        Returns
+        -------
+        Trainer
+            Returns the current instance after attempting to save the model checkpoint.
+        """
         if not self.config.disable_result_saving:
             init_dir(self._status.result_dir, clear_original_content=False)
             self._checkpoint_container.save(
@@ -1086,12 +1454,35 @@ class Trainer:
         return self
 
     def _load_model_state_dict(self):
+        """
+        Private method to load the model state dictionary from the checkpoint container.
+
+        If the `freeze_backbone` flag is set in the configuration, the backbone will be frozen after loading.
+
+        Returns
+        -------
+        Trainer
+            Returns the current instance with the model state loaded.
+        """
         self._model.load_state_dict(self._checkpoint_container.state_dict)
         if self.config.freeze_backbone:
             self.freeze_backbone()
         return self
 
     def _load_from_container(self, model_path):
+        """
+        Private method to load a trained model from a given path.
+
+        Parameters
+        ----------
+        model_path : str
+            Path to the saved model.
+
+        Returns
+        -------
+        bool
+            Returns True if the model is successfully loaded, otherwise False.
+        """
         if not op.exists(model_path):
             return False
         logger.info(f"Loading trained model from {model_path}.")
@@ -1101,11 +1492,24 @@ class Trainer:
         return True
 
     def load_checkpoint(self):
+        """
+        Load the model from a checkpoint.
+        This function allows loading the checkpoint from the path where the model is trained without
+        the uncertainty estimation method. This is useful when the uncertainty estimation method can be
+        trained from the checkpoint.
+
+        Returns
+        -------
+        bool
+            Returns True if the model is successfully loaded from a checkpoint, otherwise False.
+        """
         if self.config.retrain_model:
             return False
 
         if not self.config.ignore_uncertainty_output:
-            model_path = op.join(self._status.result_dir, self._status.model_name)
+            model_path = op.join(
+                self._status.result_dir, self._status.model_name
+            )
             if self._load_from_container(model_path):
                 return True
 
@@ -1119,13 +1523,35 @@ class Trainer:
         return False
 
     def get_dataloader(
-        self, dataset, shuffle: Optional[bool] = False, batch_size: Optional[int] = 0
+        self,
+        dataset,
+        shuffle: Optional[bool] = False,
+        batch_size: Optional[int] = 0,
     ):
+        """
+        Create a DataLoader for the provided dataset.
+
+        Parameters
+        ----------
+        dataset : Dataset
+            Dataset for which the DataLoader is to be created.
+        shuffle : bool, optional
+            Whether to shuffle the data. Defaults to False.
+        batch_size : int, optional
+            Batch size for the DataLoader. If not provided, will use the batch size from the configuration.
+
+        Returns
+        -------
+        DataLoader
+            Returns the created DataLoader for the provided dataset.
+        """
         try:
             dataloader = DataLoader(
                 dataset=dataset,
                 collate_fn=self._collate_fn,
-                batch_size=batch_size if batch_size else self.config.batch_size,
+                batch_size=batch_size
+                if batch_size
+                else self.config.batch_size,
                 num_workers=getattr(self.config, "num_workers", 0),
                 pin_memory=getattr(self.config, "pin_memory", False),
                 shuffle=shuffle,
@@ -1162,7 +1588,9 @@ class Trainer:
         -------
         None
         """
-        output_dir = output_dir if output_dir is not None else self._status.result_dir
+        output_dir = (
+            output_dir if output_dir is not None else self._status.result_dir
+        )
 
         model_state_dict = self._model.state_dict()
         torch.save(model_state_dict, op.join(output_dir, model_name))
@@ -1171,11 +1599,13 @@ class Trainer:
 
         if save_optimizer:
             torch.save(
-                self._optimizer.state_dict(), op.join(output_dir, optimizer_name)
+                self._optimizer.state_dict(),
+                op.join(output_dir, optimizer_name),
             )
         if save_scheduler and self._scheduler is not None:
             torch.save(
-                self._scheduler.state_dict(), op.join(output_dir, scheduler_name)
+                self._scheduler.state_dict(),
+                op.join(output_dir, scheduler_name),
             )
 
         return None
@@ -1205,7 +1635,9 @@ class Trainer:
         -------
         self
         """
-        input_dir = input_dir if input_dir is not None else self._status.result_dir
+        input_dir = (
+            input_dir if input_dir is not None else self._status.result_dir
+        )
 
         logger.info(f"Loading model from {input_dir}")
 
@@ -1222,7 +1654,8 @@ class Trainer:
             if op.isfile(op.join(input_dir, optimizer_name)):
                 self._optimizer.load_state_dict(
                     torch.load(
-                        op.join(input_dir, optimizer_name), map_location=self._device
+                        op.join(input_dir, optimizer_name),
+                        map_location=self._device,
                     )
                 )
             else:
@@ -1237,7 +1670,8 @@ class Trainer:
             if op.isfile(op.join(input_dir, scheduler_name)):
                 self._optimizer.load_state_dict(
                     torch.load(
-                        op.join(input_dir, scheduler_name), map_location=self._device
+                        op.join(input_dir, scheduler_name),
+                        map_location=self._device,
                     )
                 )
             else:
@@ -1246,9 +1680,25 @@ class Trainer:
 
     def save_results(self, path, preds, variances, lbs, masks):
         """
-        Save results to disk as csv files
-        """
+        Save results to disk in the specified format.
 
+        Parameters
+        ----------
+        path : str
+            Destination path to save the results.
+        preds : array_like
+            Predictions from the model.
+        variances : array_like
+            Variance values associated with the predictions.
+        lbs : array_like
+            Ground truth labels.
+        masks : array_like
+            Masks associated with the data.
+
+        Returns
+        -------
+        None
+        """
         if not self.config.disable_result_saving:
             save_results(path, preds, variances, lbs, masks)
         else:

@@ -1,8 +1,13 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: regression calibration, modified from https://github.com/kage08/DistCal/tree/master
+# Description:
+
+Implements regression calibration.  This calibration method 
+attempts to improve the calibration of regression models using isotonic regression.
+
+# Reference: https://github.com/kage08/DistCal/tree/master
 """
 
 import torch
@@ -22,6 +27,14 @@ eps = np.finfo(np.random.randn(1).dtype).eps
 
 class IsotonicCalibration:
     def __init__(self, n_task):
+        """
+        Initialize the Isotonic Calibration.
+
+        Parameters
+        ----------
+        n_task : int
+            Number of tasks for which isotonic calibration is performed.
+        """
         super().__init__()
         self._n_task = n_task
         self._isotonic_regressors = [
@@ -30,77 +43,93 @@ class IsotonicCalibration:
 
     def fit(self, means, variances, lbs, masks) -> "IsotonicCalibration":
         """
-        Fit isotonic regressors to the calibration (validation) dataset
+        Fit isotonic regressors to the calibration (validation) dataset.
 
         Parameters
         ----------
-        means: predicted mean, (batch_size, n_tasks)
-        variances: predicted variances, (batch_size, n_tasks)
-        lbs: true labels
-        masks: masks, (batch_size, n_tasks)
+        means : np.ndarray or torch.Tensor
+            Predicted means with shape (batch_size, n_tasks).
+        variances : np.ndarray or torch.Tensor
+            Predicted variances with shape (batch_size, n_tasks).
+        lbs : np.ndarray or torch.Tensor
+            True labels.
+        masks : np.ndarray or torch.Tensor
+            Masks with shape (batch_size, n_tasks), indicating valid entries.
 
         Returns
         -------
         self
         """
-        if isinstance(means, torch.Tensor):
-            means = means.cpu().numpy()
-        if isinstance(variances, torch.Tensor):
-            variances = variances.cpu().numpy()
-        if isinstance(lbs, torch.Tensor):
-            lbs = lbs.cpu().numpy()
-        if isinstance(masks, torch.Tensor):
-            masks = masks.cpu().numpy()
+        # Convert tensors to numpy arrays if needed.
+        means, variances, lbs, masks = [
+            x.cpu().numpy() if isinstance(x, torch.Tensor) else x
+            for x in [means, variances, lbs, masks]
+        ]
         bool_masks = masks.astype(bool)
 
-        if len(means.shape) == 1:
-            means = means.reshape(-1, 1)
-        if len(variances.shape) == 1:
-            variances = variances.reshape(-1, 1)
-        if len(lbs.shape) == 1:
-            lbs = lbs.reshape(-1, 1)
-        if len(bool_masks.shape) == 1:
-            bool_masks = bool_masks.reshape(-1, 1)
+        # Ensure the data is 2-dimensional.
+        for data in [means, variances, lbs, bool_masks]:
+            if len(data.shape) == 1:
+                data = data.reshape(-1, 1)
 
+        # Fit the isotonic regressors.
         for task_means, task_vars, task_lbs, task_masks, regressor in zip(
-            means.T, variances.T, lbs.T, bool_masks.T, self._isotonic_regressors
+            means.T,
+            variances.T,
+            lbs.T,
+            bool_masks.T,
+            self._isotonic_regressors,
         ):
             task_means = task_means[task_masks]
             task_vars = task_vars[task_masks]
             task_lbs = task_lbs[task_masks]
 
-            q, q_hat = get_iso_cal_table(task_lbs, task_means, np.sqrt(task_vars))
+            q, q_hat = get_iso_cal_table(
+                task_lbs, task_means, np.sqrt(task_vars)
+            )
 
             regressor.fit(q, q_hat)
 
         return self
 
     def calibrate(self, means, variances, lbs, masks):
+        """
+        Apply isotonic calibration to the test dataset and compute metrics.
+
+        Parameters
+        ----------
+        means : np.ndarray or torch.Tensor
+            Predicted means with shape (batch_size, n_tasks).
+        variances : np.ndarray or torch.Tensor
+            Predicted variances with shape (batch_size, n_tasks).
+        lbs : np.ndarray or torch.Tensor
+            True labels.
+        masks : np.ndarray or torch.Tensor
+            Masks with shape (batch_size, n_tasks), indicating valid entries.
+        """
         n_t_test = 1024
 
-        if isinstance(means, torch.Tensor):
-            means = means.cpu().numpy()
-        if isinstance(variances, torch.Tensor):
-            variances = variances.cpu().numpy()
-        if isinstance(lbs, torch.Tensor):
-            lbs = lbs.cpu().numpy()
-        if isinstance(masks, torch.Tensor):
-            masks = masks.cpu().numpy()
+        # Convert tensors to numpy arrays if needed.
+        means, variances, lbs, masks = [
+            x.cpu().numpy() if isinstance(x, torch.Tensor) else x
+            for x in [means, variances, lbs, masks]
+        ]
+
         bool_masks = masks.astype(bool)
 
-        if len(means.shape) == 1:
-            means = means.reshape(-1, 1)
-        if len(variances.shape) == 1:
-            variances = variances.reshape(-1, 1)
-        if len(lbs.shape) == 1:
-            lbs = lbs.reshape(-1, 1)
-        if len(bool_masks.shape) == 1:
-            bool_masks = bool_masks.reshape(-1, 1)
+        # Ensure the data is 2-dimensional.
+        for data in [means, variances, lbs, bool_masks]:
+            if len(data.shape) == 1:
+                data = data.reshape(-1, 1)
 
         nll_list = list()
         rmse_list = list()
         for task_means, task_vars, task_lbs, task_masks, regressor in zip(
-            means.T, variances.T, lbs.T, bool_masks.T, self._isotonic_regressors
+            means.T,
+            variances.T,
+            lbs.T,
+            bool_masks.T,
+            self._isotonic_regressors,
         ):
             task_means = task_means[task_masks]
             task_vars = task_vars[task_masks]
@@ -137,7 +166,28 @@ class IsotonicCalibration:
 
 
 def get_iso_cal_table(y, mu, sigma):
-    q_raw = scipy.stats.norm.cdf(y, loc=mu.reshape(-1, 1), scale=sigma.reshape(-1, 1))
+    """
+    Generate the calibration table for isotonic regression.
+
+    Parameters
+    ----------
+    lbs : np.ndarray
+        True labels.
+    means : np.ndarray
+        Predicted means.
+    stds : np.ndarray
+        Predicted standard deviations.
+
+    Returns
+    -------
+    q : np.ndarray
+        The sorted percentile values.
+    q_hat : np.ndarray
+        The observed percentile values.
+    """
+    q_raw = scipy.stats.norm.cdf(
+        y, loc=mu.reshape(-1, 1), scale=sigma.reshape(-1, 1)
+    )
     q_list, idx = np.unique(q_raw, return_inverse=True)
 
     q_hat_list = np.zeros_like(q_list)
@@ -148,41 +198,59 @@ def get_iso_cal_table(y, mu, sigma):
     return q_raw.ravel(), q_hat.ravel()
 
 
-def get_cal_table_test(mu, sigma, t_list_test):
-    n_t = np.shape(t_list_test)[1]
-
-    n_y = np.shape(mu)[0]
-
-    t = t_list_test.repeat(n_y, axis=1).reshape(-1, 1)
-
-    mu_cal = mu.reshape(1, -1).repeat(n_t, axis=0).reshape(-1, 1)
-
-    sigma_cal = sigma.reshape(1, -1).repeat(n_t, axis=0).reshape(-1, 1)
-
-    ln_s = scipy.stats.norm.logcdf(t, loc=mu_cal, scale=sigma_cal)
-
-    ln_ns = scipy.stats.norm.logsf(t, loc=mu_cal, scale=sigma_cal)
-
-    n = np.shape(ln_s)[0]
-
-    s = np.hstack([ln_s, ln_ns, np.ones([n, 1])])
-
-    return s
-
-
 def get_norm_q(mu, sigma, t_list):
+    """
+    Compute the expected percentile values for a normal distribution.
+
+    Parameters
+    ----------
+    means : np.ndarray
+        Predicted means.
+    stds : np.ndarray
+        Predicted standard deviations.
+    t_list : np.ndarray
+        Points at which percentiles are calculated.
+
+    Returns
+    -------
+    q : np.ndarray
+        The expected percentile values.
+    s : np.ndarray
+        The expected standard deviations for each percentile.
+    """
     q = np.zeros([len(mu), len(t_list)])
 
     s = np.zeros([len(mu), len(t_list)])
 
     for j in range(0, len(t_list)):
-        q[:, j] = np.squeeze(scipy.stats.norm.cdf(t_list[j], loc=mu, scale=sigma))
-        s[:, j] = np.squeeze(scipy.stats.norm.pdf(t_list[j], loc=mu, scale=sigma))
+        q[:, j] = np.squeeze(
+            scipy.stats.norm.cdf(t_list[j], loc=mu, scale=sigma)
+        )
+        s[:, j] = np.squeeze(
+            scipy.stats.norm.pdf(t_list[j], loc=mu, scale=sigma)
+        )
 
     return q, s
 
 
 def get_log_loss(y, t_list, density_hat):
+    """
+    Calculate log loss for given y values and densities.
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Array of data points.
+    t_list : np.ndarray
+        Array of t-values.
+    density_hat : np.ndarray
+        Array of density values.
+
+    Returns
+    -------
+    np.ndarray
+        Log loss for each data point in y.
+    """
     t_list_hat = (t_list[0:-1] + t_list[1:]) / 2
 
     ll = np.zeros(len(y))
@@ -198,6 +266,21 @@ def get_log_loss(y, t_list, density_hat):
 
 
 def get_y_hat(t_list, density_hat):
+    """
+    Compute y_hat based on t_list and density values.
+
+    Parameters
+    ----------
+    t_list : np.ndarray
+        Array of t-values.
+    density_hat : np.ndarray
+        Array of density values.
+
+    Returns
+    -------
+    np.ndarray
+        y_hat for each entry in density_hat.
+    """
     n_y, n_t = np.shape(density_hat)
 
     t_list_hat = (t_list[0:-1] + t_list[1:]) / 2
@@ -220,6 +303,21 @@ def get_y_hat(t_list, density_hat):
 
 
 def get_y_var(t_list, density_hat):
+    """
+    Compute y variance based on t_list and density values.
+
+    Parameters
+    ----------
+    t_list : np.ndarray
+        Array of t-values.
+    density_hat : np.ndarray
+        Array of density values.
+
+    Returns
+    -------
+    np.ndarray
+        Variance for each entry in density_hat.
+    """
     n_y, n_t = np.shape(density_hat)
 
     t_list_hat = (t_list[0:-1] + t_list[1:]) / 2
@@ -242,13 +340,24 @@ def get_y_var(t_list, density_hat):
     return y_var
 
 
-def get_se(y, y_hat):
-    se = (np.squeeze(y) - np.squeeze(y_hat)) ** 2
-
-    return se
-
-
 def get_q_y(y, q, t_list):
+    """
+    Get q values for given y and t_list.
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Array of data points.
+    q : np.ndarray
+        Array of q-values.
+    t_list : np.ndarray
+        Array of t-values.
+
+    Returns
+    -------
+    np.ndarray
+        q-values for each data point in y.
+    """
     q_y = np.zeros(len(y))
 
     for i in range(0, len(y)):
@@ -256,20 +365,3 @@ def get_q_y(y, q, t_list):
         q_y[i] = q[i, t_loc]
 
     return q_y
-
-
-def get_cal_error(q_y):
-    ce = np.zeros(20)
-
-    q_list = np.linspace(0, 1, 21)[1:-1]
-
-    q_hat = np.zeros_like(q_list)
-
-    for i in range(0, len(q_list)):
-        q_hat[i] = np.mean(q_y <= q_list[i])
-
-    ce[1:20] = (q_list.ravel() - q_hat.ravel()) ** 2
-
-    ce[0] = np.mean(ce[1:20])
-
-    return ce

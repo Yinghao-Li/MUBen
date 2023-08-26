@@ -1,9 +1,13 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: SGLD optimizers, modified from
-               https://github.com/JavierAntoran/Bayesian-Neural-Networks/blob/master/src/Stochastic_Gradient_Langevin_Dynamics/optimizers.py
+# Description:
+
+SGLD (Stochastic Gradient Langevin Dynamics) optimizers
+
+# Reference:
+https://github.com/JavierAntoran/Bayesian-Neural-Networks/blob/master/src/Stochastic_Gradient_Langevin_Dynamics/optimizers.py
 
 """
 
@@ -15,17 +19,29 @@ __all__ = ["SGLDOptimizer", "PSGLDOptimizer"]
 
 
 class SGLDOptimizer(Optimizer):
-    """
-    SGLD optimiser based on pytorch's SGD.
-
-    Note that the weight decay is specified in terms of the gaussian prior sigma.
-    """
-
     def __init__(self, params, lr, norm_sigma=0.1, addnoise=True):
+        """
+        SGLD (Stochastic Gradient Langevin Dynamics) optimiser based on pytorch's SGD.
+
+        Parameters
+        ----------
+        params: iterable
+            Parameters to be optimized.
+        lr: float
+            Learning rate.
+        norm_sigma: float, optional
+            Sigma for gaussian prior (default is 0.1).
+        addnoise: bool, optional
+            Whether to add Langevin noise (default is True).
+
+        Note: The weight decay is specified in terms of the gaussian prior sigma.
+        """
         weight_decay = 1 / (norm_sigma**2)
 
         if weight_decay < 0.0:
-            raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
+            raise ValueError(
+                "Invalid weight_decay value: {}".format(weight_decay)
+            )
 
         defaults = dict(lr=lr, weight_decay=weight_decay, addnoise=addnoise)
 
@@ -34,6 +50,11 @@ class SGLDOptimizer(Optimizer):
     def step(self, *args, **kwargs):
         """
         Performs a single optimization step.
+
+        Returns
+        -------
+        torch.Tensor:
+            The loss after the optimization step.
         """
         loss = None
 
@@ -59,10 +80,6 @@ class SGLDOptimizer(Optimizer):
 
 
 class PSGLDOptimizer(Optimizer):
-    """
-    RMSprop preconditioned SGLD using pytorch rmsprop implementation.
-    """
-
     def __init__(
         self,
         params,
@@ -73,10 +90,32 @@ class PSGLDOptimizer(Optimizer):
         centered=False,
         addnoise=True,
     ):
+        """
+        RMSprop preconditioned SGLD (Stochastic Gradient Langevin Dynamics) using pytorch rmsprop implementation.
+
+        Parameters
+        ----------
+        params: iterable
+            Parameters to be optimized.
+        lr: float
+            Learning rate.
+        norm_sigma: float, optional
+            Sigma for gaussian prior (default is 0.1).
+        alpha: float, optional
+            Factor for running average (default is 0.99).
+        eps: float, optional
+            Term added to denominator for numerical stability (default is 1e-8).
+        centered: bool, optional
+            Whether to compute a centered RMSProp (default is False).
+        addnoise: bool, optional
+            Whether to add Langevin noise (default is True).
+        """
         weight_decay = 1 / (norm_sigma**2)
 
         if weight_decay < 0.0:
-            raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
+            raise ValueError(
+                "Invalid weight_decay value: {}".format(weight_decay)
+            )
         defaults = dict(
             lr=lr,
             weight_decay=weight_decay,
@@ -95,6 +134,11 @@ class PSGLDOptimizer(Optimizer):
     def step(self, *args, **kwargs):
         """
         Performs a single optimization step.
+
+        Returns
+        -------
+        torch.Tensor:
+            The loss after the optimization step.
         """
         loss = None
 
