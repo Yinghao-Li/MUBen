@@ -38,7 +38,7 @@ class Dataset(BaseDataset):
         Parameters
         ----------
         config : object
-            A configuration object that must have an attribute `num_preprocess_workers` indicating the number of worker processes.
+            The configuration object with an attribute `num_preprocess_workers`.
 
         Returns
         -------
