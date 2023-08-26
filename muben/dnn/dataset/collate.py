@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Data collator for DNN
 """
@@ -16,20 +16,38 @@ logger = logging.getLogger(__name__)
 
 
 class Collator:
+    """
+    Collator for creating data batches for the Deep Neural Network (DNN).
+
+    The collator takes a list of data instances, processes, and collates them into a batch.
+    This is primarily used for training and evaluation of the DNN model.
+    """
+
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the Collator instance.
+
+        Currently, only the default data type for labels (`_lbs_type`) is set during initialization.
+        """
         self._lbs_type = torch.float
 
     def __call__(self, instance_list: list, *args, **kwargs) -> Batch:
         """
-        function call
+        Create a batch from a list of instances.
+
+        Processes and collates the input list of data instances into a single batch
+        suitable for DNN training or evaluation.
 
         Parameters
         ----------
-        instance_list: a list of instance
+        instance_list : list
+            List of data instances to be processed. Each instance typically contains feature data,
+            labels, and masks.
 
         Returns
         -------
-        a Batch of instances
+        Batch
+            Processed batch of data, containing features, labels, and masks.
         """
         features, lbs, masks = unpack_instances(instance_list)
 

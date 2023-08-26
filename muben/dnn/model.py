@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 8th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: A simple deep neural network with customizable activation function.
 """
@@ -15,6 +15,22 @@ __all__ = ["DNN"]
 
 
 class DNN(nn.Module):
+    """
+    Simple Deep Neural Network (DNN) with customizable layers and activation functions.
+
+    Extends PyTorch's Module to provide additional functionality for constructing
+    and initializing a deep neural network.
+
+    Attributes
+    ----------
+    input_layer : torch.nn.Sequential
+        The initial input layer.
+    hidden_layers : torch.nn.Sequential
+        Hidden layers in the neural network.
+    output_layer : muben.base.model.OutputLayer
+        The final output layer.
+    """
+
     def __init__(
         self,
         d_feature: int,
@@ -28,6 +44,33 @@ class DNN(nn.Module):
         uncertainty_method: Optional[int] = "none",
         **kwargs
     ):
+        """
+        Initialize the DNN.
+
+        Parameters
+        ----------
+        d_feature : int
+            Input feature dimension.
+        n_lbs : int
+            Number of labels.
+        n_tasks : int
+            Number of tasks.
+        n_hidden_layers : Optional[int]
+            Number of hidden layers. Defaults to 4.
+        d_hidden : Optional[int]
+            Dimension of each hidden layer. Defaults to 128.
+        p_dropout : Optional[float]
+            Dropout probability. Defaults to 0.1.
+        hidden_dims : Optional[List[int]]
+            List specifying dimensions of each hidden layer.
+            Overrides `n_hidden_layers` and `d_hidden` if provided.
+        activation : Optional[str]
+            Activation function to use. Must be an attribute of torch.nn. Defaults to 'ReLU'.
+        uncertainty_method : Optional[str]
+            Method for calculating uncertainty. Defaults to 'none'.
+        **kwargs : dict
+            Additional keyword arguments for the output layer.
+        """
         super().__init__()
 
         if hidden_dims is None:
@@ -58,6 +101,15 @@ class DNN(nn.Module):
         self.initialize()
 
     def initialize(self):
+        """
+        Initialize the weights of the DNN using Xavier uniform initialization.
+
+        Returns
+        -------
+        DNN
+            Returns the initialized DNN model.
+        """
+
         def init_weights(m):
             if isinstance(m, nn.Linear):
                 torch.nn.init.xavier_uniform_(m.weight)
@@ -68,6 +120,21 @@ class DNN(nn.Module):
         return self
 
     def forward(self, batch, **kwargs):
+        """
+        Perform a forward pass on the input batch.
+
+        Parameters
+        ----------
+        batch : object
+            Input batch which must have attribute 'features' representing input features.
+        **kwargs : dict
+            Additional keyword arguments.
+
+        Returns
+        -------
+        torch.Tensor
+            Output logits.
+        """
         features = batch.features
 
         x = self.input_layer(features)

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: ChemBERTa trainer.
 """
@@ -9,7 +9,6 @@ from abc import ABC
 
 import logging
 
-from muben.utils.macro import UncertaintyMethods
 from muben.base.train import Trainer as BaseTrainer
 from .dataset import Collator
 from .model import ChemBERTa
@@ -19,6 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer, ABC):
+    """
+    Trainer class for the ChemBERTa model.
+
+    Inherits from the BaseTrainer and provides specialized functionalities
+    for training the ChemBERTa model with chemical data.
+
+    Attributes:
+        config (Config): Configuration settings for the trainer.
+    """
+
     def __init__(
         self,
         config,
@@ -27,6 +36,18 @@ class Trainer(BaseTrainer, ABC):
         test_dataset=None,
         collate_fn=None,
     ):
+        """
+        Initializes the ChemBERTa Trainer.
+
+        Args:
+            config (Config): Configuration settings for the trainer.
+            training_dataset (Optional[Union[str, list]]): Dataset for training. Default is None.
+            valid_dataset (Optional[Union[str, list]]): Dataset for validation. Default is None.
+            test_dataset (Optional[Union[str, list]]): Dataset for testing. Default is None.
+            collate_fn (Optional[Callable]): Collation function to process batches of data. If not provided,
+                                            a default Collator based on the config is used.
+
+        """
         if not collate_fn:
             collate_fn = Collator(config)
 
@@ -40,9 +61,15 @@ class Trainer(BaseTrainer, ABC):
 
     @property
     def config(self) -> Config:
+        """
+        Returns the config object used by the trainer.
+        """
         return self._config
 
     def initialize_model(self):
+        """
+        Initializes the ChemBERTa model with settings from the config.
+        """
         self._model = ChemBERTa(
             bert_model_name_or_path=self.config.pretrained_model_name_or_path,
             n_lbs=self.config.n_lbs,

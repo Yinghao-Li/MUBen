@@ -1,8 +1,12 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: ChemBERTa model.
+
+This module implements the ChemBERTa model which is tailored for chemical informatics tasks. 
+It leverages the pretrained BERT architecture from the HuggingFace `transformers` library 
+and adds an output layer tailored for multi-label and multi-task prediction.
 """
 
 import torch.nn as nn
@@ -13,6 +17,21 @@ from muben.base.model import OutputLayer
 
 
 class ChemBERTa(nn.Module):
+    """
+    The ChemBERTa model, a modified version of BERT for chemical informatics tasks.
+
+    Attributes:
+        bert_model (transformers.PreTrainedModel): The pretrained BERT model.
+        output_layer (OutputLayer): The output layer for multi-label and multi-task classification.
+
+    Args:
+        bert_model_name_or_path (str): Identifier or path for the BERT model to be loaded.
+        n_lbs (int): Number of labels per task.
+        n_tasks (int): Number of tasks.
+        uncertainty_method (str): Method for modeling uncertainty.
+        **kwargs: Additional keyword arguments passed to the output layer's initialization.
+    """
+
     def __init__(
         self,
         bert_model_name_or_path: str,
@@ -31,6 +50,16 @@ class ChemBERTa(nn.Module):
         ).initialize()
 
     def forward(self, batch: Batch, **kwargs):
+        """
+        Forward pass for the ChemBERTa model.
+
+        Args:
+            batch (Batch): A batch of data containing atom_ids and attn_masks.
+            **kwargs: Additional arguments.
+
+        Returns:
+            torch.Tensor: The logits for each label and task.
+        """
         bert_hidden = self.bert_model(
             input_ids=batch.atom_ids, attention_mask=batch.attn_masks
         )

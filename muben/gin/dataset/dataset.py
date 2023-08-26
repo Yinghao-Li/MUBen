@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 8th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: GIN dataset.
+# Description: Dataset class tailored for the GIN (Graph Isomorphism Network) model.
 """
-
 
 import logging
 import torch
@@ -19,20 +18,38 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset(BaseDataset):
-    def __init__(self):
-        super().__init__()
+    """
+    Dataset tailored for the GIN model.
 
+    This class provides mechanisms for creating graph features from SMILES strings and generating instances compatible with the GIN model.
+    """
+
+    def __init__(self):
+        """
+        Initialize the GIN dataset.
+
+        Initializes the base dataset and prepares a placeholder for graph representations.
+        """
+        super().__init__()
         self._graphs = None
 
     def create_features(self, config):
         """
-        Create data features
+        Generate graph representations from SMILES strings.
+
+        Iterates over SMILES strings, converts them into graph representations with node (atom) features and edge indices,
+        and stores them for further processing.
+
+        Parameters
+        ----------
+        config : object
+            Configuration object containing necessary hyperparameters and settings.
 
         Returns
         -------
-        self
+        Dataset
+            Self reference for potential method chaining.
         """
-
         self._graphs = list()
         for smiles in tqdm(self._smiles):
             atom_ids, edge_indices = smiles_to_2d_graph(smiles)
@@ -47,6 +64,14 @@ class Dataset(BaseDataset):
         return self
 
     def get_instances(self):
+        """
+        Pack graph data, labels, and masks into data instances.
+
+        Returns
+        -------
+        list
+            List of packed instances, each containing a graph, labels, and masks.
+        """
         data_instances = pack_instances(
             graphs=self._graphs, lbs=self.lbs, masks=self.masks
         )

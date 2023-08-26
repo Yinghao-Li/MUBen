@@ -1,15 +1,13 @@
 """
 # Author: Yinghao Li
-# Modified: August 14th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Collate function for GIN model
+# Description: Collate function for the GIN (Graph Isomorphism Network) model.
 """
-
 
 import torch
 import logging
 import numpy as np
-import itertools
 
 from torch_geometric.data import Batch as pygBatch
 from muben.base.dataset import Batch, unpack_instances
@@ -18,17 +16,40 @@ logger = logging.getLogger(__name__)
 
 
 class Collator:
+    """
+    Collator for the GIN model.
+
+    This class provides a mechanism to collate individual data instances into a single batch for the GIN model.
+    """
+
     def __init__(self, config):
+        """
+        Initialize the collator.
+
+        Parameters
+        ----------
+        config : object
+            Configuration object containing necessary hyperparameters and settings.
+            Expected to have attributes `task_type`.
+        """
         self._task = config.task_type
         self._lbs_type = torch.float
 
     def __call__(self, instances) -> Batch:
         """
-        function call
+        Collate individual instances into a batch.
+
+        This method collates input instances into a single batch that is compatible with the GIN model.
+
+        Parameters
+        ----------
+        instances : list
+            List of instances where each instance comprises a graph, labels, and masks.
 
         Returns
         -------
-        a Batch of instances
+        Batch
+            A single batch containing batched graphs, labels, and masks, and the batch size.
         """
         graphs, lbs, masks = unpack_instances(instances)
         batched_graphs = pygBatch().from_data_list(graphs)

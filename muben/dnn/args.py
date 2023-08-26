@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 8th, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Arguments for DNN model
 """
@@ -20,12 +20,15 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Arguments(BaseArguments):
     """
-    Arguments regarding the training of Neural hidden Markov Model
+    Dataclass for arguments regarding the training of the DNN model.
+
+    Inherits from BaseArguments and adds specific fields relevant to the DNN model.
     """
 
     # --- Model Arguments ---
     model_name: Optional[str] = field(
-        default="DNN", metadata={"help": "Name of the model", "choices": MODEL_NAMES}
+        default="DNN",
+        metadata={"help": "Name of the model", "choices": MODEL_NAMES},
     )
 
     # -- Feature Arguments ---
@@ -42,14 +45,31 @@ class Arguments(BaseArguments):
         default=8, metadata={"help": "The number of DNN hidden layers."}
     )
     d_dnn_hidden: Optional[int] = field(
-        default=128, metadata={"help": "The dimensionality of DNN hidden layers."}
+        default=128,
+        metadata={"help": "The dimensionality of DNN hidden layers."},
     )
 
 
 @dataclass
 class Config(Arguments, BaseConfig):
+    """
+    Configuration dataclass for the DNN model.
+
+    Inherits from both Arguments and BaseConfig to combine all configurations
+    into a unified structure. It also calculates some properties based on
+    provided arguments.
+    """
+
     @cached_property
     def d_feature(self):
+        """
+        Get the dimensionality of the feature based on the feature type.
+
+        Returns
+        -------
+        int
+            The feature dimensionality.
+        """
         if self.feature_type == "rdkit":
             return 200
         elif self.feature_type == "morgan":
