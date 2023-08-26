@@ -1,8 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
-# Description: Manage model checkpoints.
+# Description: This module provides functionality to manage and save model checkpoints
+               based on certain criteria, such as when a metric value improves.
 """
 
 import copy
@@ -20,19 +21,41 @@ __all__ = ["UpdateCriteria", "CheckpointContainer"]
 
 
 class UpdateCriteria(StrEnum):
+    """
+    Enumeration for the update criteria.
+
+    - metric_smaller: Update the container dict when metric value becomes smaller.
+    - metric_larger: Update the container dict when metric value becomes larger.
+    - always: Always update the container dict.
+    """
+
     metric_smaller = "metric-smaller"
     metric_larger = "metric-larger"
     always = "always"
 
 
 class CheckpointContainer:
+    """
+    A container to manage model checkpoints.
+
+    This class tracks and updates model checkpoints based on
+    a specified update criteria.
+    """
+
     def __init__(
         self, update_criteria: Optional[Union[str, UpdateCriteria]] = "always"
     ):
         """
+        Initialize the checkpoint container.
+
         Parameters
         ----------
-        update_criteria: decides whether the metrics are in descend order
+        update_criteria : str or UpdateCriteria
+            Criterion to determine whether to update the model.
+            Choices:
+            - "always": Always update the container state dict.
+            - "metric-smaller": Update when the metric is smaller than previously stored.
+            - "metric-larger": Update when the metric is larger than previously stored.
         """
         assert update_criteria in UpdateCriteria.options(), ValueError(
             f"Invalid criteria! Options are {UpdateCriteria.options()}"
@@ -41,32 +64,42 @@ class CheckpointContainer:
 
         self._state_dict = None
         self._metric = (
-            np.inf if self._criteria == UpdateCriteria.metric_smaller else -np.inf
+            np.inf
+            if self._criteria == UpdateCriteria.metric_smaller
+            else -np.inf
         )
 
     @property
     def state_dict(self):
+        """
+        Returns the state dict of the best model
+        """
         return self._state_dict
 
     @property
     def metric(self):
+        """
+        Returns the metric value of the best model
+        """
         return self._metric
 
     def check_and_update(
         self, model, metric: Optional[Union[int, float]] = None
     ) -> bool:
         """
-        Check whether the new model performs better than the buffered models.
-        If so, replace the worst model in the buffer by the new model
+        Check if the new model is better than the buffered model.
 
         Parameters
         ----------
-        metric: metric to compare the model performance
-        model: the models
+        model : torch.nn.Module
+            The model to be evaluated.
+        metric : int or float, optional
+            Performance metric of the model.
 
         Returns
         -------
-        bool, whether there's any change to the buffer
+        bool
+            True if the new model replaces the buffered one, else False.
         """
         update_flag = (
             (self._criteria == UpdateCriteria.always)
@@ -75,7 +108,8 @@ class CheckpointContainer:
                 and metric <= self.metric
             )
             or (
-                self._criteria == UpdateCriteria.metric_larger and metric >= self.metric
+                self._criteria == UpdateCriteria.metric_larger
+                and metric >= self.metric
             )
         )
 
@@ -91,9 +125,12 @@ class CheckpointContainer:
 
     def save(self, model_dir: str):
         """
+        Save the buffered model to the specified directory.
+
         Parameters
         ----------
-        model_dir: which directory to save the model
+        model_dir : str
+            Directory path to save the model.
 
         Returns
         -------
@@ -109,13 +146,17 @@ class CheckpointContainer:
 
     def load(self, model_dir: str):
         """
+        Load the model from the specified directory.
+
         Parameters
         ----------
-        model_dir: from which directory to load the model
+        model_dir : str
+            Directory path from where the model should be loaded.
 
         Returns
         -------
-        self
+        CheckpointContainer
+            Instance of the loaded model container.
         """
         model_dict = torch.load(model_dir)
 
