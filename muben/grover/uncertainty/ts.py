@@ -1,9 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Reload the Temperature Scaling UQ method
-               to accomotate GROVER's 2-head output format.
+               to accomotate GROVER's 2-branch output format.
 """
 
 import torch
@@ -12,6 +12,11 @@ import torch.nn as nn
 
 # Temperature scaling model
 class TSModel(nn.Module):
+    """
+    Implement a different the Temperature Scaling UQ model for GROVER
+    as it has two output branches.
+    """
+
     def __init__(self, model, n_task):
         super().__init__()
         # the single temperature scaling parameter, the initialization value doesn't

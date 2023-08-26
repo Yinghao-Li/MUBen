@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: August 26th, 2023
 # ---------------------------------------
 # Description: Trainer for GROVER backbone
 """
@@ -25,6 +25,12 @@ logger = logging.getLogger(__name__)
 
 
 class Trainer(BaseTrainer, ABC):
+    """
+    Trainer tailored for the GROVER model.
+
+    This class provides mechanisms for initializing, training, and inferring using the GROVER model.
+    """
+
     def __init__(
         self,
         config: Config,
@@ -33,6 +39,23 @@ class Trainer(BaseTrainer, ABC):
         test_dataset=None,
         collate_fn=None,
     ):
+        """
+        Initialize the GROVER Trainer.
+
+        Parameters
+        ----------
+        config : Config
+            Configuration object containing necessary hyperparameters and settings.
+        training_dataset : Dataset, optional
+            Dataset used for training.
+        valid_dataset : Dataset, optional
+            Dataset used for validation.
+        test_dataset : Dataset, optional
+            Dataset used for testing.
+        collate_fn : Collator, optional
+            Function to collate data. Default is None.
+
+        """
         if not collate_fn:
             collate_fn = Collator(config)
 
@@ -46,13 +69,23 @@ class Trainer(BaseTrainer, ABC):
 
     @property
     def config(self) -> Config:
+        """Get the config object."""
         return self._config
 
     def initialize_model(self):
-        logger.info(f"Loading GROVER checkpoint from {self.config.checkpoint_path}")
+        """
+        Load GROVER model from checkpoint.
+        """
+        logger.info(
+            f"Loading GROVER checkpoint from {self.config.checkpoint_path}"
+        )
         self._model = load_checkpoint(self.config)
 
     def ts_session(self):
+        """
+        Reload the temperature scaling session as we are using a different
+        TS model implementation.
+        """
         # update hyper parameters
         self._status.lr = self.config.ts_lr
         self._status.lr_scheduler_type = "constant"
@@ -76,6 +109,23 @@ class Trainer(BaseTrainer, ABC):
         return self
 
     def get_loss(self, logits, batch, n_steps_per_epoch=None) -> torch.Tensor:
+        """
+        Calculate the combined loss for atom and bond logits.
+
+        Parameters
+        ----------
+        logits : tuple
+            Tuple containing atom and bond logits.
+        batch : Batch
+            Batch of data samples.
+        n_steps_per_epoch : int, optional
+            Number of steps per epoch. Default is None.
+
+        Returns
+        -------
+        torch.Tensor
+            Computed loss value.
+        """
         assert isinstance(logits, tuple) and len(logits) == 2, ValueError(
             "GROVER should have 2 return values for training!"
         )
@@ -96,7 +146,10 @@ class Trainer(BaseTrainer, ABC):
             and n_steps_per_epoch is not None
         ):
             kld = (
-                (self.model.atom_output_layer.kld + self.model.bond_output_layer.kld)
+                (
+                    self.model.atom_output_layer.kld
+                    + self.model.bond_output_layer.kld
+                )
                 / n_steps_per_epoch
                 / len(batch)
             )
@@ -104,6 +157,23 @@ class Trainer(BaseTrainer, ABC):
         return loss
 
     def get_distance_loss(self, atom_logits, bond_logits, batch):
+        """
+        Compute the distance loss between atom and bond logits.
+
+        Parameters
+        ----------
+        atom_logits : torch.Tensor
+            Logits for atom predictions.
+        bond_logits : torch.Tensor
+            Logits for bond predictions.
+        batch : Batch
+            Batch of data samples.
+
+        Returns
+        -------
+        torch.Tensor
+            Computed distance loss value.
+        """
         # modify data shapes to accommodate different tasks
         if (
             self.config.task_type == "regression"
@@ -121,6 +191,22 @@ class Trainer(BaseTrainer, ABC):
         return loss
 
     def inference(self, dataset, **kwargs):
+        """
+        Perform inference on a given dataset using the trained GROVER model.
+        This function is reloaded to accomodate the special output format of GROVER.
+
+        Parameters
+        ----------
+        dataset : Dataset
+            Dataset on which to perform inference.
+        kwargs : dict
+            Additional keyword arguments.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            Predicted atom logits and bond logits.
+        """
         dataloader = self.get_dataloader(
             dataset, batch_size=self.config.batch_size_inference, shuffle=False
         )
@@ -134,8 +220,12 @@ class Trainer(BaseTrainer, ABC):
                 batch.to(self.config.device)
                 atom_logits, bond_logits = self.model(batch)
 
-                atom_logits_list.append(atom_logits.to(torch.float).detach().cpu())
-                bond_logits_list.append(bond_logits.to(torch.float).detach().cpu())
+                atom_logits_list.append(
+                    atom_logits.to(torch.float).detach().cpu()
+                )
+                bond_logits_list.append(
+                    bond_logits.to(torch.float).detach().cpu()
+                )
 
         atom_logits = torch.cat(atom_logits_list, dim=0).numpy()
         bond_logits = torch.cat(bond_logits_list, dim=0).numpy()
@@ -143,6 +233,20 @@ class Trainer(BaseTrainer, ABC):
         return atom_logits, bond_logits
 
     def process_logits(self, logits: tuple[np.ndarray, np.ndarray]):
+        """
+        Process raw logits into prediction probabilities or regression values.
+        This function is reloaded to accomodate the special output format of GROVER.
+
+        Parameters
+        ----------
+        logits : tuple[np.ndarray, np.ndarray]
+            Raw logits for atoms and bonds.
+
+        Returns
+        -------
+        Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
+            Processed predictions. This could be class probabilities, or mean and variance in case of regression.
+        """
         atom_logits, bond_logits = logits
 
         if self.config.task_type == "classification":
@@ -156,8 +260,12 @@ class Trainer(BaseTrainer, ABC):
 
                 atom_alpha = atom_logits * (atom_logits > 0) + 1
                 bond_alpha = bond_logits * (bond_logits > 0) + 1
-                atom_probs = atom_alpha / np.sum(atom_alpha, axis=1, keepdims=True)
-                bond_probs = bond_alpha / np.sum(bond_alpha, axis=1, keepdims=True)
+                atom_probs = atom_alpha / np.sum(
+                    atom_alpha, axis=1, keepdims=True
+                )
+                bond_probs = bond_alpha / np.sum(
+                    bond_alpha, axis=1, keepdims=True
+                )
 
                 return (atom_probs + bond_probs) / 2
 
@@ -170,7 +278,9 @@ class Trainer(BaseTrainer, ABC):
             logits = (atom_logits + bond_logits) / 2
 
             if self.config.n_tasks > 1 and len(logits.shape) == 2:
-                logits = logits.reshape(-1, self.config.n_tasks, self.config.n_lbs)
+                logits = logits.reshape(
+                    -1, self.config.n_tasks, self.config.n_lbs
+                )
 
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
                 gamma, _, alpha, beta = np.split(logits, 4, axis=-1)
@@ -186,4 +296,6 @@ class Trainer(BaseTrainer, ABC):
             else:
                 return logits
         else:
-            raise ValueError(f"Unrecognized task type: {self.config.task_type}")
+            raise ValueError(
+                f"Unrecognized task type: {self.config.task_type}"
+            )
