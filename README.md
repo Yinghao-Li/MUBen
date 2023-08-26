@@ -34,7 +34,7 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 | SWAG | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1808.05326) |
 | Bayes by Backprop | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1505.05424) |
 | SGLD | ✅︎ | ✅︎ | [link](https://www.stats.ox.ac.uk/~teh/research/compstats/WelTeh2011a.pdf) |
-| MC Dropout || ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1506.02142) |
+| MC Dropout | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1506.02142) |
 
 ### Data
 Please check [MoleculeNet](https://moleculenet.org/datasets-1) for a detailed description.
