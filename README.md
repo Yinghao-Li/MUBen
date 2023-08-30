@@ -37,15 +37,17 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 | MC Dropout | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1506.02142) |
 
 ### Data
+
 Please check [MoleculeNet](https://moleculenet.org/datasets-1) for a detailed description.
 We use a subset of the MoleculeNet benckmark, including BBBP, Tox21, ToxCast, SIDER, ClinTox, BACE, MUV, HIV, ESOL, FreeSolv, Lipophilicity, QM7, QM8, QM9.
-The data are shared in this repo: [scaffold split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files); [random split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files-random).
 
 ## 1. DATA
 
+> A set of partitioned datasets are already included in this repo. You can find them under the `./data/` folder: [[scaffold split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files)]; [[random split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files-random)].
+
 We utilize the datasets prepared by [Uni-Mol](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol).
 You find the data [here](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol#:~:text=pockets.tar.gz-,molecular%20property,-3.506GB) or directly download it through [this link](https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz).
-We place the unzipped files into `<project root>/data/UniMol` by default.
+We place the unzipped files into `./data/UniMol` by default.
 For convenience, you are suggested to rename the `qm7dft`, `qm8dft`, and `qm9dft` folders to `qm7`, `qm8`, and `qm9`.
 
 Afterwards, you can transfer the dataset format into ours by running
@@ -78,7 +80,7 @@ If you want to test the UQ methods on your own dataset, you can use `pandas.Data
 and store them as `train.csv`, `valid.csv`, and `test.csv` files.
 `mask=1` indicates the existence informative label at the position and `mask=0` indicates missing label.
 You can check the prepared datasets included in our program for reference.
-You are recommended to put the dataset files in the `<project root>/data/file/<dataset name>` directory, but you can of course choose your favorite location and specify the `--data_folder` argument.
+You are recommended to put the dataset files in the `./data/file/<dataset name>` directory, but you can of course choose your favorite location and specify the `--data_folder` argument.
 
 The `.csv` files should be accompanied by a `meta.json` file within the same directory.
 It stores some constant dataset properties, *e.g.*, `task_type` (classification or regression), `n_tasks`, or `classes` (`[0,1]` for all our classification datasets).
@@ -103,12 +105,12 @@ The backbone models `GROVER` and `Uni-Mol` requires loading pre-trained model ch
 Unzip the downloaded `.tar.gz` file to get the `.pt` checkpoint.
 - The `Uni-Mol` checkpoint is available at Uni-Mol's [project repo](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol) or can be directly downloaded through [this link](https://github.com/dptech-corp/Uni-Mol/releases/download/v0.1/mol_pre_no_h_220816.pt).
 
-By default, the code will look for the models at locations `<project root>/models/grover_base.pt` and `<project root>/models/unimol_base.pt`, respectively.
+By default, the code will look for the models at locations `./models/grover_base.pt` and `./models/unimol_base.pt`, respectively.
 You need to specify the `--checkpoint_path` argument if you prefer other locations and checkpoint names.
 
 ## 3. RUN
 
-> A simple demo of running our project can be found at `<project root>/demo/demo.ipynb`.
+> A simple demo of running our project can be found at `./demo/demo.ipynb`.
 
 To run each of the four backbone models with uncertainty estimation methods, you can check the `run_*.py` files in the root directory.
 Example shell scripts are provided in the `./scripts` folder as `.sh` files.
@@ -135,7 +137,7 @@ PYTHONPATH="." python ./run/dnn.py --help
 
 By default, this project uses local logging files (`*.log`) and [WandB](https://wandb.ai/site) to track training status.
 
-The log files are stored as `<project root>/logs/<dataset>/<model>/<uncertainty>/<running_time>.log`.
+The log files are stored as `./logs/<dataset>/<model>/<uncertainty>/<running_time>.log`.
 You can change the file path by specifying the `--log_path` argument, or disable log saving by setting `--log_path="disabled"`.
 
 To use WandB, you first need to register an account and sign in on your machine with `wandb login`.
@@ -158,19 +160,24 @@ For 3D conformations, we directly take advantage of the results from Uni-Mol but
 ### Calculating Metrics
 
 During training, we only calculate metrics necessary for early stopping and simple prediction performance evaluation.
-To get other metrics, you need to use the `<project root>/assist/results_get_metrics.py` file.
+To get other metrics, you need to use the `./assist/results_get_metrics.py` file.
 
 Specifically, you need to save the model predictions by **not** setting `--disable_dataset_saving`.
-The results are saved as `<project root>/<result_folder>/<dataset_name>/<model_name>/<uncertainty_method>/seed-<seed>/preds/<test_idx>.pt` files.
-When the training is finished, you can run the `<project root>/assist/results_get_metrics.py` file to generate all metrics for your model predictions.
+The results are saved as `./<result_folder>/<dataset_name>/<model_name>/<uncertainty_method>/seed-<seed>/preds/<test_idx>.pt` files.
+When the training is finished, you can run the `./assist/results_get_metrics.py` file to generate all metrics for your model predictions.
 For example:
 ```bash
 PYTHONPATH="." python ./assist/results_get_metrics.py ./scripts/config_metrics.json
 ```
 Make sure the hyper-parameters in the configuration file are updated to your need.
 
-The metrics will be saved in the `<project root>/<result_folder>/RESULTS/<model_name>-<dataset_name>.csv` files.
-Notice that these files already exist in the repo if you keep the default `--result_folder=./output` argument and you need to check whether it is updated to reveal your experiment results.
+The metrics will be saved in the `./<result_folder>/RESULTS/<model_name>-<dataset_name>.csv` files.
+~~Notice that these files already exist in the repo if you keep the default `--result_folder=./output` argument and you need to check whether it is updated to reveal your experiment results.~~
+
+### Results
+
+We provided a more comprehensive copy of our experiment results [here](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/output) that are presented in the tables in our paper's appendix.
+We hope it can ease some effort if you want to further analyse the behavior of our backbone models and uncertainty quantification methods. 
 
 ## 4. CITATION
 
