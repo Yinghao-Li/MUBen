@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: September 11th, 2023
 # ---------------------------------------
 # Description: 
 
@@ -52,8 +52,8 @@ class TrainerState:
         Directory to save results without uncertainty.
     """
 
-    train_log_idx: int = 0
-    eval_log_idx: int = 0
+    train_log_idx: int = 1
+    eval_log_idx: int = 1
     n_eval_no_improve: int = 0
 
     valid_epoch_interval: int = 1
@@ -70,8 +70,8 @@ class TrainerState:
         """
         Initialize or reset counters related to training and evaluation.
         """
-        self.train_log_idx = 0
-        self.eval_log_idx = 0
+        self.train_log_idx = 1
+        self.eval_log_idx = 1
         self.n_eval_no_improve = 0
 
     def save_to_json(self, json_path: str):

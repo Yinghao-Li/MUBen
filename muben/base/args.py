@@ -5,6 +5,7 @@
 # Description: Base classes for arguments and configurations.
 """
 
+import os
 import os.path as op
 import json
 import torch
@@ -289,7 +290,7 @@ class Arguments:
             )
 
         # wandb arguments
-        self.apply_wandb = not self.disable_wandb
+        self.apply_wandb = not self.disable_wandb and (self.wandb_api_key or os.getenv("WANDB_API_KEY"))
         if not self.wandb_name:
             self.wandb_name = (
                 f"{self.model_name}{'' if self.feature_type == 'none' else f'-{self.feature_type}'}"
