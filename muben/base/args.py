@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: September 11th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -14,6 +14,7 @@ from dataclasses import dataclass, field, asdict
 from functools import cached_property
 
 from muben.utils.macro import MODEL_NAMES, UncertaintyMethods
+from muben.utils.io import prettify_json
 
 logger = logging.getLogger(__name__)
 
@@ -34,58 +35,36 @@ class Arguments:
             "whom stored in the environment variables. Can be found here: https://wandb.ai/settings"
         },
     )
-    wandb_project: Optional[str] = field(
-        default=None, metadata={"help": "name of the wandb project."}
-    )
-    wandb_name: Optional[str] = field(
-        default=None, metadata={"help": "wandb model name."}
-    )
+    wandb_project: Optional[str] = field(default=None, metadata={"help": "name of the wandb project."})
+    wandb_name: Optional[str] = field(default=None, metadata={"help": "wandb model name."})
     disable_wandb: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Disable WandB even if relevant arguments are filled."
-        },
+        metadata={"help": "Disable WandB even if relevant arguments are filled."},
     )
 
     # --- IO arguments ---
-    dataset_name: Optional[str] = field(
-        default="", metadata={"help": "Dataset Name."}
-    )
-    data_folder: Optional[str] = field(
-        default="", metadata={"help": "The folder containing all datasets."}
-    )
+    dataset_name: Optional[str] = field(default="", metadata={"help": "Dataset Name."})
+    data_folder: Optional[str] = field(default="", metadata={"help": "The folder containing all datasets."})
     data_seed: Optional[int] = field(
         default=None,
-        metadata={
-            "help": "Seed used while constructing the random split dataset"
-        },
+        metadata={"help": "Seed used while constructing the random split dataset"},
     )
-    result_folder: Optional[str] = field(
-        default="./output", metadata={"help": "where to save model outputs."}
-    )
+    result_folder: Optional[str] = field(default="./output", metadata={"help": "where to save model outputs."})
     ignore_preprocessed_dataset: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Ignore pre-processed datasets and re-generate features if necessary."
-        },
+        metadata={"help": "Ignore pre-processed datasets and re-generate features if necessary."},
     )
     disable_dataset_saving: Optional[bool] = field(
         default=False, metadata={"help": "Do not save pre-processed dataset."}
     )
     disable_result_saving: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Do not save training results and trained model checkpoints."
-        },
+        metadata={"help": "Do not save training results and trained model checkpoints."},
     )
-    overwrite_results: Optional[bool] = field(
-        default=False, metadata={"help": "Whether overwrite existing outputs."}
-    )
+    overwrite_results: Optional[bool] = field(default=False, metadata={"help": "Whether overwrite existing outputs."})
     log_path: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "Path to the logging file. Set to `disabled` to disable log saving."
-        },
+        metadata={"help": "Path to the logging file. Set to `disabled` to disable log saving."},
     )
 
     # --- Model Arguments ---
@@ -93,9 +72,7 @@ class Arguments:
         default="DNN",
         metadata={"help": "Name of the model", "choices": MODEL_NAMES},
     )
-    dropout: Optional[float] = field(
-        default=0.1, metadata={"help": "Dropout ratio."}
-    )
+    dropout: Optional[float] = field(default=0.1, metadata={"help": "Dropout ratio."})
     binary_classification_with_softmax: Optional[bool] = field(
         default=False,
         metadata={
@@ -105,17 +82,13 @@ class Arguments:
     )
     regression_with_variance: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Use two regression output heads, one for mean and the other for variance."
-        },
+        metadata={"help": "Use two regression output heads, one for mean and the other for variance."},
     )
 
     # --- Training Arguments ---
     retrain_model: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Train the model from scratch even if there are models saved in result dir"
-        },
+        metadata={"help": "Train the model from scratch even if there are models saved in result dir"},
     )
     ignore_uncertainty_output: Optional[bool] = field(
         default=False,
@@ -126,27 +99,15 @@ class Arguments:
     )
     ignore_no_uncertainty_output: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Ignore the model checkpoints from no-uncertainty training processes."
-        },
+        metadata={"help": "Ignore the model checkpoints from no-uncertainty training processes."},
     )
-    batch_size: Optional[int] = field(
-        default=32, metadata={"help": "Batch size."}
-    )
-    batch_size_inference: Optional[int] = field(
-        default=None, metadata={"help": "Inference batch size."}
-    )
-    n_epochs: Optional[int] = field(
-        default=50, metadata={"help": "How many epochs to train the model."}
-    )
-    lr: Optional[float] = field(
-        default=1e-4, metadata={"help": "Learning Rate."}
-    )
+    batch_size: Optional[int] = field(default=32, metadata={"help": "Batch size."})
+    batch_size_inference: Optional[int] = field(default=None, metadata={"help": "Inference batch size."})
+    n_epochs: Optional[int] = field(default=50, metadata={"help": "How many epochs to train the model."})
+    lr: Optional[float] = field(default=1e-4, metadata={"help": "Learning Rate."})
     grad_norm: Optional[float] = field(
         default=0,
-        metadata={
-            "help": "Gradient norm. Default is 0 (do not clip gradient)"
-        },
+        metadata={"help": "Gradient norm. Default is 0 (do not clip gradient)"},
     )
     lr_scheduler_type: Optional[str] = field(
         default="constant",
@@ -163,14 +124,10 @@ class Arguments:
             ],
         },
     )
-    warmup_ratio: Optional[float] = field(
-        default=0.1, metadata={"help": "Learning rate scheduler warm-up ratio"}
-    )
+    warmup_ratio: Optional[float] = field(default=0.1, metadata={"help": "Learning rate scheduler warm-up ratio"})
     seed: Optional[int] = field(
         default=0,
-        metadata={
-            "help": "Random seed that will be set at the beginning of training."
-        },
+        metadata={"help": "Random seed that will be set at the beginning of training."},
     )
     debug: Optional[bool] = field(
         default=False,
@@ -178,9 +135,7 @@ class Arguments:
     )
     deploy: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Deploy mode that does not throw run-time errors when bugs are encountered"
-        },
+        metadata={"help": "Deploy mode that does not throw run-time errors when bugs are encountered"},
     )
     time_training: Optional[bool] = field(
         default=False,
@@ -197,16 +152,11 @@ class Arguments:
     # --- Evaluation Arguments ---
     valid_epoch_interval: Optional[int] = field(
         default=1,
-        metadata={
-            "help": "How many training epochs within each validation step. "
-            "Set to 0 to disable validation."
-        },
+        metadata={"help": "How many training epochs within each validation step. " "Set to 0 to disable validation."},
     )
     valid_tolerance: Optional[int] = field(
         default=20,
-        metadata={
-            "help": "Maximum validation steps allowed for non-increasing model performance."
-        },
+        metadata={"help": "Maximum validation steps allowed for non-increasing model performance."},
     )
     n_test: Optional[int] = field(
         default=1,
@@ -228,21 +178,15 @@ class Arguments:
     # --- Ensemble Arguments ---
     n_ensembles: Optional[int] = field(
         default=5,
-        metadata={
-            "help": "The number of ensemble models in the deep ensembles method."
-        },
+        metadata={"help": "The number of ensemble models in the deep ensembles method."},
     )
 
     # --- SWAG Arguments ---
     swa_lr_decay: Optional[float] = field(
         default=0.5,
-        metadata={
-            "help": "The learning rate decay coefficient during SWA training."
-        },
+        metadata={"help": "The learning rate decay coefficient during SWA training."},
     )
-    n_swa_epochs: Optional[int] = field(
-        default=20, metadata={"help": "The number of SWA training epochs."}
-    )
+    n_swa_epochs: Optional[int] = field(default=20, metadata={"help": "The number of SWA training epochs."})
     k_swa_checkpoints: Optional[int] = field(
         default=20,
         metadata={
@@ -254,45 +198,31 @@ class Arguments:
     # --- Temperature Scaling Arguments ---
     ts_lr: Optional[float] = field(
         default=0.01,
-        metadata={
-            "help": "The learning rate to train temperature scaling parameters."
-        },
+        metadata={"help": "The learning rate to train temperature scaling parameters."},
     )
     n_ts_epochs: Optional[int] = field(
         default=20,
-        metadata={
-            "help": "The number of Temperature Scaling training epochs."
-        },
+        metadata={"help": "The number of Temperature Scaling training epochs."},
     )
 
     # --- Focal Loss Arguments ---
     apply_temperature_scaling_after_focal_loss: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Whether to apply temperature scaling after training model with focal loss."
-        },
+        metadata={"help": "Whether to apply temperature scaling after training model with focal loss."},
     )
 
     # --- BBP Arguments ---
-    bbp_prior_sigma: Optional[float] = field(
-        default=0.1, metadata={"help": "Sigma value for BBP prior."}
-    )
+    bbp_prior_sigma: Optional[float] = field(default=0.1, metadata={"help": "Sigma value for BBP prior."})
 
     # --- SGLD Arguments ---
     apply_preconditioned_sgld: Optional[bool] = field(
         default=False,
-        metadata={
-            "help": "Whether to apply pre-conditioned SGLD instead of the vanilla one."
-        },
+        metadata={"help": "Whether to apply pre-conditioned SGLD instead of the vanilla one."},
     )
-    sgld_prior_sigma: Optional[float] = field(
-        default=0.1, metadata={"help": "Variance of the SGLD Gaussian prior."}
-    )
+    sgld_prior_sigma: Optional[float] = field(default=0.1, metadata={"help": "Variance of the SGLD Gaussian prior."})
     n_langevin_samples: Optional[int] = field(
         default=30,
-        metadata={
-            "help": "The number of model checkpoints sampled from the Langevin Dynamics."
-        },
+        metadata={"help": "The number of model checkpoints sampled from the Langevin Dynamics."},
     )
     sgld_sampling_interval: Optional[int] = field(
         default=2,
@@ -300,14 +230,10 @@ class Arguments:
     )
 
     # --- Evidential Networks Arguments ---
-    evidential_reg_loss_weight: Optional[float] = field(
-        default=1, metadata={"help": "The weight of evidential loss."}
-    )
+    evidential_reg_loss_weight: Optional[float] = field(default=1, metadata={"help": "The weight of evidential loss."})
     evidential_clx_loss_annealing_epochs: Optional[int] = field(
         default=10,
-        metadata={
-            "help": "How many epochs before evidential loss weight increase to 1."
-        },
+        metadata={"help": "How many epochs before evidential loss weight increase to 1."},
     )
 
     # --- Device Arguments ---
@@ -327,9 +253,7 @@ class Arguments:
         default=8,
         metadata={"help": "The number of threads to process the dataset."},
     )
-    pin_memory: Optional[bool] = field(
-        default=False, metadata={"help": "Pin memory for data loader."}
-    )
+    pin_memory: Optional[bool] = field(default=False, metadata={"help": "Pin memory for data loader."})
     n_feature_generating_threads: Optional[int] = field(
         default=8, metadata={"help": "Number of feature generation threads"}
     )
@@ -396,24 +320,22 @@ class Arguments:
 
 @dataclass
 class Config(Arguments):
-    d_feature = None  # feature dimensionality
+    # --- Dataset Arguments ---
+    # The dataset attributes are to be overwritten by the dataset meta file when used
     classes = None  # all possible classification classes
     task_type = "classification"  # classification or regression
     n_tasks = None  # how many tasks (sets of labels to predict)
     eval_metric = None  # which metric for evaluating valid and test performance *during training*
     random_split = False  # whether the dataset is split randomly; False indicates scaffold split
 
+    # --- Properties and Functions ---
     @cached_property
     def n_lbs(self):
         """
         The number of labels to predict
         """
         if self.task_type == "classification":
-            if (
-                len(self.classes) == 2
-                and not self.uncertainty_method
-                == UncertaintyMethods.evidential
-            ):
+            if len(self.classes) == 2 and not self.uncertainty_method == UncertaintyMethods.evidential:
                 return 1
             else:
                 return len(self.classes)
@@ -463,9 +385,7 @@ class Config(Arguments):
                 invalid_keys.append(k)
 
         if invalid_keys:
-            logger.warning(
-                f"The following attributes in the meta file are not defined in config: {invalid_keys}"
-            )
+            logger.warning(f"The following attributes in the meta file are not defined in config: {invalid_keys}")
 
         return self
 
@@ -484,9 +404,7 @@ class Config(Arguments):
         arg_elements = {
             attr: getattr(args, attr)
             for attr in dir(args)
-            if not callable(getattr(args, attr))
-            and not attr.startswith("__")
-            and not attr.startswith("_")
+            if not callable(getattr(args, attr)) and not attr.startswith("__") and not attr.startswith("_")
         }
         for attr, value in arg_elements.items():
             try:
@@ -504,14 +422,10 @@ class Config(Arguments):
         self
         """
 
-        assert not (
-            self.model_name == "DNN" and self.feature_type == "none"
-        ), "`feature_type` is required for DNN!"
+        assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
 
         if self.debug and self.deploy:
-            logger.warning(
-                "`DEBUG` mode is not allowed when the program is in `DEPLOY`! Setting debug=False."
-            )
+            logger.warning("`DEBUG` mode is not allowed when the program is in `DEPLOY`! Setting debug=False.")
             self.debug = False
 
         if (
@@ -547,14 +461,12 @@ class Config(Arguments):
             self.n_test = 30
 
         assert not (
-            self.uncertainty_method
-            in [UncertaintyMethods.temperature, UncertaintyMethods.focal]
+            self.uncertainty_method in [UncertaintyMethods.temperature, UncertaintyMethods.focal]
             and self.task_type == "regression"
         ), f"{self.uncertainty_method} is not compatible with regression tasks!"
         # temporary for evidential networks
         assert not (
-            self.uncertainty_method in [UncertaintyMethods.iso]
-            and self.task_type == "classification"
+            self.uncertainty_method in [UncertaintyMethods.iso] and self.task_type == "classification"
         ), f"{self.uncertainty_method} is not compatible with classification tasks!"
 
         if self.uncertainty_method in [
@@ -572,13 +484,8 @@ class Config(Arguments):
             )
             self.k_swa_checkpoints = self.n_swa_epochs
 
-        if (
-            self.uncertainty_method == UncertaintyMethods.sgld
-            and not self.lr_scheduler_type == "constant"
-        ):
-            logger.warning(
-                "SGLD currently only works with constant lr scheduler. The argument will be modified"
-            )
+        if self.uncertainty_method == UncertaintyMethods.sgld and not self.lr_scheduler_type == "constant":
+            logger.warning("SGLD currently only works with constant lr scheduler. The argument will be modified")
             self.lr_scheduler_type = "constant"
 
         if self.uncertainty_method == UncertaintyMethods.evidential:
@@ -593,13 +500,9 @@ class Config(Arguments):
         elements = {
             attr: getattr(self, attr)
             for attr in dir(self)
-            if not callable(getattr(self, attr))
-            and not attr.startswith("__")
-            and not attr.startswith("_")
+            if not callable(getattr(self, attr)) and not (attr.startswith("__") or attr.startswith("_"))
         }
-        logger.info(f"Configurations: ({type(self)})")
-        for arg_element, value in elements.items():
-            logger.info(f"  {arg_element}: {value}")
+        logger.info(f"Configurations:\n{prettify_json(json.dumps(elements, indent=2), collapse_level=2)}")
 
         return self
 
@@ -627,10 +530,7 @@ class Config(Arguments):
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(asdict(self), f, ensure_ascii=False, indent=2)
         except Exception as e:
-            logger.exception(
-                f"Cannot save config file to {file_path}; "
-                f"encountered Error {e}"
-            )
+            logger.exception(f"Cannot save config file to {file_path}; " f"encountered Error {e}")
             raise e
         return self
 
@@ -649,9 +549,7 @@ class Config(Arguments):
         """
         if op.isdir(file_dir):
             file_path = op.join(file_dir, f"{file_name}.json")
-            assert op.isfile(file_path), FileNotFoundError(
-                f"{file_path} does not exist!"
-            )
+            assert op.isfile(file_path), FileNotFoundError(f"{file_path} does not exist!")
         elif op.isfile(file_dir):
             file_path = file_dir
         else:
