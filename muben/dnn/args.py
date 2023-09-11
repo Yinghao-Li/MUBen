@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: September 11th, 2023
 # ---------------------------------------
 # Description: Arguments for DNN model
 """
@@ -41,9 +41,7 @@ class Arguments(BaseArguments):
     )
 
     # --- DNN Arguments ---
-    n_dnn_hidden_layers: Optional[int] = field(
-        default=8, metadata={"help": "The number of DNN hidden layers."}
-    )
+    n_dnn_hidden_layers: Optional[int] = field(default=8, metadata={"help": "The number of DNN hidden layers."})
     d_dnn_hidden: Optional[int] = field(
         default=128,
         metadata={"help": "The dimensionality of DNN hidden layers."},
