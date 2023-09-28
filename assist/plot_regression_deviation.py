@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: September 27th, 2023
 # ---------------------------------------
 # Description: Generate the plots of the difference between the predicted and true labels
                against the predicted standard deviation.
@@ -34,11 +34,9 @@ class Arguments:
     # --- IO arguments ---
     dataset_name: Optional[str] = field(
         default=None,
-        metadata={"choices": DATASET_NAMES, "help": "A list of dataset names."},
+        metadata={"choices": DATASET_NAMES, "help": "dataset name."},
     )
-    model_name: Optional[str] = field(
-        default=None, metadata={"choices": MODEL_NAMES, "help": "A list of model names"}
-    )
+    model_name: Optional[str] = field(default=None, metadata={"choices": MODEL_NAMES, "help": "model name"})
     feature_type: Optional[str] = field(
         default="none",
         metadata={
@@ -46,24 +44,16 @@ class Arguments:
             "help": "Feature type that the DNN model uses.",
         },
     )
-    result_dir: Optional[str] = field(
-        default=".", metadata={"help": "The folder which holds the results."}
-    )
-    result_seed: Optional[int] = field(
-        default=0, metadata={"help": "Seed of the results"}
-    )
+    result_dir: Optional[str] = field(default=".", metadata={"help": "The folder which holds the results."})
+    result_seed: Optional[int] = field(default=0, metadata={"help": "Seed of the results"})
     n_subsamples: Optional[int] = field(
         default=None, metadata={"help": "Sub-sampling n datapoints for each UQ method."}
     )
-    output_dir: Optional[str] = field(
-        default="plots", metadata={"help": "Directory to save the plots."}
-    )
+    output_dir: Optional[str] = field(default="plots", metadata={"help": "Directory to save the plots."})
 
     def __post_init__(self):
         if self.model_name == "DNN":
-            assert self.feature_type != "none", ValueError(
-                "Invalid feature type for DNN!"
-            )
+            assert self.feature_type != "none", ValueError("Invalid feature type for DNN!")
             self.model_name = f"{self.model_name}-{self.feature_type}"
 
         self.none_result_dir = op.join(
@@ -155,8 +145,8 @@ def main(args: Arguments):
         label="y=3x",
     )
     ax.scatter(
-        np.sqrt(sgld_variances),
-        sgld_abs_error,
+        np.sqrt(none_variances),
+        none_abs_error,
         color="goldenrod",
         marker="^",
         s=20,
@@ -165,8 +155,8 @@ def main(args: Arguments):
         label="Deterministic",
     )
     ax.scatter(
-        np.sqrt(none_variances),
-        none_abs_error,
+        np.sqrt(sgld_variances),
+        sgld_abs_error,
         color="royalblue",
         s=20,
         alpha=0.6,
@@ -179,8 +169,8 @@ def main(args: Arguments):
 
     ax.set_ylabel("Absolute Prediction Error", fontsize=12)
     ax.set_xlabel("Predicted Standard Deviation", fontsize=12)
-    ax.set_xlim(0, ref_x[-1] / 3)
-    ax.set_ylim(0, ref_x[-1])
+    ax.set_xlim(0, 0.8)
+    ax.set_ylim(0, 1.6)
     plt.legend()
 
     init_dir(args.output_dir, clear_original_content=False)

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: September 11th, 2023
+# Modified: September 27th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -165,6 +165,10 @@ class Arguments:
             "help": "How many test loops to run in one training process. "
             "The default value for some Bayesian methods such as MC Dropout is 20."
         },
+    )
+    test_on_training_data: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether include test results on training data."},
     )
 
     # --- Uncertainty Arguments ---
@@ -460,6 +464,9 @@ class Config(Arguments):
                 f"multiple test runs! Setting `n_test` to the default value 30."
             )
             self.n_test = 30
+
+        if self.uncertainty_method == UncertaintyMethods.sgld:
+            self.n_test = self.n_langevin_samples
 
         assert not (
             self.uncertainty_method in [UncertaintyMethods.temperature, UncertaintyMethods.focal]

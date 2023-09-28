@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: September 27th, 2023
 # ---------------------------------------
 # Description: Trainer function for Uni-Mol.
 """
@@ -86,9 +86,7 @@ class Trainer(BaseTrainer, ABC):
         self._model = UniMol(self.config, self.dictionary)
 
         state = load_checkpoint_to_cpu(self.config.checkpoint_path)
-        model_loading_info = self._model.load_state_dict(
-            state["model"], strict=False
-        )
+        model_loading_info = self._model.load_state_dict(state["model"], strict=False)
         logger.info(model_loading_info)
         return self
 
@@ -102,24 +100,16 @@ class Trainer(BaseTrainer, ABC):
         # Original implementation seems set weight decay to 0, which is weird.
         # We'll keep it as default here
         params = [p for p in self.model.parameters() if p.requires_grad]
-        self._optimizer = AdamW(
-            params, lr=self._status.lr, betas=(0.9, 0.99), eps=1e-6
-        )
+        self._optimizer = AdamW(params, lr=self._status.lr, betas=(0.9, 0.99), eps=1e-6)
 
         # for sgld compatibility
         if self.config.uncertainty_method == UncertaintyMethods.sgld:
-            output_param_ids = [
-                id(x[1])
-                for x in self._model.named_parameters()
-                if "output_layer" in x[0]
-            ]
+            output_param_ids = [id(x[1]) for x in self._model.named_parameters() if "output_layer" in x[0]]
             backbone_params = filter(
                 lambda p: id(p) not in output_param_ids,
                 self._model.parameters(),
             )
-            output_params = filter(
-                lambda p: id(p) in output_param_ids, self._model.parameters()
-            )
+            output_params = filter(lambda p: id(p) in output_param_ids, self._model.parameters())
 
             self._optimizer = AdamW(
                 backbone_params,
@@ -127,11 +117,7 @@ class Trainer(BaseTrainer, ABC):
                 betas=(0.9, 0.99),
                 eps=1e-6,
             )
-            sgld_optimizer = (
-                PSGLDOptimizer
-                if self.config.apply_preconditioned_sgld
-                else SGLDOptimizer
-            )
+            sgld_optimizer = PSGLDOptimizer if self.config.apply_preconditioned_sgld else SGLDOptimizer
             self._sgld_optimizer = sgld_optimizer(
                 output_params,
                 lr=self._status.lr,
@@ -177,9 +163,7 @@ class Trainer(BaseTrainer, ABC):
         if isinstance(preds, np.ndarray):
             pred_instance_shape = preds.shape[1:]
 
-            preds = preds.reshape(
-                (-1, self.config.n_conformation, *pred_instance_shape)
-            )
+            preds = preds.reshape((-1, self.config.n_conformation, *pred_instance_shape))
             return preds.mean(axis=1)
 
         elif isinstance(preds, tuple):
@@ -187,16 +171,20 @@ class Trainer(BaseTrainer, ABC):
 
             # this could be improved for deep ensembles
             return tuple(
-                [
-                    p.reshape(
-                        (-1, self.config.n_conformation, *pred_instance_shape)
-                    ).mean(axis=1)
-                    for p in preds
-                ]
+                [p.reshape((-1, self.config.n_conformation, *pred_instance_shape)).mean(axis=1) for p in preds]
             )
 
         else:
             raise TypeError(f"Unsupported prediction type {type(preds)}")
+
+    def test_on_training_data(self, load_best_model=True):
+        """
+        Reload the runction as the dataset is processed differently
+        """
+        self._training_dataset.set_processor_variant("inference")
+        metrics = super().test_on_training_data(load_best_model)
+        self._training_dataset.set_processor_variant("training")
+        return metrics
 
 
 def load_checkpoint_to_cpu(path, arg_overrides=None):
@@ -222,11 +210,7 @@ def load_checkpoint_to_cpu(path, arg_overrides=None):
     with open(local_path, "rb") as f:
         state = torch.load(f, map_location=torch.device("cpu"))
 
-    if (
-        "args" in state
-        and state["args"] is not None
-        and arg_overrides is not None
-    ):
+    if "args" in state and state["args"] is not None and arg_overrides is not None:
         args = state["args"]
         for arg_name, arg_val in arg_overrides.items():
             setattr(args, arg_name, arg_val)
