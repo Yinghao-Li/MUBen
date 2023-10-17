@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: September 28th, 2023
 # ---------------------------------------
 # Description: compute and save the ranks of UQ methods
 """
@@ -60,9 +60,7 @@ class Arguments:
 
     # --- IO arguments ---
 
-    model_names: Optional[str] = field(
-        default=None, metadata={"nargs": "*", "help": "A list of model names."}
-    )
+    model_names: Optional[str] = field(default=None, metadata={"nargs": "*", "help": "A list of model names."})
     feature_type: Optional[str] = field(
         default="rdkit",
         metadata={
@@ -70,11 +68,9 @@ class Arguments:
             "help": "Feature type that the DNN model uses.",
         },
     )
-    result_dir: Optional[str] = field(
-        default="./output/RESULTS/", metadata={"help": "Directory the scores."}
-    )
+    result_dir: Optional[str] = field(default="./output/primary/RESULTS/", metadata={"help": "Directory the scores."})
     output_dir: Optional[str] = field(
-        default="./output/RESULTS/", metadata={"help": "Where to save the ranks."}
+        default="./output/primary/RESULTS/", metadata={"help": "Where to save the ranks."}
     )
 
     def __post_init__(self):
@@ -85,9 +81,7 @@ class Arguments:
 
         for idx, model_name in enumerate(self.model_names):
             if model_name == "DNN":
-                assert self.feature_type != "none", ValueError(
-                    "Invalid feature type for DNN!"
-                )
+                assert self.feature_type != "none", ValueError("Invalid feature type for DNN!")
                 self.model_names[idx] = f"DNN-{self.feature_type}"
 
 
@@ -145,9 +139,7 @@ def main(args: Arguments):
             metric_values = item[1:]
             assert len(metric_values) == len(metric_names)
 
-            uncertainty_metric[uncertainty_method] = {
-                n: v for n, v in zip(metric_names, metric_values)
-            }
+            uncertainty_metric[uncertainty_method] = {n: v for n, v in zip(metric_names, metric_values)}
 
         dataset_model_uncertainty_metric[dataset_name][model_name] = uncertainty_metric
 
@@ -157,18 +149,10 @@ def main(args: Arguments):
     phy_fl_dt_md_unc_mtr = pd.json_normalize(phy_dt_md_unc_mtr, sep="_").to_dict()
 
     # calculate ranks
-    qm_metric_ranks = {
-        dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in QM_DATASET
-    }
-    pc_metric_ranks = {
-        dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in PC_DATASET
-    }
-    bio_metric_ranks = {
-        dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in BIO_DATASET
-    }
-    phy_metric_ranks = {
-        dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in PHY_DATASET
-    }
+    qm_metric_ranks = {dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in QM_DATASET}
+    pc_metric_ranks = {dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in PC_DATASET}
+    bio_metric_ranks = {dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in BIO_DATASET}
+    phy_metric_ranks = {dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in PHY_DATASET}
 
     qm_metric_ranks_mean = {mtr: dict() for mtr in REGRESSION_METRICS}
     pc_metric_ranks_mean = {mtr: dict() for mtr in REGRESSION_METRICS}
@@ -193,8 +177,7 @@ def main(args: Arguments):
             dict1 = qm_metric_ranks_mean[mtr]
             dict2 = md_unc_ranks
             qm_metric_ranks_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(QM_DATASET)
-                for i in md_unc_ranks.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(QM_DATASET) for i in md_unc_ranks.keys()
             }
 
     # pc
@@ -215,8 +198,7 @@ def main(args: Arguments):
             dict1 = pc_metric_ranks_mean[mtr]
             dict2 = md_unc_ranks
             pc_metric_ranks_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PC_DATASET)
-                for i in md_unc_ranks.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PC_DATASET) for i in md_unc_ranks.keys()
             }
 
     # bio
@@ -237,8 +219,7 @@ def main(args: Arguments):
             dict1 = bio_metric_ranks_mean[mtr]
             dict2 = md_unc_ranks
             bio_metric_ranks_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(BIO_DATASET)
-                for i in md_unc_ranks.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(BIO_DATASET) for i in md_unc_ranks.keys()
             }
 
     # phy
@@ -259,8 +240,7 @@ def main(args: Arguments):
             dict1 = phy_metric_ranks_mean[mtr]
             dict2 = md_unc_ranks
             phy_metric_ranks_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PHY_DATASET)
-                for i in md_unc_ranks.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PHY_DATASET) for i in md_unc_ranks.keys()
             }
 
     # save ranks
@@ -300,18 +280,10 @@ def main(args: Arguments):
     df.to_csv(op.join(output_dir, "mean_phy.csv"))
 
     # get reciprocal ranks
-    qm_metric_rrs = {
-        dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in QM_DATASET
-    }
-    pc_metric_rrs = {
-        dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in PC_DATASET
-    }
-    bio_metric_rrs = {
-        dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in BIO_DATASET
-    }
-    phy_metric_rrs = {
-        dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in PHY_DATASET
-    }
+    qm_metric_rrs = {dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in QM_DATASET}
+    pc_metric_rrs = {dt: {mtr: dict() for mtr in REGRESSION_METRICS} for dt in PC_DATASET}
+    bio_metric_rrs = {dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in BIO_DATASET}
+    phy_metric_rrs = {dt: {mtr: dict() for mtr in CLASSIFICATION_METRICS} for dt in PHY_DATASET}
 
     qm_metric_rrs_mean = {mtr: dict() for mtr in REGRESSION_METRICS}
     pc_metric_rrs_mean = {mtr: dict() for mtr in REGRESSION_METRICS}
@@ -335,8 +307,7 @@ def main(args: Arguments):
             dict1 = qm_metric_rrs_mean[mtr]
             dict2 = md_unc_rrs
             qm_metric_rrs_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(QM_DATASET)
-                for i in md_unc_rrs.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(QM_DATASET) for i in md_unc_rrs.keys()
             }
 
     for dt, mtr_vals in pc_metric_rrs.items():
@@ -356,8 +327,7 @@ def main(args: Arguments):
             dict1 = pc_metric_rrs_mean[mtr]
             dict2 = md_unc_rrs
             pc_metric_rrs_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PC_DATASET)
-                for i in md_unc_rrs.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PC_DATASET) for i in md_unc_rrs.keys()
             }
 
     for dt, mtr_vals in bio_metric_rrs.items():
@@ -377,8 +347,7 @@ def main(args: Arguments):
             dict1 = bio_metric_rrs_mean[mtr]
             dict2 = md_unc_rrs
             bio_metric_rrs_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(BIO_DATASET)
-                for i in md_unc_rrs.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(BIO_DATASET) for i in md_unc_rrs.keys()
             }
 
     for dt, mtr_vals in phy_metric_rrs.items():
@@ -398,8 +367,7 @@ def main(args: Arguments):
             dict1 = phy_metric_rrs_mean[mtr]
             dict2 = md_unc_rrs
             phy_metric_rrs_mean[mtr] = {
-                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PHY_DATASET)
-                for i in md_unc_rrs.keys()
+                i: dict1.get(i, 0) + dict2.get(i, 0) / len(PHY_DATASET) for i in md_unc_rrs.keys()
             }
 
     # save mrr results
