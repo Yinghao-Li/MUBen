@@ -81,7 +81,7 @@ class Trainer:
             Dataset for validating the model.
         test_dataset : Dataset, optional
             Dataset for testing the model.
-        collate_fn : function, optional
+        collate_fn : Callable, optional
             Function to collate data samples into batches.
         scalar : StandardScaler, optional
             Scaler for standardizing input data.
