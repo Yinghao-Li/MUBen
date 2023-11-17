@@ -68,7 +68,7 @@ class DNN(nn.Module):
             Activation function to use. Must be an attribute of torch.nn. Defaults to 'ReLU'.
         uncertainty_method : Optional[str]
             Method for calculating uncertainty. Defaults to 'none'.
-        **kwargs : dict
+        **kwargs
             Additional keyword arguments for the output layer.
         """
         super().__init__()
