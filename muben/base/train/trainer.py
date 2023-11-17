@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: September 27th, 2023
+# Modified: November 17th, 2023
 # ---------------------------------------
 # Description:
 
@@ -1160,7 +1160,7 @@ class Trainer:
 
         return None
 
-    def test(self, load_best_model=True):
+    def test(self, load_best_model=True, return_preds=False):
         """
         Test the model's performance on the test dataset.
 
@@ -1168,11 +1168,13 @@ class Trainer:
         ----------
         load_best_model : bool, optional
             Whether to load the best model saved during training for testing, default is True.
+        return_preds : bool, optional
+            Whether to return the predictions along with metrics, default is False.
 
         Returns
         -------
-        dict
-            Evaluation metrics for the test dataset.
+        dict, tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Evaluation metrics (and predictions) for the test dataset.
         """
         self.set_mode("test")
 
@@ -1207,7 +1209,7 @@ class Trainer:
 
         return metrics
 
-    def test_on_training_data(self, load_best_model=True):
+    def test_on_training_data(self, load_best_model=True, return_preds=False):
         """
         Test the model's performance on the training dataset.
 
@@ -1215,13 +1217,16 @@ class Trainer:
         ----------
         load_best_model : bool, optional
             Whether to load the best model saved during training for testing, default is True.
+        return_preds : bool, optional
+            Whether to return the predictions along with metrics, default is False.
 
         Returns
         -------
-        dict
-            Evaluation metrics for the test dataset.
+        dict, tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Evaluation metrics (and predictions) for the training dataset.
         """
         self.set_mode("test")
+        self._training_dataset.force_full_dataset = True
 
         if load_best_model and self._checkpoint_container.state_dict:
             self._load_model_state_dict()
@@ -1252,7 +1257,9 @@ class Trainer:
                 masks=self.test_dataset.masks,
             )
 
-        return metrics
+        self._training_dataset.force_full_dataset = False
+
+        return (metrics, preds) if return_preds else metrics
 
     def get_metrics(self, lbs, preds, masks):
         """

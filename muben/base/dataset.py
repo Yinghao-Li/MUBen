@@ -1,10 +1,10 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: November 17th, 2023
 # ---------------------------------------
 # Description: Base classes for dataset creation and batch processing.
 """
-
+import json
 import os
 import regex
 import torch
@@ -43,7 +43,26 @@ class Dataset(TorchDataset):
         self._masks: Union[np.ndarray, None] = None
         self._ori_ids: Union[np.ndarray, None] = None
 
-        self.data_instances = None
+        self.data_instances_all = None
+        self.data_instances_selected = None
+        self.selected_ids = None
+        self.force_full_dataset = False
+
+    @property
+    def data_instances(self):
+        """
+        Be careful with this property and the setter below
+        """
+        if self.force_full_dataset:
+            return self.data_instances_all
+        return self.data_instances_selected if self.data_instances_selected is not None else self.data_instances_all
+
+    @data_instances.setter
+    def data_instances(self, x):
+        """
+        Be careful with this property and the setter below
+        """
+        self.data_instances_all = x
 
     @property
     def smiles(self) -> list[str]:
@@ -58,13 +77,11 @@ class Dataset(TorchDataset):
         """
         Return masks, and if not present, generate masks with ones.
         """
-        return (
-            self._masks
-            if self._masks is not None
-            else np.ones_like(self.lbs).astype(int)
-        )
+        return self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
 
     def __len__(self):
+        if self.data_instances is not None:
+            return len(self.data_instances)
         return len(self._smiles)
 
     def __getitem__(self, idx):
@@ -97,9 +114,7 @@ class Dataset(TorchDataset):
         )
 
         method_identifier = (
-            f"{config.model_name}-{config.feature_type}"
-            if config.feature_type != "none"
-            else config.model_name
+            f"{config.model_name}-{config.feature_type}" if config.feature_type != "none" else config.model_name
         )
         preprocessed_path = os.path.normpath(
             os.path.join(
@@ -110,10 +125,7 @@ class Dataset(TorchDataset):
             )
         )
         # Load Pre-processed dataset if exist
-        if (
-            os.path.exists(preprocessed_path)
-            and not config.ignore_preprocessed_dataset
-        ):
+        if os.path.exists(preprocessed_path) and not config.ignore_preprocessed_dataset:
             logger.info(f"Loading pre-processed dataset {preprocessed_path}")
             self.load(preprocessed_path)
         # else, load dataset from csv and generate features
@@ -129,6 +141,63 @@ class Dataset(TorchDataset):
                 self.save(preprocessed_path)
 
         self.data_instances = self.get_instances()
+        return self
+
+    def downsample_with(self, file_path: str = None, ids: list[int] = None):
+        """
+        Down-sample the instances to a subset with the specified indices
+
+        Parameters
+        ----------
+        file_path: str, optional
+            path to the file containing the indices of the selected instances
+        ids: list[int], optional
+            indices of the selected instances
+
+        Returns
+        -------
+        self
+        """
+        assert ids is not None or file_path is not None, ValueError("Either `ids` or `file_path` should be specified!")
+
+        if file_path:
+            with open(file_path, "r", encoding="utf-8") as f:
+                ids = json.load(f)
+
+        self.selected_ids = ids
+        self.data_instances_selected = [self.data_instances_all[idx] for idx in self.selected_ids]
+        return self
+
+    def add_sample_with(self, file_path: str = None, ids: list[int] = None):
+        """
+        Append a subset of data instances to the data_instances_selected
+
+
+        Parameters
+        ----------
+        file_path: str, optional
+            path to the file containing the indices of the selected instances
+        ids: list[int], optional
+            indices of the selected instances
+
+        Returns
+        -------
+        self
+        """
+        assert ids is not None or file_path is not None, ValueError("Either `ids` or `file_path` should be specified!")
+
+        if file_path:
+            with open(file_path, "r", encoding="utf-8") as f:
+                ids = json.load(f)
+
+        intersection = set(ids).intersection(set(self.selected_ids))
+        if intersection:
+            logger.warning(f"IDs {ids} already exist in the selected instances.")
+            return self
+
+        self.selected_ids = list(set(self.selected_ids).union(set(ids)))
+        self.data_instances_selected = [self.data_instances_all[idx] for idx in self.selected_ids]
+
         return self
 
     # noinspection PyTypeChecker
@@ -162,9 +231,7 @@ class Dataset(TorchDataset):
             if regex.match(f"^_[a-z]", attr):
                 attr_dict[attr] = value
 
-        os.makedirs(
-            os.path.dirname(os.path.normpath(file_path)), exist_ok=True
-        )
+        os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
         torch.save(attr_dict, file_path)
 
         return self
@@ -185,9 +252,7 @@ class Dataset(TorchDataset):
 
         for attr, value in attr_dict.items():
             if attr not in self.__dict__:
-                logger.warning(
-                    f"Attribute {attr} is not natively defined in dataset!"
-                )
+                logger.warning(f"Attribute {attr} is not natively defined in dataset!")
 
             setattr(self, attr, value)
 
@@ -197,9 +262,7 @@ class Dataset(TorchDataset):
         """
         Read data from csv files
         """
-        file_path = os.path.normpath(
-            os.path.join(data_dir, f"{partition}.csv")
-        )
+        file_path = os.path.normpath(os.path.join(data_dir, f"{partition}.csv"))
         logger.info(f"Loading dataset {file_path}")
 
         if not (file_path and os.path.exists(file_path)):
@@ -208,14 +271,8 @@ class Dataset(TorchDataset):
         df = pd.read_csv(file_path)
         self._smiles = df.smiles.tolist()
         self._lbs = np.asarray(df.labels.map(literal_eval).to_list())
-        self._masks = (
-            np.asarray(df.masks.map(literal_eval).to_list())
-            if not df.masks.isnull().all()
-            else None
-        )
-        self._ori_ids = (
-            df.ori_ids.to_numpy() if "ori_ids" in df.keys() else None
-        )  # for randomly split dataset
+        self._masks = np.asarray(df.masks.map(literal_eval).to_list()) if not df.masks.isnull().all() else None
+        self._ori_ids = df.ori_ids.to_numpy() if "ori_ids" in df.keys() else None  # for randomly split dataset
 
         return self
 
@@ -251,11 +308,7 @@ class Batch:
         return self
 
     def __len__(self):
-        return (
-            len(tuple(self._tensor_members.values())[0])
-            if not self.size
-            else self.size
-        )
+        return len(tuple(self._tensor_members.values())[0]) if not self.size else self.size
 
 
 def pack_instances(**kwargs) -> list[dict]:
@@ -274,9 +327,7 @@ def pack_instances(**kwargs) -> list[dict]:
     return instance_list
 
 
-def unpack_instances(
-    instance_list: list[dict], attr_names: Optional[list[str]] = None
-):
+def unpack_instances(instance_list: list[dict], attr_names: Optional[list[str]] = None):
     """
     Convert a list of dict-type instances to a list of value lists,
     each contains all values within a batch of each attribute
@@ -289,8 +340,6 @@ def unpack_instances(
     """
     if not attr_names:
         attr_names = list(instance_list[0].keys())
-    attribute_tuple = [
-        [inst[name] for inst in instance_list] for name in attr_names
-    ]
+    attribute_tuple = [[inst[name] for inst in instance_list] for name in attr_names]
 
     return attribute_tuple

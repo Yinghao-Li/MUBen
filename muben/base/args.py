@@ -1,12 +1,12 @@
 """
 # Author: Yinghao Li
-# Modified: September 27th, 2023
+# Modified: November 17th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
 
 import os
-import os.path as op
+import os.path as osp
 import json
 import torch
 import logging
@@ -263,6 +263,15 @@ class Arguments:
         default=8, metadata={"help": "Number of feature generation threads"}
     )
 
+    # --- Active Learning Arguments ---
+    enable_active_learning: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to enable active learning."},
+    )
+    n_init_instances: int = field(default=100, metadata={"help": "Number of initial instances."})
+    n_init_select: int = field(default=20, metadata={"help": "Number of instances to select in each epoch."})
+    n_al_loops: int = field(default=10, metadata={"help": "Number of active learning loops."})
+
     def __post_init__(self):
         """
         Post initialization for creating derived attributes
@@ -274,8 +283,8 @@ class Arguments:
             model_name_and_feature = f"{self.model_name}-{self.feature_type}"
 
         # update data and result dir
-        self.data_dir = op.join(self.data_folder, self.dataset_name)
-        self.result_dir = op.join(
+        self.data_dir = osp.join(self.data_folder, self.dataset_name)
+        self.result_dir = osp.join(
             self.result_folder,
             self.dataset_name,
             model_name_and_feature,
@@ -283,8 +292,8 @@ class Arguments:
             f"seed-{self.seed}",
         )
         if self.data_seed is not None:
-            self.data_dir = op.join(self.data_dir, f"seed-{self.data_seed}")
-            self.result_dir = op.join(
+            self.data_dir = osp.join(self.data_dir, f"seed-{self.data_seed}")
+            self.result_dir = osp.join(
                 self.result_folder,
                 self.dataset_name,
                 f"data-seed-{self.data_seed}",
@@ -292,6 +301,8 @@ class Arguments:
                 self.uncertainty_method,
                 f"seed-{self.seed}",
             )
+        if self.enable_active_learning:
+            self.init_inst_path = osp.join(self.data_dir, f"al-{self.n_init_instances}.json")
 
         # wandb arguments
         self.apply_wandb = not self.disable_wandb and (self.wandb_api_key or os.getenv("WANDB_API_KEY"))
@@ -378,7 +389,7 @@ class Config(Arguments):
                 "the `meta_dir` argument or define a `data_dir` class attribute."
             )
 
-        meta_dir = op.join(meta_dir, meta_file_name)
+        meta_dir = osp.join(meta_dir, meta_file_name)
         with open(meta_dir, "r", encoding="utf-8") as f:
             meta_dict = json.load(f)
 
@@ -527,9 +538,9 @@ class Config(Arguments):
         -------
         self
         """
-        if op.isdir(file_dir):
-            file_path = op.join(file_dir, f"{file_name}.json")
-        elif op.isdir(op.split(file_dir)[0]):
+        if osp.isdir(file_dir):
+            file_path = osp.join(file_dir, f"{file_name}.json")
+        elif osp.isdir(osp.split(file_dir)[0]):
             file_path = file_dir
         else:
             raise FileNotFoundError(f"{file_dir} does not exist!")
@@ -555,10 +566,10 @@ class Config(Arguments):
         -------
         self
         """
-        if op.isdir(file_dir):
-            file_path = op.join(file_dir, f"{file_name}.json")
-            assert op.isfile(file_path), FileNotFoundError(f"{file_path} does not exist!")
-        elif op.isfile(file_dir):
+        if osp.isdir(file_dir):
+            file_path = osp.join(file_dir, f"{file_name}.json")
+            assert osp.isfile(file_path), FileNotFoundError(f"{file_path} does not exist!")
+        elif osp.isfile(file_dir):
             file_path = file_dir
         else:
             raise FileNotFoundError(f"{file_dir} does not exist!")
