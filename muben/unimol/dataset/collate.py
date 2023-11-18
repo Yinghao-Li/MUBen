@@ -1,3 +1,10 @@
+"""
+# Author: Yinghao Li
+# Modified: September 18th, 2023
+# ---------------------------------------
+# Description: Collate function for Uni-Mol
+"""
+
 import torch
 import logging
 import numpy as np
@@ -68,9 +75,7 @@ class Collator:
                 torch.cat(
                     [
                         a,
-                        a.new(a.shape[0], max_length - a.shape[1]).fill_(
-                            self._atom_pad_idx
-                        ),
+                        a.new(a.shape[0], max_length - a.shape[1]).fill_(self._atom_pad_idx),
                     ],
                     dim=1,
                 )
@@ -83,9 +88,7 @@ class Collator:
                 torch.cat(
                     [
                         c,
-                        c.new(
-                            c.shape[0], max_length - c.shape[1], c.shape[2]
-                        ).fill_(0),
+                        c.new(c.shape[0], max_length - c.shape[1], c.shape[2]).fill_(0),
                     ],
                     dim=1,
                 )

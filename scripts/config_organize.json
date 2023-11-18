@@ -1,6 +1,0 @@
-{
-  "dataset_names": null,
-  "model_name": "GROVER",
-  "feature_type": "rdkit",
-  "result_folder": "./output/"
-}

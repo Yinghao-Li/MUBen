@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: September 11th, 2023
+# Modified: November 17th, 2023
 # ---------------------------------------
 # Description:
 
@@ -81,7 +81,7 @@ class Trainer:
             Dataset for validating the model.
         test_dataset : Dataset, optional
             Dataset for testing the model.
-        collate_fn : function, optional
+        collate_fn : Callable, optional
             Function to collate data samples into batches.
         scalar : StandardScaler, optional
             Scaler for standardizing input data.
@@ -504,6 +504,10 @@ class Trainer:
             for k, v in test_metrics.items():
                 wandb.run.summary[f"test-single_shot/{k}"] = v
 
+            if self.config.test_on_training_data:
+                logger.info("[Single Shot] Testing on training data.")
+                self.test_on_training_data()
+
         self.save_checkpoint()
 
         return self
@@ -550,6 +554,10 @@ class Trainer:
             for k, v in test_metrics.items():
                 wandb.run.summary[f"test-ensemble_{ensemble_idx}/{k}"] = v
 
+            if self.config.test_on_training_data:
+                logger.info(f"[Ensemble {ensemble_idx}] Testing on training data.")
+                self.test_on_training_data()
+
             self.save_checkpoint()
 
         return self
@@ -579,6 +587,10 @@ class Trainer:
         # log results to wandb
         for k, v in test_metrics.items():
             wandb.run.summary[f"test-swag/{k}"] = v
+
+        if self.config.test_on_training_data:
+            logger.info("[SWAG] Testing on training data.")
+            self.test_on_training_data()
 
         return self
 
@@ -638,6 +650,10 @@ class Trainer:
         # log results to wandb
         for k, v in test_metrics.items():
             wandb.run.summary[f"test-temperature_scaling/{k}"] = v
+
+        if self.config.test_on_training_data:
+            logger.info("[Temperature Scaling] Testing on training data.")
+            self.test_on_training_data()
 
         return self
 
@@ -721,6 +737,10 @@ class Trainer:
             for k, v in test_metrics.items():
                 wandb.run.summary[f"test-temperature_scaling/{k}"] = v
 
+            if self.config.test_on_training_data:
+                logger.info("[Temperature Scaling] Testing on training data.")
+                self.test_on_training_data(load_best_model=False)
+
         return self
 
     def run_sgld(self):
@@ -751,6 +771,10 @@ class Trainer:
         # log results to wandb
         for k, v in test_metrics.items():
             wandb.run.summary[f"test-sgld/{k}"] = v
+
+        if self.config.test_on_training_data:
+            logger.info("[SGLD] Testing on training data.")
+            self.test_on_training_data(load_best_model=False)
 
         return self
 
@@ -1136,7 +1160,7 @@ class Trainer:
 
         return None
 
-    def test(self, load_best_model=True):
+    def test(self, load_best_model=True, return_preds=False):
         """
         Test the model's performance on the test dataset.
 
@@ -1144,11 +1168,13 @@ class Trainer:
         ----------
         load_best_model : bool, optional
             Whether to load the best model saved during training for testing, default is True.
+        return_preds : bool, optional
+            Whether to return the predictions along with metrics, default is False.
 
         Returns
         -------
-        dict
-            Evaluation metrics for the test dataset.
+        dict, tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Evaluation metrics (and predictions) for the test dataset.
         """
         self.set_mode("test")
 
@@ -1182,6 +1208,58 @@ class Trainer:
             )
 
         return metrics
+
+    def test_on_training_data(self, load_best_model=True, return_preds=False):
+        """
+        Test the model's performance on the training dataset.
+
+        Parameters
+        ----------
+        load_best_model : bool, optional
+            Whether to load the best model saved during training for testing, default is True.
+        return_preds : bool, optional
+            Whether to return the predictions along with metrics, default is False.
+
+        Returns
+        -------
+        dict, tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Evaluation metrics (and predictions) for the training dataset.
+        """
+        self.set_mode("test")
+        self._training_dataset.force_full_dataset = True
+
+        if load_best_model and self._checkpoint_container.state_dict:
+            self._load_model_state_dict()
+
+        metrics, preds = self.evaluate(self._training_dataset, n_run=self.config.n_test, return_preds=True)
+
+        # save preds
+        if self.config.n_test == 1:
+            if isinstance(preds, np.ndarray):
+                preds = preds.reshape(1, *preds.shape)
+            else:
+                preds = tuple([p.reshape(1, *p.shape) for p in preds])
+
+        if isinstance(preds, np.ndarray):
+            variances = [None] * len(preds)
+        elif isinstance(preds, tuple) and len(preds) == 2:
+            preds, variances = preds
+        else:
+            raise ValueError("Unrecognized type or shape of `preds`.")
+
+        for idx, (pred, variance) in enumerate(zip(preds, variances)):
+            file_path = op.join(self._status.result_dir, "preds-train", f"{idx}.pt")
+            self.save_results(
+                path=file_path,
+                preds=pred,
+                variances=variance,
+                lbs=self._test_dataset.lbs,
+                masks=self.test_dataset.masks,
+            )
+
+        self._training_dataset.force_full_dataset = False
+
+        return (metrics, preds) if return_preds else metrics
 
     def get_metrics(self, lbs, preds, masks):
         """
