@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 18th, 2023
+# Modified: November 19th, 2023
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with DNN backbone model.
@@ -45,15 +45,34 @@ def main(args: Arguments):
     trainer.run()
 
     for idx_l in range(config.n_al_loops):
-        _, preds = trainer.test_on_training_data(return_preds=True)
-        if isinstance(preds, np.ndarray):
-            preds = preds.squeeze()
+        if config.al_random_sampling:
+            candidate_ids = list(
+                filter(lambda x: x not in training_dataset.selected_ids, list(range(len(training_dataset.smiles))))
+            )
+            new_ids = np.random.choice(candidate_ids, size=config.n_al_select, replace=False)
+        else:
+            _, preds = trainer.test_on_training_data(return_preds=True)
 
-        sorted_preds_ids = np.argsort(np.abs(preds - 0.5))
-        sorted_preds_ids = np.array(list(filter(lambda x: x not in training_dataset.selected_ids, sorted_preds_ids)))
-        sorted_preds_ids = sorted_preds_ids[: config.n_al_select]
+            if config.task_type == "classification":
+                if preds.shape[0] > 1:
+                    preds = preds.mean(axis=0) / preds.shape[0]
 
-        training_dataset.add_sample_by_ids(sorted_preds_ids)
+                preds = preds.squeeze()
+                diff = np.abs(preds - 0.5)
+
+                if len(preds.shape) > 1:
+                    masks = training_dataset.masks
+                    diff[~training_dataset.masks.astype(bool)] = 0
+                    diff = diff.sum(axis=-1)
+                    diff /= masks.sum(axis=-1)
+
+                sorted_preds_ids = np.argsort(diff)
+                sorted_preds_ids = np.array(
+                    list(filter(lambda x: x not in training_dataset.selected_ids, sorted_preds_ids))
+                )
+                new_ids = sorted_preds_ids[: config.n_al_select]
+
+        training_dataset.add_sample_by_ids(new_ids)
 
         trainer = Trainer(
             config=config,

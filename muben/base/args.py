@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 18th, 2023
+# Modified: November 19th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -265,12 +265,14 @@ class Arguments:
 
     # --- Active Learning Arguments ---
     enable_active_learning: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Whether to enable active learning."},
+        default=False, metadata={"help": "Whether to enable active learning."}
     )
     n_init_instances: int = field(default=100, metadata={"help": "Number of initial instances."})
     n_al_select: int = field(default=50, metadata={"help": "Number of instances to select in each epoch."})
     n_al_loops: int = field(default=5, metadata={"help": "Number of active learning loops."})
+    al_random_sampling: bool = field(
+        default=False, metadata={"help": "Whether to randomly select instances in active learning."}
+    )
 
     def __post_init__(self):
         """
