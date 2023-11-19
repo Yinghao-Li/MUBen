@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 17th, 2023
+# Modified: November 18th, 2023
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with DNN backbone model.
@@ -28,19 +28,8 @@ def main(args: Arguments):
     # --- construct and validate configuration ---
     config = Config().from_args(args).get_meta().validate().log()
 
-    # --- initialize wandb ---
-    if args.apply_wandb and args.wandb_api_key:
-        wandb.login(key=args.wandb_api_key)
-
-    wandb.init(
-        project=args.wandb_project,
-        name=args.wandb_name,
-        config=config.__dict__,
-        mode="online" if args.apply_wandb else "disabled",
-    )
-
     # --- prepare dataset ---
-    training_dataset = Dataset().prepare(config=config, partition="train").downsample_with(config.init_inst_path)
+    training_dataset = Dataset().prepare(config=config, partition="train").downsample_by(config.init_inst_path)
     valid_dataset = Dataset().prepare(config=config, partition="valid")
     test_dataset = Dataset().prepare(config=config, partition="test")
 
@@ -54,12 +43,25 @@ def main(args: Arguments):
 
     # --- run training and testing ---
     trainer.run()
-    _, preds = trainer.test_on_training_data(return_preds=True)
-    if isinstance(preds, np.ndarray):
-        preds = preds["preds"]
 
-    # --- log results ---
-    logger.info(f"Training results: {preds.shape}")
+    for idx_l in range(config.n_al_loops):
+        _, preds = trainer.test_on_training_data(return_preds=True)
+        if isinstance(preds, np.ndarray):
+            preds = preds.squeeze()
+
+        sorted_preds_ids = np.argsort(np.abs(preds - 0.5))
+        sorted_preds_ids = np.array(list(filter(lambda x: x not in training_dataset.selected_ids, sorted_preds_ids)))
+        sorted_preds_ids = sorted_preds_ids[: config.n_al_select]
+
+        training_dataset.add_sample_by_ids(sorted_preds_ids)
+
+        trainer = Trainer(
+            config=config,
+            training_dataset=training_dataset,
+            valid_dataset=valid_dataset,
+            test_dataset=test_dataset,
+        )
+        trainer.run()
 
     return None
 

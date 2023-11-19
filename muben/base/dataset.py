@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 17th, 2023
+# Modified: November 18th, 2023
 # ---------------------------------------
 # Description: Base classes for dataset creation and batch processing.
 """
@@ -143,7 +143,7 @@ class Dataset(TorchDataset):
         self.data_instances = self.get_instances()
         return self
 
-    def downsample_with(self, file_path: str = None, ids: list[int] = None):
+    def downsample_by(self, file_path: str = None, ids: list[int] = None):
         """
         Down-sample the instances to a subset with the specified indices
 
@@ -168,15 +168,13 @@ class Dataset(TorchDataset):
         self.data_instances_selected = [self.data_instances_all[idx] for idx in self.selected_ids]
         return self
 
-    def add_sample_with(self, file_path: str = None, ids: list[int] = None):
+    def add_sample_by_ids(self, ids: list[int] = None):
         """
         Append a subset of data instances to the data_instances_selected
 
 
         Parameters
         ----------
-        file_path: str, optional
-            path to the file containing the indices of the selected instances
         ids: list[int], optional
             indices of the selected instances
 
@@ -184,11 +182,7 @@ class Dataset(TorchDataset):
         -------
         self
         """
-        assert ids is not None or file_path is not None, ValueError("Either `ids` or `file_path` should be specified!")
-
-        if file_path:
-            with open(file_path, "r", encoding="utf-8") as f:
-                ids = json.load(f)
+        assert ids is not None, ValueError("`ids` should be specified!")
 
         intersection = set(ids).intersection(set(self.selected_ids))
         if intersection:

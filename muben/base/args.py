@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 17th, 2023
+# Modified: November 18th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -269,8 +269,8 @@ class Arguments:
         metadata={"help": "Whether to enable active learning."},
     )
     n_init_instances: int = field(default=100, metadata={"help": "Number of initial instances."})
-    n_init_select: int = field(default=20, metadata={"help": "Number of instances to select in each epoch."})
-    n_al_loops: int = field(default=10, metadata={"help": "Number of active learning loops."})
+    n_al_select: int = field(default=50, metadata={"help": "Number of instances to select in each epoch."})
+    n_al_loops: int = field(default=5, metadata={"help": "Number of active learning loops."})
 
     def __post_init__(self):
         """

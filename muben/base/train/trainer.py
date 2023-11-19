@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 17th, 2023
+# Modified: November 18th, 2023
 # ---------------------------------------
 # Description:
 
@@ -99,6 +99,17 @@ class Trainer:
         self._scheduler = None
         self._loss_fn = None
         self._timer = Timer(device=self._device)
+
+        # --- initialize wandb ---
+        if config.apply_wandb and config.wandb_api_key:
+            wandb.login(key=config.wandb_api_key)
+
+        wandb.init(
+            project=config.wandb_project,
+            name=config.wandb_name,
+            config=config.__dict__,
+            mode="online" if config.apply_wandb else "disabled",
+        )
 
         # Validation variables and flags
         self._valid_metric = (
