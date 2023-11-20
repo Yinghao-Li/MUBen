@@ -57,7 +57,7 @@ def main(args: Arguments):
 
             if config.task_type == "classification":
                 if preds.shape[0] > 1:
-                    preds = preds.mean(axis=0) / preds.shape[0]
+                    preds = preds.mean(axis=0)
 
                 preds = preds.squeeze()
                 diff = np.abs(preds - 0.5)
@@ -77,14 +77,14 @@ def main(args: Arguments):
             elif config.task_type == "regression":
                 _, variances = preds
                 if variances.shape[0] > 1:
-                    variances = variances.mean(axis=0) / variances.shape[0]
+                    variances = variances.mean(axis=0)
                 variances = variances.squeeze()
 
                 if len(variances.shape) > 1:
                     masks = training_dataset.masks
                     variances[~training_dataset.masks.astype(bool)] = 0
                     variances = variances.sum(axis=-1)
-                    variances /= variances.sum(axis=-1)
+                    variances /= masks.sum(axis=-1)
 
                 sorted_preds_ids = np.argsort(variances)
                 sorted_preds_ids = np.array(
