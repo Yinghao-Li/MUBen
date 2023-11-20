@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 19th, 2023
+# Modified: November 20th, 2023
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with DNN backbone model.
@@ -44,7 +44,9 @@ def main(args: Arguments):
     # --- run training and testing ---
     trainer.run()
 
+    # --- active learning ---
     for idx_l in range(config.n_al_loops):
+        logger.info(f"Active learning loop {idx_l + 1} / {config.n_al_loops}")
         if config.al_random_sampling:
             candidate_ids = list(
                 filter(lambda x: x not in training_dataset.selected_ids, list(range(len(training_dataset.smiles))))
@@ -71,6 +73,24 @@ def main(args: Arguments):
                     list(filter(lambda x: x not in training_dataset.selected_ids, sorted_preds_ids))
                 )
                 new_ids = sorted_preds_ids[: config.n_al_select]
+
+            elif config.task_type == "regression":
+                _, variances = preds
+                if variances.shape[0] > 1:
+                    variances = variances.mean(axis=0) / variances.shape[0]
+                variances = variances.squeeze()
+
+                if len(variances.shape) > 1:
+                    masks = training_dataset.masks
+                    variances[~training_dataset.masks.astype(bool)] = 0
+                    variances = variances.sum(axis=-1)
+                    variances /= variances.sum(axis=-1)
+
+                sorted_preds_ids = np.argsort(variances)
+                sorted_preds_ids = np.array(
+                    list(filter(lambda x: x not in training_dataset.selected_ids, sorted_preds_ids))
+                )
+                new_ids = sorted_preds_ids[-config.n_al_select :]
 
         training_dataset.add_sample_by_ids(new_ids)
 

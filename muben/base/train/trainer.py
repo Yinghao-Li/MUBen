@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 18th, 2023
+# Modified: November 20th, 2023
 # ---------------------------------------
 # Description:
 
@@ -1252,17 +1252,18 @@ class Trainer:
                 preds = tuple([p.reshape(1, *p.shape) for p in preds])
 
         if isinstance(preds, np.ndarray):
+            means = preds
             variances = [None] * len(preds)
         elif isinstance(preds, tuple) and len(preds) == 2:
-            preds, variances = preds
+            means, variances = preds
         else:
             raise ValueError("Unrecognized type or shape of `preds`.")
 
-        for idx, (pred, variance) in enumerate(zip(preds, variances)):
+        for idx, (mean, variance) in enumerate(zip(means, variances)):
             file_path = op.join(self._status.result_dir, "preds-train", f"{idx}.pt")
             self.save_results(
                 path=file_path,
-                preds=pred,
+                preds=mean,
                 variances=variance,
                 lbs=self._test_dataset.lbs,
                 masks=self.test_dataset.masks,
