@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 20th, 2023
+# Modified: November 23rd, 2023
 # ---------------------------------------
 # Description:
 
@@ -382,6 +382,7 @@ class Trainer:
         """
         if self.config.task_type == "classification":
             return self
+
         if self._training_dataset is None and self._scaler is None:
             logger.warning(
                 "Encounter regression task with no training dataset specified and label scaling disabled! "
@@ -389,11 +390,15 @@ class Trainer:
             )
             return self
 
+        # just to make sure that the lbs are not already standardized
+        self._training_dataset.toggle_standardized_lbs(False)
+
         lbs = copy.deepcopy(self._training_dataset.lbs)
         lbs[~self._training_dataset.masks.astype(bool)] = np.nan
         self._scaler = StandardScaler(replace_nan_token=0).fit(lbs)
 
-        self._training_dataset.update_lbs(self._scaler.transform(self._training_dataset.lbs))
+        if not self._training_dataset.has_standardized_lbs:
+            self._training_dataset.set_standardized_lbs(self._scaler.transform(self._training_dataset.lbs))
 
         return self
 
@@ -806,6 +811,7 @@ class Trainer:
         """
 
         self.model.to(self._device)
+        self.training_dataset.toggle_standardized_lbs(True)
         data_loader = self.get_dataloader(
             self.training_dataset if not use_valid_dataset else self.valid_dataset,
             shuffle=True,
@@ -847,6 +853,7 @@ class Trainer:
                 self._status.n_eval_no_improve = 0
                 break
 
+        self.training_dataset.toggle_standardized_lbs()
         return None
 
     def training_epoch(self, data_loader):
@@ -1238,6 +1245,7 @@ class Trainer:
         """
         self.set_mode("test")
         self._training_dataset.force_full_dataset = True
+        self._training_dataset.toggle_standardized_lbs(False)
 
         if load_best_model and self._checkpoint_container.state_dict:
             self._load_model_state_dict()

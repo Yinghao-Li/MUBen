@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 18th, 2023
+# Modified: November 23rd, 2023
 # ---------------------------------------
 # Description: Base classes for dataset creation and batch processing.
 """
@@ -46,14 +46,18 @@ class Dataset(TorchDataset):
         self.data_instances_all = None
         self.data_instances_selected = None
         self.selected_ids = None
-        self.force_full_dataset = False
+        self.use_full_dataset = False
+
+        self._lbs_standardized: Union[np.ndarray, None] = None
+        self._use_standardized_lbs = False
+        self.has_standardized_lbs = False
 
     @property
     def data_instances(self):
         """
         Be careful with this property and the setter below
         """
-        if self.force_full_dataset:
+        if self.use_full_dataset:
             return self.data_instances_all
         return self.data_instances_selected if self.data_instances_selected is not None else self.data_instances_all
 
@@ -70,7 +74,32 @@ class Dataset(TorchDataset):
 
     @property
     def lbs(self) -> np.ndarray:
+        if self.has_standardized_lbs and self._use_standardized_lbs:
+            return self._lbs_standardized
         return self._lbs
+
+    def toggle_standardized_lbs(self, use_standardized_lbs: bool = None):
+        """
+        Toggle between standardized and unstandardized labels
+
+        Parameters
+        ----------
+        use_standardized_lbs: bool, optional
+            whether to use standardized labels
+
+        Returns
+        -------
+        self
+        """
+        if use_standardized_lbs is None:
+            self._use_standardized_lbs = not self._use_standardized_lbs
+            self.data_instances = self.get_instances()
+        else:
+            unchanged = use_standardized_lbs == self._use_standardized_lbs
+            self._use_standardized_lbs = use_standardized_lbs
+            if not unchanged:
+                self.data_instances = self.get_instances()
+        return self
 
     @cached_property
     def masks(self) -> np.ndarray:
@@ -93,6 +122,14 @@ class Dataset(TorchDataset):
         """
         self._lbs = lbs
         self.data_instances = self.get_instances()
+        return self
+
+    def set_standardized_lbs(self, lbs):
+        """
+        Update dataset labels and instance list accordingly
+        """
+        self._lbs_standardized = lbs
+        self.has_standardized_lbs = True
         return self
 
     def prepare(self, config, partition, **kwargs):
