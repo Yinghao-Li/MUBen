@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 23rd, 2023
+# Modified: November 29th, 2023
 # ---------------------------------------
 # Description:
 
@@ -67,6 +67,7 @@ class Trainer:
         test_dataset=None,
         collate_fn=None,
         scalar=None,
+        **kwargs,
     ):
         """
         Initialize the Trainer object.
@@ -85,7 +86,14 @@ class Trainer:
             Function to collate data samples into batches.
         scalar : StandardScaler, optional
             Scaler for standardizing input data.
+        **kwargs : dict, optional
+            Additional keyword arguments.
         """
+        # make a deep copy of the config to avoid modifying the original config
+        config = copy.deepcopy(config)
+        for k, v in kwargs.items():
+            setattr(config, k, v)
+
         self._config = config
         self._training_dataset = training_dataset
         self._valid_dataset = valid_dataset

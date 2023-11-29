@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: November 29th, 2023
 # ---------------------------------------
 # Description: ChemBERTa trainer.
 """
@@ -32,6 +32,7 @@ class Trainer(BaseTrainer, ABC):
         valid_dataset=None,
         test_dataset=None,
         collate_fn=None,
+        **kwargs,
     ):
         """
         Initializes the ChemBERTa Trainer.
@@ -54,6 +55,7 @@ class Trainer(BaseTrainer, ABC):
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
             collate_fn=collate_fn,
+            **kwargs,
         )
 
     @property

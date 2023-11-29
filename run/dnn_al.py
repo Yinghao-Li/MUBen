@@ -1,12 +1,13 @@
 """
 # Author: Yinghao Li
-# Modified: November 23rd, 2023
+# Modified: November 29th, 2023
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with DNN backbone model.
 """
 
 import os
+import os.path as osp
 import sys
 import wandb
 import logging
@@ -39,6 +40,7 @@ def main(args: Arguments):
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
+        result_dir=osp.join(config.result_dir, "al-0"),
     )
 
     # --- run training and testing ---
@@ -99,6 +101,7 @@ def main(args: Arguments):
             training_dataset=training_dataset,
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
+            result_dir=osp.join(config.result_dir, f"al-{idx_l + 1}"),
         )
         trainer.run()
 
