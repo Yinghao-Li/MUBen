@@ -1252,7 +1252,7 @@ class Trainer:
             Evaluation metrics (and predictions) for the training dataset.
         """
         self.set_mode("test")
-        self._training_dataset.force_full_dataset = True
+        self._training_dataset.use_full_dataset = True
         self._training_dataset.toggle_standardized_lbs(False)
 
         if load_best_model and self._checkpoint_container.state_dict:
@@ -1285,7 +1285,7 @@ class Trainer:
                 masks=self.test_dataset.masks,
             )
 
-        self._training_dataset.force_full_dataset = False
+        self._training_dataset.use_full_dataset = False
 
         return (metrics, preds) if return_preds else metrics
 

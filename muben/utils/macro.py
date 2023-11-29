@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 17th, 2023
+# Modified: November 29th, 2023
 # ---------------------------------------
 # Description: Constants
 """
@@ -150,7 +150,7 @@ class UncertaintyMethods(StrEnum):
     ensembles = "DeepEnsembles"
     conformal = "ConformalPrediction"
     focal = "FocalLoss"
-    iso = ("IsotonicCalibration",)
+    iso = "IsotonicCalibration"
     evidential = "Evidential"
 
 
