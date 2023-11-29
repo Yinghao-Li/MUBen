@@ -54,7 +54,8 @@ def main(args: Arguments):
             )
             new_ids = np.random.choice(candidate_ids, size=config.n_al_select, replace=False)
         else:
-            _, preds = trainer.test_on_training_data(return_preds=True)
+            load_best_model = True if config.uncertainty_method not in ["TemperatureScaling", "SWAG"] else False
+            _, preds = trainer.test_on_training_data(load_best_model=load_best_model, return_preds=True)
 
             if config.task_type == "classification":
                 if preds.shape[0] > 1:

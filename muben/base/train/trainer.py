@@ -614,7 +614,7 @@ class Trainer:
 
         if self.config.test_on_training_data:
             logger.info("[SWAG] Testing on training data.")
-            self.test_on_training_data()
+            self.test_on_training_data(load_best_model=False)
 
         return self
 
@@ -677,7 +677,7 @@ class Trainer:
 
         if self.config.test_on_training_data:
             logger.info("[Temperature Scaling] Testing on training data.")
-            self.test_on_training_data()
+            self.test_on_training_data(load_best_model=False)
 
         return self
 
