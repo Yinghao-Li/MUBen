@@ -9,7 +9,6 @@
 import os
 import os.path as osp
 import sys
-import wandb
 import logging
 import numpy as np
 from datetime import datetime
