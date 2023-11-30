@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 29th, 2023
+# Modified: November 30th, 2023
 # ---------------------------------------
 # Description:
 
@@ -1235,7 +1235,7 @@ class Trainer:
 
         return metrics
 
-    def test_on_training_data(self, load_best_model=True, return_preds=False):
+    def test_on_training_data(self, load_best_model=True, return_preds=False, disable_result_saving=False):
         """
         Test the model's performance on the training dataset.
 
@@ -1275,15 +1275,16 @@ class Trainer:
         else:
             raise ValueError("Unrecognized type or shape of `preds`.")
 
-        for idx, (mean, variance) in enumerate(zip(means, variances)):
-            file_path = op.join(self._status.result_dir, "preds-train", f"{idx}.pt")
-            self.save_results(
-                path=file_path,
-                preds=mean,
-                variances=variance,
-                lbs=self._test_dataset.lbs,
-                masks=self.test_dataset.masks,
-            )
+        if not disable_result_saving:
+            for idx, (mean, variance) in enumerate(zip(means, variances)):
+                file_path = op.join(self._status.result_dir, "preds-train", f"{idx}.pt")
+                self.save_results(
+                    path=file_path,
+                    preds=mean,
+                    variances=variance,
+                    lbs=self._test_dataset.lbs,
+                    masks=self.test_dataset.masks,
+                )
 
         self._training_dataset.use_full_dataset = False
 

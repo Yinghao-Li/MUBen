@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 29th, 2023
+# Modified: November 30th, 2023
 # ---------------------------------------
 # Description: Constants
 """
@@ -152,6 +152,17 @@ class UncertaintyMethods(StrEnum):
     focal = "FocalLoss"
     iso = "IsotonicCalibration"
     evidential = "Evidential"
+
+    @classmethod
+    def options(cls, classification_only=False, regression_only=False):
+        if not classification_only and not regression_only:
+            return super().options()
+        elif classification_only:
+            return [m for m in super().options() if m not in ["ConformalPrediction", "IsotonicCalibration"]]
+        elif regression_only:
+            return [m for m in super().options() if m not in ["TemperatureScaling", "FocalLoss"]]
+        else:
+            raise ValueError("Invalid arguments")
 
 
 FINGERPRINT_FEATURE_TYPES = ["none", "rdkit", "morgan"]

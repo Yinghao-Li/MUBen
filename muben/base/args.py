@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 19th, 2023
+# Modified: November 30th, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -442,6 +442,8 @@ class Config(Arguments):
 
         assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
 
+        self.validate_task_uq_compatibility()
+
         if self.debug and self.deploy:
             logger.warning("`DEBUG` mode is not allowed when the program is in `DEPLOY`! Setting debug=False.")
             self.debug = False
@@ -511,6 +513,27 @@ class Config(Arguments):
 
         if self.uncertainty_method == UncertaintyMethods.evidential:
             self.regression_with_variance = False
+
+        return self
+
+    def validate_task_uq_compatibility(self):
+        """
+        Check whether the task type and uncertainty estimation method are compatible
+
+        Returns
+        -------
+        self
+        """
+        if self.task_type == "classification":
+            assert self.uncertainty_method in UncertaintyMethods.options(
+                classification_only=True
+            ), f"{self.uncertainty_method} is not compatible with classification tasks!"
+        elif self.task_type == "regression":
+            assert self.uncertainty_method in UncertaintyMethods.options(
+                regression_only=True
+            ), f"{self.uncertainty_method} is not compatible with regression tasks!"
+        else:
+            raise ValueError(f"Unrecognized task type: {self.task_type}")
 
         return self
 

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 29th, 2023
+# Modified: November 30th, 2023
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with DNN backbone model.
@@ -55,7 +55,9 @@ def main(args: Arguments):
             new_ids = np.random.choice(candidate_ids, size=config.n_al_select, replace=False)
         else:
             load_best_model = True if config.uncertainty_method not in ["TemperatureScaling", "SWAG"] else False
-            _, preds = trainer.test_on_training_data(load_best_model=load_best_model, return_preds=True)
+            _, preds = trainer.test_on_training_data(
+                load_best_model=load_best_model, return_preds=True, disable_result_saving=True
+            )
 
             if config.task_type == "classification":
                 if preds.shape[0] > 1:
