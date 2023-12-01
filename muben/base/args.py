@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 30th, 2023
+# Modified: December 1st, 2023
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -285,6 +285,9 @@ class Arguments:
             model_name_and_feature = f"{self.model_name}-{self.feature_type}"
 
         # update data and result dir
+        if self.al_random_sampling:
+            self.result_folder = f"{self.result_folder}-random"
+
         self.data_dir = osp.join(self.data_folder, self.dataset_name)
         self.result_dir = osp.join(
             self.result_folder,
@@ -442,7 +445,11 @@ class Config(Arguments):
 
         assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
 
-        self.validate_task_uq_compatibility()
+        # Check whether the task type and uncertainty estimation method are compatible
+        assert self.uncertainty_method in UncertaintyMethods.options(self.task_type), (
+            f"Uncertainty estimation method {self.uncertainty_method} is not compatible with task type "
+            f"{self.task_type}!"
+        )
 
         if self.debug and self.deploy:
             logger.warning("`DEBUG` mode is not allowed when the program is in `DEPLOY`! Setting debug=False.")
@@ -513,27 +520,6 @@ class Config(Arguments):
 
         if self.uncertainty_method == UncertaintyMethods.evidential:
             self.regression_with_variance = False
-
-        return self
-
-    def validate_task_uq_compatibility(self):
-        """
-        Check whether the task type and uncertainty estimation method are compatible
-
-        Returns
-        -------
-        self
-        """
-        if self.task_type == "classification":
-            assert self.uncertainty_method in UncertaintyMethods.options(
-                classification_only=True
-            ), f"{self.uncertainty_method} is not compatible with classification tasks!"
-        elif self.task_type == "regression":
-            assert self.uncertainty_method in UncertaintyMethods.options(
-                regression_only=True
-            ), f"{self.uncertainty_method} is not compatible with regression tasks!"
-        else:
-            raise ValueError(f"Unrecognized task type: {self.task_type}")
 
         return self
 

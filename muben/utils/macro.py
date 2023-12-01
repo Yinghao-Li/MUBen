@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 30th, 2023
+# Modified: December 1st, 2023
 # ---------------------------------------
 # Description: Constants
 """
@@ -22,6 +22,8 @@ __all__ = [
     "metrics_mapping",
     "MODEL_NAMES",
     "UncertaintyMethods",
+    "DatasetNames",
+    "ModelNames",
     "FINGERPRINT_FEATURE_TYPES",
     "StrEnum",
     "QM_DATASET",
@@ -30,14 +32,19 @@ __all__ = [
     "PHY_DATASET",
 ]
 
+is_callable = lambda x: hasattr(x, "__call__")
+
 
 class StrEnum(str, Enum):
     @classmethod
     def options(cls):
         opts = list()
         for k, v in cls.__dict__.items():
-            if not k.startswith("_") and k != "options":
-                opts.append(v.value)
+            if not k.startswith("_") and not isinstance(v, classmethod) and not is_callable(v):
+                try:
+                    opts.append(v.value)
+                except AttributeError:
+                    pass
         return opts
 
 
@@ -154,15 +161,90 @@ class UncertaintyMethods(StrEnum):
     evidential = "Evidential"
 
     @classmethod
-    def options(cls, classification_only=False, regression_only=False):
-        if not classification_only and not regression_only:
+    def options(cls, constraint: str = None):
+        """
+        Parameters
+        ----------
+        constraint : str
+            The constraint for the options. If None, return all options.
+            If "classification", return classification options.
+            If "regression", return regression options.
+
+        Returns
+        -------
+        options : list
+            The options for the constraint.
+        """
+        if constraint is None:
             return super().options()
-        elif classification_only:
+        elif constraint == "classification":
             return [m for m in super().options() if m not in ["ConformalPrediction", "IsotonicCalibration"]]
-        elif regression_only:
+        elif constraint == "regression":
             return [m for m in super().options() if m not in ["TemperatureScaling", "FocalLoss"]]
         else:
-            raise ValueError("Invalid arguments")
+            raise ValueError("Invalid constraint")
+
+
+class DatasetNames(StrEnum):
+    esol = "esol"
+    freesolv = "freesolv"
+    lipo = "lipo"
+    muv = "muv"
+    hiv = "hiv"
+    bace = "bace"
+    bbbp = "bbbp"
+    tox21 = "tox21"
+    toxcast = "toxcast"
+    sider = "sider"
+    clintox = "clintox"
+    qm7 = "qm7"
+    qm8 = "qm8"
+    qm9 = "qm9"
+
+    @classmethod
+    def options(cls, task_type: str = None):
+        """
+        Parameters
+        ----------
+        task_type : str
+            The task type for the options. If None, return all options.
+            If "classification", return classification options.
+            If "regression", return regression options.
+            If "qm", return quantum mechanics options.
+            If "pc", return physical chemistry options.
+            If "bio", return biophysics options.
+            If "phy", return physiology options.
+
+        Returns
+        -------
+        options : list
+            The options for the task type.
+        """
+        if task_type is None:
+            return super().options()
+        elif task_type == "classification":
+            return ["muv", "hiv", "bace", "bbbp", "tox21", "toxcast", "sider", "clintox"]
+        elif task_type == "regression":
+            return ["esol", "freesolv", "lipo", "qm7", "qm8", "qm9"]
+        elif task_type in ["qm", "quantum mechanics"]:
+            return ["qm7", "qm8", "qm9"]
+        elif task_type in ["pc", "physical chemistry"]:
+            return ["esol", "freesolv", "lipo"]
+        elif task_type in ["bio", "biophysics"]:
+            return ["bace", "hiv", "muv"]
+        elif task_type in ["phy", "physiology"]:
+            return ["bbbp", "clintox", "tox21", "toxcast", "sider"]
+        else:
+            raise ValueError("Invalid task type")
+
+
+class ModelNames(StrEnum):
+    dnn = "DNN"
+    chemberta = "ChemBERTa"
+    grover = "GROVER"
+    unimol = "Uni-Mol"
+    torchmdnet = "TorchMD-NET"
+    gin = "GIN"
 
 
 FINGERPRINT_FEATURE_TYPES = ["none", "rdkit", "morgan"]
