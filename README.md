@@ -54,7 +54,7 @@ Afterwards, you can transfer the dataset format into ours by running
 ```bash
 PYTHONPATH="." python ./assist/dataset_build_from_unimol.py
 ``` 
-suppose you are at the project root directory.
+suppose you are in the project root directory.
 You can specify the input (Uni-Mol) and output data directories with `--unimol_data_dir` and `--output_dir` arguments.
 The script will convert *all* datasets by default (excluding PCBA).
 If you want to specify a subset of datasets, you can specify the argument `--dataset_names` with the target dataset names with lowercase letters.
@@ -110,7 +110,7 @@ docker run --gpus all -it --rm  muben
 
 ### External Dependencies
 
-The backbone models `GROVER` and `Uni-Mol` requires loading pre-trained model checkpoints.
+The backbone models `GROVER` and `Uni-Mol` require loading pre-trained model checkpoints.
 
 - The `GROVER-base` checkpoint is available at GROVER's [project repo](https://github.com/tencent-ailab/grover) or can be directly downloaded through [this link](https://ai.tencent.com/ailab/ml/ml-data/grover-models/pretrain/grover_base.tar.gz).
 Unzip the downloaded `.tar.gz` file to get the `.pt` checkpoint.
@@ -180,7 +180,7 @@ For example:
 ```bash
 PYTHONPATH="." python ./assist/results_get_metrics.py ./scripts/config_metrics.json
 ```
-Make sure the hyper-parameters in the configuration file are updated to your need.
+Make sure the hyper-parameters in the configuration file are updated to your needs.
 
 The metrics will be saved in the `./<result_folder>/RESULTS/<model_name>-<dataset_name>.csv` files.
 ~~Notice that these files already exist in the repo if you keep the default `--result_folder=./output` argument and you need to check whether it is updated to reveal your experiment results.~~
@@ -188,9 +188,37 @@ The metrics will be saved in the `./<result_folder>/RESULTS/<model_name>-<datase
 ### Results
 
 We provided a more comprehensive copy of our experiment results [here](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/output) that are presented in the tables in our paper's appendix.
-We hope it can ease some effort if you want to further analyse the behavior of our backbone models and uncertainty quantification methods. 
+We hope it can ease some effort if you want to further analyze the behavior of our backbone models and uncertainty quantification methods. 
 
-## 4. CITATION
+## 4. ONGOING WORKS
+
+### 4.1. Active Learning
+
+We are developing code to integrate *active learning* into the pipeline.
+Specifically, we assume we have a small set of labeled data points (`--n_init_instances`) at the beginning.
+Within each active learning iteration, we use the labeled dataset to fine-tune the model parameters and select a batch of data points (`--n_al_select`) from the unlabeled set with the least predicted certainty (*i.e.*, max predicted entropy for classification and max predicted variance for regression).
+The process is repeated for several loops (`--n_al_loops`), and the intermediate performance is tracked.
+
+The code is still under construction and currently is **only available under the `dev` branch**.
+In addition, several points are worth attention:
+
+- Currently, only DNN and ChemBERTa backbones are supported (`./run/dnn_al.py` and `./run/chemberta_al.py`). Migrating AL to other backbones is not difficult but requires updating some Trainer functions if they are reloaded.
+- To enable active learning, make sure you set `--enable_active_learning` to `true`.
+- Currently, Deep Ensembles is not supported for AL.
+- We cannot guarantee the correctness of our implementation. If you notice any abnormalities in the code, please do not hesitate to post an issue.
+
+One example is
+```bash
+python ./run/dnn_al.py \
+  --n_init_instances 100 \
+  --enable_active_learning true \
+  --n_al_loops 20 \
+  --n_al_select 20 \
+  --al_random_sampling \
+  # other model and training parameters...
+```
+
+## 5. CITATION
 
 If you find our work helpful, please consider citing it as
 ```latex
