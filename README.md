@@ -210,12 +210,11 @@ In addition, several points are worth attention:
 One example is
 ```bash
 python ./run/dnn_al.py \
+  --enable_active_learning \
   --n_init_instances 100 \
-  --enable_active_learning true \
   --n_al_loops 20 \
   --n_al_select 20 \
-  --al_random_sampling \
-  # other model and training parameters...
+  # other model and training hyper-parameters...
 ```
 
 ## 5. CITATION
