@@ -16,7 +16,7 @@ from transformers import set_seed
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.dataset import DatasetString, CollatorString
-from muben.chemberta.model import ChemBERTa
+from muben.model import LinearTransformer
 from muben.args import ArgumentsString as Arguments, ConfigString as Config
 from muben.train import Trainer
 
@@ -36,7 +36,7 @@ def main(args: Arguments):
     # --- initialize trainer ---
     trainer = Trainer(
         config=config,
-        model_class=ChemBERTa,
+        model_class=LinearTransformer,
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,

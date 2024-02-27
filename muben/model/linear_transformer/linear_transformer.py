@@ -13,7 +13,7 @@ import torch.nn as nn
 from transformers import AutoModel
 
 from muben.dataset.dataset import Batch
-from .layers import OutputLayer
+from ..layers import OutputLayer
 
 
 class ChemBERTa(nn.Module):

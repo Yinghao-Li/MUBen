@@ -1,6 +1,6 @@
 from .dnn import DNN
-from .gin import GIN
-from .linear_transformer import LinearTransformer
+from .gin.gin import GIN
+from .linear_transformer.linear_transformer import LinearTransformer
 from .grover import GROVERFinetuneModel, load_checkpoint, TSModel as GROVERTSModel
 from .torchmdnet import TorchMDNet
 from .unimol import UniMol

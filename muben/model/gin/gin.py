@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch_geometric.nn as pygnn
 from typing import Optional
 
-from .layers import OutputLayer
+from ..layers import OutputLayer
 
 
 class GIN(nn.Module):
