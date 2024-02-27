@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: calculate the imbalance ratio of the datasets.
 """
@@ -10,7 +10,7 @@ import logging
 import os.path as op
 import numpy as np
 from dataclasses import dataclass, field
-from muben.base.dataset import Dataset
+from muben.dataset.dataset import Dataset
 from muben.utils.io import set_logging
 from muben.utils.macro import CLASSIFICATION_DATASET
 from muben.utils.argparser import ArgumentParser
@@ -36,9 +36,7 @@ def main(args: Arguments):
         valid_dataset = Dataset().read_csv(data_dir=dataset_dir, partition="valid")
         test_dataset = Dataset().read_csv(data_dir=dataset_dir, partition="test")
 
-        lbs = np.concatenate(
-            (training_dataset.lbs, valid_dataset.lbs, test_dataset.lbs), axis=0
-        )
+        lbs = np.concatenate((training_dataset.lbs, valid_dataset.lbs, test_dataset.lbs), axis=0)
 
         ratios = list()
         for lbs_ in lbs.T:
@@ -47,9 +45,7 @@ def main(args: Arguments):
             pos_ratio = n_pos / (n_pos + n_neg)
             ratios.append(pos_ratio if pos_ratio > 0.5 else (1 - pos_ratio))
 
-        logger.info(
-            f"{dataset_name}: Mean: {np.mean(ratios):.4f}; Max: {np.max(ratios):.4f}"
-        )
+        logger.info(f"{dataset_name}: Mean: {np.mean(ratios):.4f}; Max: {np.max(ratios):.4f}")
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ class Trainer(BaseTrainer):
 
         Any additional arguments or keyword arguments are passed directly to the DNN constructor.
         """
-        self._model = DNN(
+        self._model = self._model_class(
             d_feature=self.config.d_feature,
             n_lbs=self.config.n_lbs,
             n_tasks=self.config.n_tasks,

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: GROVER Dataset.
 
@@ -11,7 +11,7 @@ in the GROVER format.
 from tqdm.auto import tqdm
 from multiprocessing import get_context
 
-from muben.base.dataset import pack_instances, Dataset as BaseDataset
+from ..dataset import pack_instances, Dataset as BaseDataset
 from .molgraph import MolGraph, MolGraphAttrs
 
 

@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Dataset class for Uni-Mol
 """
-
 
 import os.path as op
 import logging
@@ -16,7 +15,7 @@ from .process import ProcessingPipeline
 from .dictionary import Dictionary
 from muben.utils.chem import smiles_to_coords
 from muben.utils.io import load_lmdb, load_unimol_preprocessed
-from muben.base.dataset import Dataset as BaseDataset
+from muben.dataset.dataset import Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +92,7 @@ class Dataset(BaseDataset):
             "training",
             "inference",
         ), "Processor variant must be `training` or `inference`"
-        self.data_processor = getattr(
-            self.processing_pipeline, f"process_{variant}"
-        )
+        self.data_processor = getattr(self.processing_pipeline, f"process_{variant}")
         return self
 
     def prepare(self, config, partition, dictionary=None):
@@ -155,22 +152,14 @@ class Dataset(BaseDataset):
         self._coordinates = list()
 
         # load feature if UniMol LMDB file exists else generate feature
-        unimol_feature_path = op.join(
-            config.unimol_feature_dir, f"{self._partition}.lmdb"
-        )
-        if op.exists(config.unimol_feature_dir) and op.exists(
-            unimol_feature_path
-        ):
+        unimol_feature_path = op.join(config.unimol_feature_dir, f"{self._partition}.lmdb")
+        if op.exists(config.unimol_feature_dir) and op.exists(unimol_feature_path):
             logger.info("Loading features form pre-processed Uni-Mol LMDB")
             if not config.random_split:
-                self._atoms, self._coordinates = load_lmdb(
-                    unimol_feature_path, ["atoms", "coordinates"]
-                )
+                self._atoms, self._coordinates = load_lmdb(unimol_feature_path, ["atoms", "coordinates"])
 
             else:
-                unimol_data = load_unimol_preprocessed(
-                    config.unimol_feature_dir
-                )
+                unimol_data = load_unimol_preprocessed(config.unimol_feature_dir)
                 id2data_mapping = {
                     idx: (a, c)
                     for idx, a, c in zip(
@@ -179,22 +168,14 @@ class Dataset(BaseDataset):
                         unimol_data["coordinates"],
                     )
                 }
-                self._atoms = [
-                    id2data_mapping[idx][0] for idx in self._ori_ids
-                ]
-                self._coordinates = [
-                    id2data_mapping[idx][1] for idx in self._ori_ids
-                ]
+                self._atoms = [id2data_mapping[idx][0] for idx in self._ori_ids]
+                self._coordinates = [id2data_mapping[idx][1] for idx in self._ori_ids]
 
         else:
             logger.info("Generating Uni-Mol features.")
             s2c = partial(smiles_to_coords, n_conformer=10)
-            with get_context("fork").Pool(
-                config.num_preprocess_workers
-            ) as pool:
-                for outputs in tqdm(
-                    pool.imap(s2c, self._smiles), total=len(self._smiles)
-                ):
+            with get_context("fork").Pool(config.num_preprocess_workers) as pool:
+                for outputs in tqdm(pool.imap(s2c, self._smiles), total=len(self._smiles)):
                     atoms, coordinates = outputs
                     self._atoms.append(atoms)
                     self._coordinates.append(coordinates)

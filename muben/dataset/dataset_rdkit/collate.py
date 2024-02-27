@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Data collator for DNN
 """
@@ -9,7 +9,7 @@ import torch
 import logging
 import numpy as np
 
-from muben.base.dataset import Batch, unpack_instances
+from ..dataset import Batch, unpack_instances
 
 
 logger = logging.getLogger(__name__)

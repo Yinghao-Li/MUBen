@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description:
 
@@ -9,13 +9,12 @@ facilitates the aggregation of individual data instances into a batch format sui
 model training and inference.
 """
 
-
 import torch
 import logging
 import numpy as np
 import itertools
 
-from muben.base.dataset import Batch, unpack_instances
+from ..dataset import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
 
@@ -67,19 +66,11 @@ class Collator:
         atoms, coords, lbs, masks = unpack_instances(instances)
 
         mol_ids = torch.tensor(
-            list(
-                itertools.chain.from_iterable(
-                    [[i] * len(a) for i, a in enumerate(atoms)]
-                )
-            ),
+            list(itertools.chain.from_iterable([[i] * len(a) for i, a in enumerate(atoms)])),
             dtype=torch.long,
         )
-        atoms_batch = torch.tensor(
-            list(itertools.chain.from_iterable(atoms)), dtype=torch.long
-        )
-        coords_batch = torch.from_numpy(np.concatenate(coords, axis=0)).to(
-            torch.float
-        )
+        atoms_batch = torch.tensor(list(itertools.chain.from_iterable(atoms)), dtype=torch.long)
+        coords_batch = torch.from_numpy(np.concatenate(coords, axis=0)).to(torch.float)
 
         lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
         masks_batch = torch.from_numpy(np.stack(masks))

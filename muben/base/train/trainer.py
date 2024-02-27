@@ -91,7 +91,6 @@ class Trainer:
             Additional keyword arguments.
         """
         # make a deep copy of the config to avoid modifying the original config
-        config = copy.deepcopy(config)
         for k, v in kwargs.items():
             setattr(config, k, v)
 
@@ -163,9 +162,7 @@ class Trainer:
         self.standardize_training_lbs()
 
         # initialize training modules
-        self.initialize()
-
-        logger.info(f"Trainer initialized. The model contains {self.n_model_parameters} parameters")
+        # self.initialize()
 
     @property
     def model(self):
@@ -257,6 +254,8 @@ class Trainer:
 
         if self.config.freeze_backbone:
             self.freeze_backbone()
+
+        logger.info(f"Trainer initialized. The model contains {self.n_model_parameters} parameters")
         return self
 
     def initialize_model(self, *args, **kwargs):
@@ -269,7 +268,7 @@ class Trainer:
         NotImplementedError
             If the method is not implemented.
         """
-        raise NotImplementedError
+        self._model = self._model_class(*args, **kwargs)
 
     def initialize_optimizer(self, *args, **kwargs):
         """

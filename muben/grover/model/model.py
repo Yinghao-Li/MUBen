@@ -9,9 +9,8 @@ from typing import List, Dict
 
 from .layers import Readout, GTransEncoder
 from .utils import get_activation_function, get_model_args
-from ..dataset.molgraph import get_atom_fdim, get_bond_fdim
+from muben.dataset.dataset_grover.molgraph import get_atom_fdim, get_bond_fdim
 from muben.base.model import OutputLayer
-from muben.utils.macro import UncertaintyMethods
 
 
 logger = logging.getLogger(__name__)
@@ -183,9 +182,7 @@ def load_checkpoint(config):
     """
 
     # Load model and args
-    state = torch.load(
-        config.checkpoint_path, map_location=lambda storage, loc: storage
-    )
+    state = torch.load(config.checkpoint_path, map_location=lambda storage, loc: storage)
     args, loaded_state_dict = state["args"], state["state_dict"]
     model_args = get_model_args()
 
@@ -203,13 +200,8 @@ def load_checkpoint(config):
     for param_name in loaded_state_dict.keys():
         new_param_name = param_name
         if new_param_name not in model_state_dict:
-            logger.info(
-                f'Pretrained parameter "{param_name}" cannot be found in model parameters.'
-            )
-        elif (
-            model_state_dict[new_param_name].shape
-            != loaded_state_dict[param_name].shape
-        ):
+            logger.info(f'Pretrained parameter "{param_name}" cannot be found in model parameters.')
+        elif model_state_dict[new_param_name].shape != loaded_state_dict[param_name].shape:
             logger.info(
                 f'Pretrained parameter "{param_name}" '
                 f"of shape {loaded_state_dict[param_name].shape} does not match corresponding "

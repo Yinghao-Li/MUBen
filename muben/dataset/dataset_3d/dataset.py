@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: TorchMD-NET dataset.
 """
-
 
 import os.path as op
 import logging
@@ -18,7 +17,7 @@ from muben.utils.chem import (
     atom_to_atom_ids,
 )
 from muben.utils.io import load_lmdb, load_unimol_preprocessed
-from muben.base.dataset import pack_instances, Dataset as BaseDataset
+from ..dataset import pack_instances, Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
 
@@ -87,23 +86,15 @@ class Dataset(BaseDataset):
         self._coordinates = list()
 
         # load feature if UniMol LMDB file exists else generate feature
-        unimol_feature_path = op.join(
-            config.unimol_feature_dir, f"{self._partition}.lmdb"
-        )
+        unimol_feature_path = op.join(config.unimol_feature_dir, f"{self._partition}.lmdb")
 
-        if op.exists(config.unimol_feature_dir) and op.exists(
-            unimol_feature_path
-        ):
+        if op.exists(config.unimol_feature_dir) and op.exists(unimol_feature_path):
             logger.info("Loading features form pre-processed Uni-Mol LMDB")
 
             if not config.random_split:
-                unimol_atoms, self._coordinates = load_lmdb(
-                    unimol_feature_path, ["atoms", "coordinates"]
-                )
+                unimol_atoms, self._coordinates = load_lmdb(unimol_feature_path, ["atoms", "coordinates"])
             else:
-                unimol_data = load_unimol_preprocessed(
-                    config.unimol_feature_dir
-                )
+                unimol_data = load_unimol_preprocessed(config.unimol_feature_dir)
                 id2data_mapping = {
                     idx: (a, c)
                     for idx, a, c in zip(
@@ -112,22 +103,14 @@ class Dataset(BaseDataset):
                         unimol_data["coordinates"],
                     )
                 }
-                unimol_atoms = [
-                    id2data_mapping[idx][0] for idx in self._ori_ids
-                ]
-                self._coordinates = [
-                    id2data_mapping[idx][1] for idx in self._ori_ids
-                ]
+                unimol_atoms = [id2data_mapping[idx][0] for idx in self._ori_ids]
+                self._coordinates = [id2data_mapping[idx][1] for idx in self._ori_ids]
             self._coordinates = [c[0] for c in self._coordinates]
         else:
             logger.info("Generating 3D Coordinates.")
             s2c = partial(smiles_to_coords, n_conformer=1)
-            with get_context("fork").Pool(
-                config.num_preprocess_workers
-            ) as pool:
-                for outputs in tqdm(
-                    pool.imap(s2c, self._smiles), total=len(self._smiles)
-                ):
+            with get_context("fork").Pool(config.num_preprocess_workers) as pool:
+                for outputs in tqdm(pool.imap(s2c, self._smiles), total=len(self._smiles)):
                     _, coordinates = outputs
                     self._coordinates.append(coordinates[0])
             unimol_atoms = [None] * len(self._coordinates)

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: September 18th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Collate function for Uni-Mol
 """
@@ -10,7 +10,7 @@ import logging
 import numpy as np
 import torch.nn.functional as F
 
-from muben.base.dataset import Batch, unpack_instances
+from ..dataset import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
 

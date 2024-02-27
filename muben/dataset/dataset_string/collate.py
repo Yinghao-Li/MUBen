@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Collate function for ChemBERTa.
 """
@@ -10,7 +10,7 @@ import logging
 import numpy as np
 from transformers import AutoTokenizer
 
-from muben.base.dataset import Batch, unpack_instances
+from ..dataset import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,7 @@ class Collator:
         self._task = config.task_type
         self._lbs_type = torch.float
 
-        tokenizer = AutoTokenizer.from_pretrained(
-            config.pretrained_model_name_or_path
-        )
+        tokenizer = AutoTokenizer.from_pretrained(config.pretrained_model_name_or_path)
         self._pad_id = tokenizer.pad_token_id
 
     def __call__(self, instance_list: list, *args, **kwargs) -> Batch:

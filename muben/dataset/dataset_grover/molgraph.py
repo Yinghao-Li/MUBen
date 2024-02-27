@@ -10,7 +10,7 @@ import logging
 import torch
 from dataclasses import dataclass
 from rdkit import Chem
-from muben.base.dataset import Batch
+from muben.dataset.dataset import Batch
 
 logger = logging.getLogger(__name__)
 
@@ -100,17 +100,13 @@ class MolGraph:
         self.f_atoms = []  # mapping from atom index to atom features
         self.f_bonds = []  # mapping from bond index to concat(in_atom, bond) features
         self.a2b = []  # mapping from atom index to incoming bond indices
-        self.b2a = (
-            []
-        )  # mapping from bond index to the index of the atom the bond is coming from
+        self.b2a = []  # mapping from bond index to the index of the atom the bond is coming from
         self.b2revb = []  # mapping from bond index to the index of the reverse bond
 
         # Convert smiles to molecule
         mol = Chem.MolFromSmiles(smiles)
 
-        self.hydrogen_donor = Chem.MolFromSmarts(
-            "[$([N;!H0;v3,v4&+1]),$([O,S;H1;+0]),n&H1&+0]"
-        )
+        self.hydrogen_donor = Chem.MolFromSmarts("[$([N;!H0;v3,v4&+1]),$([O,S;H1;+0]),n&H1&+0]")
         self.hydrogen_acceptor = Chem.MolFromSmarts(
             "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N;v3;!$(N-*=[O,N,P,S])]),"
             "n&H0&+0,$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]"
@@ -121,12 +117,8 @@ class MolGraph:
             "!$([C,a](=O))]),$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]"
         )
 
-        self.hydrogen_donor_match = sum(
-            mol.GetSubstructMatches(self.hydrogen_donor), ()
-        )
-        self.hydrogen_acceptor_match = sum(
-            mol.GetSubstructMatches(self.hydrogen_acceptor), ()
-        )
+        self.hydrogen_donor_match = sum(mol.GetSubstructMatches(self.hydrogen_donor), ())
+        self.hydrogen_acceptor_match = sum(mol.GetSubstructMatches(self.hydrogen_acceptor), ())
         self.acidic_match = sum(mol.GetSubstructMatches(self.acidic), ())
         self.basic_match = sum(mol.GetSubstructMatches(self.basic), ())
         self.ring_info = mol.GetRingInfo()
@@ -180,9 +172,7 @@ class MolGraph:
             + onek_encoding_unk(atom.GetFormalCharge(), ATOM_FEATURES["formal_charge"])
             + onek_encoding_unk(int(atom.GetChiralTag()), ATOM_FEATURES["chiral_tag"])
             + onek_encoding_unk(int(atom.GetTotalNumHs()), ATOM_FEATURES["num_Hs"])
-            + onek_encoding_unk(
-                int(atom.GetHybridization()), ATOM_FEATURES["hybridization"]
-            )
+            + onek_encoding_unk(int(atom.GetHybridization()), ATOM_FEATURES["hybridization"])
             + [1 if atom.GetIsAromatic() else 0]
             + [atom.GetMass() * 0.01]
         )
@@ -271,20 +261,14 @@ class BatchMolGraph(Batch):
         # Start n_atoms and n_bonds at 1 b/c zero padding
         self.n_atoms = 1  # number of atoms (start at 1 b/c need index 0 as padding)
         self.n_bonds = 1  # number of bonds (start at 1 b/c need index 0 as padding)
-        self.a_scope = (
-            []
-        )  # list of tuples indicating (start_atom_index, num_atoms) for each molecule
-        self.b_scope = (
-            []
-        )  # list of tuples indicating (start_bond_index, num_bonds) for each molecule
+        self.a_scope = []  # list of tuples indicating (start_atom_index, num_atoms) for each molecule
+        self.b_scope = []  # list of tuples indicating (start_bond_index, num_bonds) for each molecule
 
         # All start with zero padding so that indexing with zero padding returns zeros
         f_atoms = [[0] * self.atom_fdim]  # atom features
         f_bonds = [[0] * self.bond_fdim]  # combined atom/bond features
         a2b = [[]]  # mapping from atom index to incoming bond indices
-        b2a = [
-            0
-        ]  # mapping from bond index to the index of the atom the bond is coming from
+        b2a = [0]  # mapping from bond index to the index of the atom the bond is coming from
         b2revb = [0]  # mapping from bond index to the index of the reverse bond
 
         for mol_graph in mol_graphs:
@@ -309,10 +293,7 @@ class BatchMolGraph(Batch):
         self.f_atoms = torch.tensor(f_atoms, dtype=torch.float)
         self.f_bonds = torch.tensor(f_bonds, dtype=torch.float)
         self.a2b = torch.tensor(
-            [
-                a2b[a] + [0] * (self.max_num_bonds - len(a2b[a]))
-                for a in range(self.n_atoms)
-            ],
+            [a2b[a] + [0] * (self.max_num_bonds - len(a2b[a])) for a in range(self.n_atoms)],
             dtype=torch.long,
         )
         self.b2a = torch.tensor(b2a, dtype=torch.long)

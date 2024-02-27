@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Collate function for the GIN (Graph Isomorphism Network) model.
 """
@@ -10,7 +10,7 @@ import logging
 import numpy as np
 
 from torch_geometric.data import Batch as pygBatch
-from muben.base.dataset import Batch, unpack_instances
+from ..dataset import Batch, unpack_instances
 
 logger = logging.getLogger(__name__)
 

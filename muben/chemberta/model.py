@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: ChemBERTa model.
 
@@ -12,7 +12,7 @@ and adds an output layer tailored for multi-label and multi-task prediction.
 import torch.nn as nn
 from transformers import AutoModel
 
-from muben.base.dataset import Batch
+from muben.dataset.dataset import Batch
 from muben.base.model import OutputLayer
 
 
@@ -32,14 +32,7 @@ class ChemBERTa(nn.Module):
         **kwargs: Additional keyword arguments passed to the output layer's initialization.
     """
 
-    def __init__(
-        self,
-        bert_model_name_or_path: str,
-        n_lbs: int,
-        n_tasks: int,
-        uncertainty_method: str,
-        **kwargs
-    ):
+    def __init__(self, bert_model_name_or_path: str, n_lbs: int, n_tasks: int, uncertainty_method: str, **kwargs):
         super().__init__()
 
         self.bert_model = AutoModel.from_pretrained(bert_model_name_or_path)
@@ -60,9 +53,7 @@ class ChemBERTa(nn.Module):
         Returns:
             torch.Tensor: The logits for each label and task.
         """
-        bert_hidden = self.bert_model(
-            input_ids=batch.atom_ids, attention_mask=batch.attn_masks
-        )
+        bert_hidden = self.bert_model(input_ids=batch.atom_ids, attention_mask=batch.attn_masks)
         bert_features = bert_hidden.pooler_output
 
         logits = self.output_layer(bert_features)
