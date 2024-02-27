@@ -14,7 +14,7 @@
 import logging
 import torch.nn as nn
 
-from ..layers import OutputLayer
+from muben.layers import OutputLayer
 from .layers import init_bert_params
 from .encoder import TransformerEncoderWithPair
 from .module import NonLinearHead, DistanceHead, GaussianLayer

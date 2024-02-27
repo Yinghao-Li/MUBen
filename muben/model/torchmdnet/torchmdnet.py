@@ -17,7 +17,7 @@ from .et import TorchMDET
 from .layers import EquivariantScalar, EquivariantVectorOutput
 from .modules import act_class_mapping
 
-from ..layers import OutputLayer
+from muben.layers import OutputLayer
 
 logger = logging.getLogger(__name__)
 

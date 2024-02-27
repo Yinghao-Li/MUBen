@@ -8,8 +8,7 @@
 import torch
 import logging
 
-from ..torchmdnet.model import TorchMDNET
-from ..args.args_3d import Config
+from muben.model import TorchMDNET
 
 from .trainer import Trainer as BaseTrainer
 

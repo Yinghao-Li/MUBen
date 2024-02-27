@@ -12,11 +12,11 @@ and adds an output layer tailored for multi-label and multi-task prediction.
 import torch.nn as nn
 from transformers import AutoModel
 
-from muben.dataset.dataset import Batch
-from ..layers import OutputLayer
+from muben.dataset import Batch
+from muben.layers import OutputLayer
 
 
-class ChemBERTa(nn.Module):
+class LinearTransformer(nn.Module):
     """
     The ChemBERTa model, a modified version of BERT for chemical informatics tasks.
 

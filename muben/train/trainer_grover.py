@@ -14,8 +14,8 @@ import torch.nn.functional as F
 from scipy.special import expit
 
 from ..args.args_grover import Config
-from ..grover.model import load_checkpoint
-from ..grover.uncertainty.ts import TSModel
+from muben.model import load_grover_checkpoint as load_checkpoint
+from muben.model import GROVERTSModel as TSModel
 from muben.utils.macro import UncertaintyMethods
 from .trainer import Trainer as BaseTrainer
 

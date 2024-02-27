@@ -4,7 +4,7 @@ from .dataset_rdkit import Dataset as DatasetRDKit, Collator as CollatorRDKit
 from .dataset_string import Dataset as DatasetString, Collator as CollatorString
 from .dataset_unimol import Dataset as DatasetUniMol, Collator as CollatorUniMol, Dictionary as DictionaryUniMol
 from .dataset_grover import Dataset as DatasetGrover, Collator as CollatorGrover
-from .dataset import Dataset
+from .dataset import Dataset, Batch
 
 
 __all__ = [
@@ -22,4 +22,5 @@ __all__ = [
     "DatasetGrover",
     "CollatorGrover",
     "Dataset",
+    "Batch",
 ]

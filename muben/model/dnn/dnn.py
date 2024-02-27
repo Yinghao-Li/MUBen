@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from typing import Optional
 
-from .layers import OutputLayer
+from muben.layers import OutputLayer
 
 __all__ = ["DNN"]
 

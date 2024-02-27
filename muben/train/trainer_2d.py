@@ -7,9 +7,6 @@
 
 import logging
 
-from ..gin.model import GIN
-from ..args.args_2d import Config
-
 from .trainer import Trainer as BaseTrainer
 
 logger = logging.getLogger(__name__)

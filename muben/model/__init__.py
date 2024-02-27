@@ -1,8 +1,8 @@
 from .dnn import DNN
 from .gin.gin import GIN
 from .linear_transformer.linear_transformer import LinearTransformer
-from .grover import GROVERFinetuneModel, load_checkpoint, TSModel as GROVERTSModel
-from .torchmdnet import TorchMDNet
+from .grover import GROVERFinetuneModel, load_checkpoint as load_grover_checkpoint, TSModel as GROVERTSModel
+from .torchmdnet import TorchMDNET
 from .unimol import UniMol
 
 
@@ -11,8 +11,8 @@ __all__ = [
     "GIN",
     "LinearTransformer",
     "GROVERFinetuneModel",
-    "load_checkpoint",
+    "load_grover_checkpoint",
     "GROVERTSModel",
-    "TorchMDNet",
+    "TorchMDNET",
     "UniMol",
 ]
