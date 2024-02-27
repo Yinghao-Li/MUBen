@@ -17,8 +17,9 @@ from transformers import set_seed
 
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
-from muben.grover.dataset import Dataset
-from muben.args.args_grover import Arguments, Config
+from muben.model import GROVER
+from muben.dataset import DatasetGrover, CollatorGrover
+from muben.args import ArgumentsGrover as Arguments, ConfigGrover as Config
 from muben.train.trainer_grover import Trainer
 
 
@@ -29,21 +30,10 @@ def main(args: Arguments):
     # --- construct and validate configuration ---
     config = Config().from_args(args).get_meta().validate().log()
 
-    # --- initialize wandb ---
-    if args.apply_wandb and args.wandb_api_key:
-        wandb.login(key=args.wandb_api_key)
-
-    wandb.init(
-        project=args.wandb_project,
-        name=args.wandb_name,
-        config=config.__dict__,
-        mode="online" if args.apply_wandb else "disabled",
-    )
-
     # --- prepare dataset ---
-    training_dataset = Dataset().prepare(config=config, partition="train")
-    valid_dataset = Dataset().prepare(config=config, partition="valid")
-    test_dataset = Dataset().prepare(config=config, partition="test")
+    training_dataset = DatasetGrover().prepare(config=config, partition="train")
+    valid_dataset = DatasetGrover().prepare(config=config, partition="valid")
+    test_dataset = DatasetGrover().prepare(config=config, partition="test")
 
     # --- initialize trainer ---
     trainer = Trainer(
@@ -51,7 +41,8 @@ def main(args: Arguments):
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
-    )
+        collate_fn=CollatorGrover(config),
+    ).initialize(config=config)
 
     # --- run training and testing ---
     trainer.run()

@@ -55,8 +55,6 @@ class Trainer(BaseTrainer, ABC):
             Function to collate data. Default is None.
 
         """
-        if not collate_fn:
-            collate_fn = Collator(config)
 
         super().__init__(
             config=config,
@@ -66,18 +64,6 @@ class Trainer(BaseTrainer, ABC):
             collate_fn=collate_fn,
             **kwargs,
         )
-
-    @property
-    def config(self) -> Config:
-        """Get the config object."""
-        return self._config
-
-    def initialize_model(self):
-        """
-        Load GROVER model from checkpoint.
-        """
-        logger.info(f"Loading GROVER checkpoint from {self.config.checkpoint_path}")
-        self._model = load_checkpoint(self.config)
 
     def ts_session(self):
         """
