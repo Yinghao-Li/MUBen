@@ -8,16 +8,16 @@
 
 import os
 import sys
-import wandb
 import logging
 from datetime import datetime
 from transformers import set_seed
 
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
-from muben.gin.dataset import Dataset
-from muben.args.args_2d import Arguments, Config
-from muben.train.trainer_2d import Trainer
+from muben.dataset import Dataset2D, Collator2D
+from muben.model import GIN
+from muben.args import Arguments2D as Arguments, Config2D as Config
+from muben.train import Trainer
 
 
 logger = logging.getLogger(__name__)
@@ -27,28 +27,29 @@ def main(args: Arguments):
     # --- construct and validate configuration ---
     config = Config().from_args(args).get_meta().validate().log()
 
-    # --- initialize wandb ---
-    if args.apply_wandb and args.wandb_api_key:
-        wandb.login(key=args.wandb_api_key)
-
-    wandb.init(
-        project=args.wandb_project,
-        name=args.wandb_name,
-        config=config.__dict__,
-        mode="online" if args.apply_wandb else "disabled",
-    )
-
     # --- prepare dataset ---
-    training_dataset = Dataset().prepare(config=config, partition="train")
-    valid_dataset = Dataset().prepare(config=config, partition="valid")
-    test_dataset = Dataset().prepare(config=config, partition="test")
+    training_dataset = Dataset2D().prepare(config=config, partition="train")
+    valid_dataset = Dataset2D().prepare(config=config, partition="valid")
+    test_dataset = Dataset2D().prepare(config=config, partition="test")
 
     # --- initialize trainer ---
     trainer = Trainer(
         config=config,
+        model_class=GIN,
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
+        collate_fn=Collator2D(config),
+    ).initialize(
+        n_lbs=config.n_lbs,
+        n_tasks=config.n_tasks,
+        max_atomic_num=config.max_atomic_num,
+        n_layers=config.n_gin_layers,
+        d_hidden=config.d_gin_hidden,
+        dropout=config.dropout,
+        uncertainty_method=config.uncertainty_method,
+        task_type=config.task_type,
+        bbp_prior_sigma=config.bbp_prior_sigma,
     )
 
     # --- run training and testing ---

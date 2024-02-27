@@ -15,9 +15,10 @@ from transformers import set_seed
 
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
-from muben.torchmdnet.dataset import Dataset
+from muben.dataset import Dataset3D, Collator3D
 from muben.args.args_3d import Arguments, Config
-from muben.train.trainer_3d import Trainer
+from muben.train import Trainer
+from muben.model import TorchMDNET
 
 
 logger = logging.getLogger(__name__)
@@ -27,29 +28,20 @@ def main(args: Arguments):
     # --- construct and validate configuration ---
     config = Config().from_args(args).get_meta().validate().log()
 
-    # --- initialize wandb ---
-    if args.apply_wandb and args.wandb_api_key:
-        wandb.login(key=args.wandb_api_key)
-
-    wandb.init(
-        project=args.wandb_project,
-        name=args.wandb_name,
-        config=config.__dict__,
-        mode="online" if args.apply_wandb else "disabled",
-    )
-
     # --- prepare dataset ---
-    training_dataset = Dataset().prepare(config=config, partition="train")
-    valid_dataset = Dataset().prepare(config=config, partition="valid")
-    test_dataset = Dataset().prepare(config=config, partition="test")
+    training_dataset = Dataset3D().prepare(config=config, partition="train")
+    valid_dataset = Dataset3D().prepare(config=config, partition="valid")
+    test_dataset = Dataset3D().prepare(config=config, partition="test")
 
     # --- initialize trainer ---
     trainer = Trainer(
         config=config,
+        model_class=TorchMDNET,
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
-    )
+        collate_fn=Collator3D(config),
+    ).initialize(config=config)
 
     # --- run training and testing ---
     trainer.run()

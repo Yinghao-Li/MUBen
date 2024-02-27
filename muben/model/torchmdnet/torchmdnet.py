@@ -91,6 +91,9 @@ class TorchMDNET(nn.Module):
 
         self.reset_parameters()
 
+        ckpt = torch.load(config.checkpoint_path, map_location="cpu")
+        self.load_from_checkpoint(ckpt)
+
     def reset_parameters(self):
         self.representation_model.reset_parameters()
         self.output_model.reset_parameters()
