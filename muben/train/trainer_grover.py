@@ -13,7 +13,7 @@ import numpy as np
 import torch.nn.functional as F
 from scipy.special import expit
 
-from ..grover.args import Config
+from ..args.args_grover import Config
 from ..grover.model import load_checkpoint
 from ..grover.uncertainty.ts import TSModel
 from muben.utils.macro import UncertaintyMethods

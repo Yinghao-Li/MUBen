@@ -8,16 +8,14 @@
 
 import os
 import sys
-import wandb
-import torch
 import logging
 from datetime import datetime
 from transformers import set_seed
 
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
-from muben.unimol.dataset import Dataset, Dictionary
-from muben.args.args_unimol import Arguments, Config
+from muben.dataset import DatasetUniMol, DictionaryUniMol
+from muben.args import ArgumentsUnimol as Arguments, ConfigUnimol as Config
 from muben.train.trainer_unimol import Trainer
 
 
@@ -29,23 +27,13 @@ def main(args: Arguments):
     config = Config().from_args(args).get_meta().validate().log()
 
     # --- initialize wandb ---
-    if args.apply_wandb and args.wandb_api_key:
-        wandb.login(key=args.wandb_api_key)
-
-    wandb.init(
-        project=args.wandb_project,
-        name=args.wandb_name,
-        config=config.__dict__,
-        mode="online" if args.apply_wandb else "disabled",
-    )
-
-    dictionary = Dictionary.load()
+    dictionary = DictionaryUniMol.load()
     dictionary.add_symbol("[MASK]", is_special=True)
 
     # --- prepare dataset ---
-    training_dataset = Dataset().prepare(config=config, partition="train", dictionary=dictionary)
-    valid_dataset = Dataset().prepare(config=config, partition="valid", dictionary=dictionary)
-    test_dataset = Dataset().prepare(config=config, partition="test", dictionary=dictionary)
+    training_dataset = DatasetUniMol().prepare(config=config, partition="train", dictionary=dictionary)
+    valid_dataset = DatasetUniMol().prepare(config=config, partition="valid", dictionary=dictionary)
+    test_dataset = DatasetUniMol().prepare(config=config, partition="test", dictionary=dictionary)
 
     # --- initialize trainer ---
     trainer = Trainer(
