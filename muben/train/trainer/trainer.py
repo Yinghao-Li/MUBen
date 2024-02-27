@@ -37,7 +37,7 @@ from .state import TrainerState
 from .timer import Timer
 
 from .container import CheckpointContainer, UpdateCriteria
-from muben.base.uncertainty import (
+from muben.uncertainty import (
     SWAModel,
     update_bn,
     TSModel,

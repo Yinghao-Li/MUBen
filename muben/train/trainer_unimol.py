@@ -13,13 +13,13 @@ import torch
 import numpy as np
 from torch.optim import AdamW
 
-from muben.dataset.dataset_unimol import Collator, Dictionary
 from ..unimol.model import UniMol
 from ..unimol.args import Config
-from muben.utils.macro import UncertaintyMethods
 from .trainer import Trainer as BaseTrainer
-from muben.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
-from muben.base.uncertainty.ts import TSModel
+from muben.dataset.dataset_unimol import Collator, Dictionary
+from muben.utils.macro import UncertaintyMethods
+from muben.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
+from muben.uncertainty.ts import TSModel
 
 logger = logging.getLogger(__name__)
 
