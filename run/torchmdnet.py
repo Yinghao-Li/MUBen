@@ -16,7 +16,7 @@ from transformers import set_seed
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.torchmdnet.dataset import Dataset
-from muben.torchmdnet.args import Arguments, Config
+from muben.args.args_3d import Arguments, Config
 from muben.train.trainer_3d import Trainer
 
 

@@ -24,10 +24,6 @@ class Collator:
 
     Attributes
     ----------
-    _task : str
-        The type of task to be handled (e.g., regression, classification).
-    _lbs_type : torch.dtype
-        The data type for labels. Typically torch.float.
     _pad_id : int
         The padding token ID.
     """
@@ -41,9 +37,6 @@ class Collator:
         config : object
             The configuration object which should have attributes 'task_type' and 'pretrained_model_name_or_path'.
         """
-        self._task = config.task_type
-        self._lbs_type = torch.float
-
         tokenizer = AutoTokenizer.from_pretrained(config.pretrained_model_name_or_path)
         self._pad_id = tokenizer.pad_token_id
 
@@ -77,7 +70,7 @@ class Collator:
             ]
         )
         attn_masks_batch = (atom_ids_batch != self._pad_id).to(torch.long)
-        lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
+        lbs_batch = torch.from_numpy(np.stack(lbs)).to(torch.float)
         masks_batch = torch.from_numpy(np.stack(masks))
 
         return Batch(

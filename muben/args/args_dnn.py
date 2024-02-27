@@ -1,16 +1,16 @@
 """
 # Author: Yinghao Li
-# Modified: September 11th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Arguments for DNN model
 """
-
 
 import logging
 from typing import Optional
 from dataclasses import dataclass, field
 from functools import cached_property
-from muben.base.args import Arguments as BaseArguments, Config as BaseConfig
+
+from .args import Arguments as BaseArguments, Config as BaseConfig
 from muben.utils.macro import MODEL_NAMES, FINGERPRINT_FEATURE_TYPES
 
 

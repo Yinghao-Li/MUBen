@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: GROVER arguments.
 """
@@ -10,7 +10,7 @@ from typing import Optional
 from dataclasses import field
 from dataclasses import dataclass
 
-from muben.base.args import Config as BaseConfig, Arguments as BaseArguments
+from muben.args.args import Config as BaseConfig, Arguments as BaseArguments
 from muben.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
@@ -23,9 +23,7 @@ class Arguments(BaseArguments):
     """
 
     # --- Reload model arguments to adjust default values ---
-    model_name: Optional[str] = field(
-        default="GROVER", metadata={"help": "Name of the model", "choices": MODEL_NAMES}
-    )
+    model_name: Optional[str] = field(default="GROVER", metadata={"help": "Name of the model", "choices": MODEL_NAMES})
 
     checkpoint_path: Optional[str] = field(
         default="./models/grover_base.pt",
@@ -59,18 +57,12 @@ class Arguments(BaseArguments):
     )
 
     # Model arguments
-    dropout: Optional[float] = field(
-        default=0.1, metadata={"help": "Dropout probability"}
-    )
+    dropout: Optional[float] = field(default=0.1, metadata={"help": "Dropout probability"})
     ffn_hidden_size: Optional[int] = field(
         default=200,
-        metadata={
-            "help": "Hidden dim for higher-capacity FFN (defaults to hidden_size)"
-        },
+        metadata={"help": "Hidden dim for higher-capacity FFN (defaults to hidden_size)"},
     )
-    ffn_num_layers: Optional[int] = field(
-        default=2, metadata={"help": "Number of layers in FFN after MPN encoding"}
-    )
+    ffn_num_layers: Optional[int] = field(default=2, metadata={"help": "Number of layers in FFN after MPN encoding"})
 
     dist_coff: Optional[float] = field(
         default=0.1,

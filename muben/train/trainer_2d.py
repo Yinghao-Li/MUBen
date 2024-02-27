@@ -8,7 +8,7 @@
 import logging
 
 from ..gin.model import GIN
-from ..gin.args import Config
+from ..args.args_2d import Config
 
 from .trainer import Trainer as BaseTrainer
 

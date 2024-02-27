@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Arguments and configuration for Uni-Mol
 """
@@ -10,7 +10,7 @@ import logging
 from typing import Optional
 from dataclasses import field, dataclass
 
-from muben.base.args import Arguments as BaseArguments, Config as BaseConfig
+from .args import Arguments as BaseArguments, Config as BaseConfig
 from muben.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
@@ -33,9 +33,7 @@ class Arguments(BaseArguments):
     # --- Dataset arguments ---
     unimol_feature_folder: Optional[str] = field(
         default=".",
-        metadata={
-            "help": "The folder containing files with pre-defined uni-mol atoms and coordinates"
-        },
+        metadata={"help": "The folder containing files with pre-defined uni-mol atoms and coordinates"},
     )
 
     # --- Reload training arguments to adjust default values ---
@@ -56,9 +54,7 @@ class Arguments(BaseArguments):
     )
     grad_norm: Optional[float] = field(
         default=1,
-        metadata={
-            "help": "Gradient norm. Default is 0 (do not clip gradient)"
-        },
+        metadata={"help": "Gradient norm. Default is 0 (do not clip gradient)"},
     )
 
     # --- update model parameters from Uni-Mol ---
@@ -68,26 +64,18 @@ class Arguments(BaseArguments):
     )
 
     # --- Arguments from Uni-Mol original implementation ---
-    batch_size: Optional[int] = field(
-        default=32, metadata={"help": "Batch size"}
-    )
+    batch_size: Optional[int] = field(default=32, metadata={"help": "Batch size"})
 
     max_atoms: Optional[int] = field(
         default=256,
-        metadata={
-            "help": "the maximum number of atoms in the input molecules."
-        },
+        metadata={"help": "the maximum number of atoms in the input molecules."},
     )
 
-    max_seq_len: Optional[int] = field(
-        default=512, metadata={"help": "Maximum length of the atom tokens."}
-    )
+    max_seq_len: Optional[int] = field(default=512, metadata={"help": "Maximum length of the atom tokens."})
 
     only_polar: Optional[int] = field(
         default=0,
-        metadata={
-            "help": "1: only reserve polar hydrogen; 0: no hydrogen; -1: all hydrogen "
-        },
+        metadata={"help": "1: only reserve polar hydrogen; 0: no hydrogen; -1: all hydrogen "},
     )
 
     dropout: Optional[float] = field(
@@ -100,9 +88,7 @@ class Arguments(BaseArguments):
 
     def __post_init__(self):
         super().__post_init__()
-        self.unimol_feature_dir = op.join(
-            self.unimol_feature_folder, self.dataset_name
-        )
+        self.unimol_feature_dir = op.join(self.unimol_feature_folder, self.dataset_name)
 
         self.pooler_dropout = self.dropout
 
@@ -140,18 +126,14 @@ class Arguments(BaseArguments):
         self.max_seq_len = getattr(self, "max_seq_len", 512)
 
         self.activation_fn = getattr(self, "activation_fn", "gelu")
-        self.pooler_activation_fn = getattr(
-            self, "pooler_activation_fn", "Tanh"
-        )
+        self.pooler_activation_fn = getattr(self, "pooler_activation_fn", "Tanh")
 
         self.post_ln = getattr(self, "post_ln", False)
         self.masked_token_loss = getattr(self, "masked_token_loss", -1.0)
         self.masked_coord_loss = getattr(self, "masked_coord_loss", -1.0)
         self.masked_dist_loss = getattr(self, "masked_dist_loss", -1.0)
         self.x_norm_loss = getattr(self, "x_norm_loss", -1.0)
-        self.delta_pair_repr_norm_loss = getattr(
-            self, "delta_pair_repr_norm_loss", -1.0
-        )
+        self.delta_pair_repr_norm_loss = getattr(self, "delta_pair_repr_norm_loss", -1.0)
 
 
 @dataclass

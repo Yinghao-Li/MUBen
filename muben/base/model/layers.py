@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: 
 
@@ -12,11 +12,10 @@ methods for model's output and supports both classification and regression tasks
 
 """
 
-
 import torch
 import torch.nn as nn
-from ..uncertainty.bbp import BBPOutputLayer
-from ..uncertainty.evidential import NIGOutputLayer
+from muben.uncertainty.bbp import BBPOutputLayer
+from muben.uncertainty.evidential import NIGOutputLayer
 from muben.utils.macro import UncertaintyMethods
 
 
@@ -60,16 +59,9 @@ class OutputLayer(nn.Module):
 
         # Choose the output layer based on the uncertainty method and task type
         if uncertainty_method == UncertaintyMethods.bbp:
-            self.output_layer = BBPOutputLayer(
-                last_hidden_dim, n_output_heads, **kwargs
-            )
-        elif (
-            uncertainty_method == UncertaintyMethods.evidential
-            and task_type == "regression"
-        ):
-            self.output_layer = NIGOutputLayer(
-                last_hidden_dim, n_output_heads, **kwargs
-            )
+            self.output_layer = BBPOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
+        elif uncertainty_method == UncertaintyMethods.evidential and task_type == "regression":
+            self.output_layer = NIGOutputLayer(last_hidden_dim, n_output_heads, **kwargs)
         else:
             self.output_layer = nn.Linear(last_hidden_dim, n_output_heads)
 
@@ -91,10 +83,7 @@ class OutputLayer(nn.Module):
         if self._uncertainty_method == UncertaintyMethods.bbp:
             self.output_layer.initialize()
             self.kld = None
-        elif (
-            self._uncertainty_method == UncertaintyMethods.evidential
-            and self._task_type == "regression"
-        ):
+        elif self._uncertainty_method == UncertaintyMethods.evidential and self._task_type == "regression":
             self.output_layer.initialize()
         else:
             nn.init.xavier_uniform_(self.output_layer.weight)

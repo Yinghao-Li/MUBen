@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Special arguments and configurations for ChemBERTa.
 """
@@ -9,7 +9,7 @@ import logging
 from typing import Optional
 from dataclasses import field, dataclass
 
-from muben.base.args import Arguments as BaseArguments, Config as BaseConfig
+from .args import Arguments as BaseArguments, Config as BaseConfig
 from muben.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)

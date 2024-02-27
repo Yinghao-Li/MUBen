@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 4th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: TorchMD-NET arguments.
 """
@@ -9,7 +9,7 @@ import os.path as op
 import logging
 from typing import Optional
 from dataclasses import dataclass, field
-from muben.base.args import Arguments as BaseArguments, Config as BaseConfig
+from muben.args.args import Arguments as BaseArguments, Config as BaseConfig
 from muben.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
@@ -28,9 +28,7 @@ class Arguments(BaseArguments):
     )
     unimol_feature_folder: Optional[str] = field(
         default=".",
-        metadata={
-            "help": "The folder containing files with pre-defined uni-mol atoms and coordinates"
-        },
+        metadata={"help": "The folder containing files with pre-defined uni-mol atoms and coordinates"},
     )
 
     # --- update model parameters ---

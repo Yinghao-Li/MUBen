@@ -17,7 +17,7 @@ from transformers import set_seed
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.unimol.dataset import Dataset, Dictionary
-from muben.unimol.args import Arguments, Config
+from muben.args.args_unimol import Arguments, Config
 from muben.train.trainer_unimol import Trainer
 
 

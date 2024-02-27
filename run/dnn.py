@@ -8,7 +8,6 @@
 
 import os
 import sys
-import wandb
 import logging
 from datetime import datetime
 from transformers import set_seed
@@ -17,7 +16,7 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.dataset import DatasetRDKit, CollatorRDKit
 from muben.dnn.model import DNN
-from muben.dnn.args import Arguments, Config
+from muben.args.args_dnn import Arguments, Config
 from muben.train import Trainer
 
 

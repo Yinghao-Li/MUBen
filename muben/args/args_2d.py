@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 8th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: GIN arguments.
 """
@@ -9,7 +9,7 @@ import os.path as op
 import logging
 from typing import Optional
 from dataclasses import dataclass, field
-from muben.base.args import Arguments as BaseArguments, Config as BaseConfig
+from muben.args.args import Arguments as BaseArguments, Config as BaseConfig
 from muben.utils.macro import MODEL_NAMES
 
 logger = logging.getLogger(__name__)
@@ -28,12 +28,8 @@ class Arguments(BaseArguments):
     )
 
     # --- model parameters ---
-    d_gin_hidden: Optional[int] = field(
-        default=128, metadata={"help": "Model dimensionality."}
-    )
-    n_gin_layers: Optional[int] = field(
-        default=5, metadata={"help": "The number of GIN hidden channels"}
-    )
+    d_gin_hidden: Optional[int] = field(default=128, metadata={"help": "Model dimensionality."})
+    n_gin_layers: Optional[int] = field(default=5, metadata={"help": "The number of GIN hidden channels"})
 
     # --- reload training parameters ---
     lr_scheduler_type: Optional[str] = field(

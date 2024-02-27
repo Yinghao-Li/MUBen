@@ -26,10 +26,7 @@ class Collator:
     def __init__(self, *args, **kwargs):
         """
         Initialize the Collator instance.
-
-        Currently, only the default data type for labels (`_lbs_type`) is set during initialization.
         """
-        self._lbs_type = torch.float
 
     def __call__(self, instance_list: list, *args, **kwargs) -> Batch:
         """
@@ -52,7 +49,7 @@ class Collator:
         features, lbs, masks = unpack_instances(instance_list)
 
         feature_batch = torch.from_numpy(np.stack(features)).to(torch.float)
-        lbs_batch = torch.from_numpy(np.stack(lbs)).to(self._lbs_type)
+        lbs_batch = torch.from_numpy(np.stack(lbs)).to(torch.float)
         masks_batch = torch.from_numpy(np.stack(masks))
 
         return Batch(features=feature_batch, lbs=lbs_batch, masks=masks_batch)

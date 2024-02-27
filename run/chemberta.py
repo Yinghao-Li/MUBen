@@ -8,7 +8,6 @@
 
 import os
 import sys
-import wandb
 import logging
 from datetime import datetime
 
@@ -18,7 +17,7 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.dataset import DatasetString, CollatorString
 from muben.chemberta.model import ChemBERTa
-from muben.chemberta.args import Arguments, Config
+from muben.args.args_string import Arguments, Config
 from muben.train import Trainer
 
 
@@ -37,10 +36,11 @@ def main(args: Arguments):
     # --- initialize trainer ---
     trainer = Trainer(
         config=config,
+        model_class=ChemBERTa,
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
-        collate_fn=CollatorString(),
+        collate_fn=CollatorString(config),
     ).initialize(
         bert_model_name_or_path=config.pretrained_model_name_or_path,
         n_lbs=config.n_lbs,

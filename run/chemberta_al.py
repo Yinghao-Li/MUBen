@@ -18,7 +18,7 @@ from transformers import set_seed
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.chemberta.dataset import Dataset
-from muben.chemberta.args import Arguments, Config
+from muben.args.args_string import Arguments, Config
 from muben.train.trainer_string import Trainer
 
 

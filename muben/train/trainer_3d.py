@@ -9,7 +9,7 @@ import torch
 import logging
 
 from ..torchmdnet.model import TorchMDNET
-from ..torchmdnet.args import Config
+from ..args.args_3d import Config
 
 from .trainer import Trainer as BaseTrainer
 

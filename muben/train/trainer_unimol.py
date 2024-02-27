@@ -14,7 +14,7 @@ import numpy as np
 from torch.optim import AdamW
 
 from ..unimol.model import UniMol
-from ..unimol.args import Config
+from ..args.args_unimol import Config
 from .trainer import Trainer as BaseTrainer
 from muben.dataset.dataset_unimol import Collator, Dictionary
 from muben.utils.macro import UncertaintyMethods
