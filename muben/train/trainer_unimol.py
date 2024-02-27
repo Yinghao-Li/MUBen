@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: November 29th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Trainer function for Uni-Mol.
 """
-
 
 from abc import ABC
 
@@ -14,9 +13,9 @@ import torch
 import numpy as np
 from torch.optim import AdamW
 
-from .dataset import Collator, Dictionary
-from .model import UniMol
-from .args import Config
+from muben.dataset.dataset_unimol import Collator, Dictionary
+from ..unimol.model import UniMol
+from ..unimol.args import Config
 from muben.utils.macro import UncertaintyMethods
 from muben.base.train import Trainer as BaseTrainer
 from muben.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer

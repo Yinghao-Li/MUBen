@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with GROVER backbone model.
@@ -19,7 +19,7 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.grover.dataset import Dataset
 from muben.grover.args import Arguments, Config
-from muben.grover.train import Trainer
+from muben.train.trainer_grover import Trainer
 
 
 logger = logging.getLogger(__name__)
@@ -67,9 +67,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.
-        (arguments,) = parser.parse_json_file(
-            json_file=os.path.abspath(sys.argv[1])
-        )
+        (arguments,) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
         (arguments,) = parser.parse_args_into_dataclasses()
 

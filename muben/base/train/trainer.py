@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 30th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description:
 
@@ -62,6 +62,7 @@ class Trainer:
     def __init__(
         self,
         config,
+        model_class=None,
         training_dataset=None,
         valid_dataset=None,
         test_dataset=None,
@@ -95,6 +96,7 @@ class Trainer:
             setattr(config, k, v)
 
         self._config = config
+        self._model_class = model_class
         self._training_dataset = training_dataset
         self._valid_dataset = valid_dataset
         self._test_dataset = test_dataset
@@ -235,7 +237,7 @@ class Trainer:
         )
         return backbone_params
 
-    def initialize(self):
+    def initialize(self, *args, **kwargs):
         """
         Initialize the trainer's status and its key components including the model,
         optimizer, learning rate scheduler, and loss function.
@@ -245,7 +247,7 @@ class Trainer:
         self : Trainer
             Initialized Trainer instance.
         """
-        self.initialize_model()
+        self.initialize_model(*args, **kwargs)
         self.initialize_optimizer()
         self.initialize_scheduler()
         self.initialize_loss()

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 30th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with Uni-Mol backbone model.
@@ -18,7 +18,7 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.unimol.dataset import Dataset, Dictionary
 from muben.unimol.args import Arguments, Config
-from muben.unimol.train import Trainer
+from muben.train.trainer_unimol import Trainer
 
 
 logger = logging.getLogger(__name__)

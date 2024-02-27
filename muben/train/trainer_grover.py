@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: November 29th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Trainer for GROVER backbone
 """
-
 
 from abc import ABC
 
@@ -14,10 +13,9 @@ import numpy as np
 import torch.nn.functional as F
 from scipy.special import expit
 
-from .dataset import Collator
-from .args import Config
-from .model import load_checkpoint
-from .uncertainty.ts import TSModel
+from ..grover.args import Config
+from ..grover.model import load_checkpoint
+from ..grover.uncertainty.ts import TSModel
 from muben.utils.macro import UncertaintyMethods
 from muben.base.train import Trainer as BaseTrainer
 

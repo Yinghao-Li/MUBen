@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: November 30th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with ChemBERTa backbone model.
@@ -19,7 +19,7 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.chemberta.dataset import Dataset
 from muben.chemberta.args import Arguments, Config
-from muben.chemberta.train import Trainer
+from muben.train.trainer_string import Trainer
 
 
 logger = logging.getLogger(__name__)
