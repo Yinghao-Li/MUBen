@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: November 29th, 2023
 # ---------------------------------------
 # Description: Trainer for DNN.
 """
@@ -32,6 +32,7 @@ class Trainer(BaseTrainer):
         valid_dataset=None,
         test_dataset=None,
         collate_fn=None,
+        **kwargs,
     ):
         """
         Initialize the Trainer instance.
@@ -57,6 +58,7 @@ class Trainer(BaseTrainer):
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
             collate_fn=collate_fn,
+            **kwargs,
         )
 
     @property

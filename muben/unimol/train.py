@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: September 27th, 2023
+# Modified: November 29th, 2023
 # ---------------------------------------
 # Description: Trainer function for Uni-Mol.
 """
@@ -38,6 +38,7 @@ class Trainer(BaseTrainer, ABC):
         test_dataset=None,
         collate_fn=None,
         dictionary=None,
+        **kwargs,
     ):
         """
         Initialize the Trainer.
@@ -73,6 +74,7 @@ class Trainer(BaseTrainer, ABC):
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
             collate_fn=collate_fn,
+            **kwargs,
         )
 
     @property

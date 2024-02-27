@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: November 29th, 2023
 # ---------------------------------------
 # Description: Trainer for GROVER backbone
 """
@@ -38,6 +38,7 @@ class Trainer(BaseTrainer, ABC):
         valid_dataset=None,
         test_dataset=None,
         collate_fn=None,
+        **kwargs,
     ):
         """
         Initialize the GROVER Trainer.
@@ -65,6 +66,7 @@ class Trainer(BaseTrainer, ABC):
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
             collate_fn=collate_fn,
+            **kwargs,
         )
 
     @property
@@ -76,9 +78,7 @@ class Trainer(BaseTrainer, ABC):
         """
         Load GROVER model from checkpoint.
         """
-        logger.info(
-            f"Loading GROVER checkpoint from {self.config.checkpoint_path}"
-        )
+        logger.info(f"Loading GROVER checkpoint from {self.config.checkpoint_path}")
         self._model = load_checkpoint(self.config)
 
     def ts_session(self):
@@ -90,9 +90,7 @@ class Trainer(BaseTrainer, ABC):
         self._status.lr = self.config.ts_lr
         self._status.lr_scheduler_type = "constant"
         self._status.n_epochs = self.config.n_ts_epochs
-        self._status.valid_epoch_interval = (
-            0  # Can also set this to None; disable validation
-        )
+        self._status.valid_epoch_interval = 0  # Can also set this to None; disable validation
 
         self.model.to(self._device)
         self.freeze()
@@ -141,18 +139,8 @@ class Trainer(BaseTrainer, ABC):
             loss += self.config.dist_coff * dist
 
         # for compatability with bbp
-        if (
-            self.config.uncertainty_method == UncertaintyMethods.bbp
-            and n_steps_per_epoch is not None
-        ):
-            kld = (
-                (
-                    self.model.atom_output_layer.kld
-                    + self.model.bond_output_layer.kld
-                )
-                / n_steps_per_epoch
-                / len(batch)
-            )
+        if self.config.uncertainty_method == UncertaintyMethods.bbp and n_steps_per_epoch is not None:
+            kld = (self.model.atom_output_layer.kld + self.model.bond_output_layer.kld) / n_steps_per_epoch / len(batch)
             loss += kld
         return loss
 
@@ -175,16 +163,9 @@ class Trainer(BaseTrainer, ABC):
             Computed distance loss value.
         """
         # modify data shapes to accommodate different tasks
-        if (
-            self.config.task_type == "regression"
-            and self.config.regression_with_variance
-        ):
-            atom_logits = atom_logits.view(
-                -1, self.config.n_tasks, 2
-            )  # mean and var for the last dimension
-            bond_logits = bond_logits.view(
-                -1, self.config.n_tasks, 2
-            )  # mean and var for the last dimension
+        if self.config.task_type == "regression" and self.config.regression_with_variance:
+            atom_logits = atom_logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
+            bond_logits = bond_logits.view(-1, self.config.n_tasks, 2)  # mean and var for the last dimension
 
         loss = F.mse_loss(atom_logits, bond_logits)
         loss = torch.sum(loss * batch.masks) / batch.masks.sum()
@@ -207,9 +188,7 @@ class Trainer(BaseTrainer, ABC):
         tuple[np.ndarray, np.ndarray]
             Predicted atom logits and bond logits.
         """
-        dataloader = self.get_dataloader(
-            dataset, batch_size=self.config.batch_size_inference, shuffle=False
-        )
+        dataloader = self.get_dataloader(dataset, batch_size=self.config.batch_size_inference, shuffle=False)
         self.model.to(self._device)
 
         atom_logits_list = list()
@@ -220,12 +199,8 @@ class Trainer(BaseTrainer, ABC):
                 batch.to(self.config.device)
                 atom_logits, bond_logits = self.model(batch)
 
-                atom_logits_list.append(
-                    atom_logits.to(torch.float).detach().cpu()
-                )
-                bond_logits_list.append(
-                    bond_logits.to(torch.float).detach().cpu()
-                )
+                atom_logits_list.append(atom_logits.to(torch.float).detach().cpu())
+                bond_logits_list.append(bond_logits.to(torch.float).detach().cpu())
 
         atom_logits = torch.cat(atom_logits_list, dim=0).numpy()
         bond_logits = torch.cat(bond_logits_list, dim=0).numpy()
@@ -251,21 +226,13 @@ class Trainer(BaseTrainer, ABC):
 
         if self.config.task_type == "classification":
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
-                atom_logits = atom_logits.reshape(
-                    (-1, self.config.n_tasks, self.config.n_lbs)
-                )
-                bond_logits = bond_logits.reshape(
-                    (-1, self.config.n_tasks, self.config.n_lbs)
-                )
+                atom_logits = atom_logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
+                bond_logits = bond_logits.reshape((-1, self.config.n_tasks, self.config.n_lbs))
 
                 atom_alpha = atom_logits * (atom_logits > 0) + 1
                 bond_alpha = bond_logits * (bond_logits > 0) + 1
-                atom_probs = atom_alpha / np.sum(
-                    atom_alpha, axis=1, keepdims=True
-                )
-                bond_probs = bond_alpha / np.sum(
-                    bond_alpha, axis=1, keepdims=True
-                )
+                atom_probs = atom_alpha / np.sum(atom_alpha, axis=1, keepdims=True)
+                bond_probs = bond_alpha / np.sum(bond_alpha, axis=1, keepdims=True)
 
                 return (atom_probs + bond_probs) / 2
 
@@ -278,9 +245,7 @@ class Trainer(BaseTrainer, ABC):
             logits = (atom_logits + bond_logits) / 2
 
             if self.config.n_tasks > 1 and len(logits.shape) == 2:
-                logits = logits.reshape(
-                    -1, self.config.n_tasks, self.config.n_lbs
-                )
+                logits = logits.reshape(-1, self.config.n_tasks, self.config.n_lbs)
 
             if self.config.uncertainty_method == UncertaintyMethods.evidential:
                 gamma, _, alpha, beta = np.split(logits, 4, axis=-1)
@@ -296,6 +261,4 @@ class Trainer(BaseTrainer, ABC):
             else:
                 return logits
         else:
-            raise ValueError(
-                f"Unrecognized task type: {self.config.task_type}"
-            )
+            raise ValueError(f"Unrecognized task type: {self.config.task_type}")

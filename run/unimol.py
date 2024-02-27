@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: November 30th, 2023
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with Uni-Mol backbone model.
@@ -43,15 +43,9 @@ def main(args: Arguments):
     dictionary.add_symbol("[MASK]", is_special=True)
 
     # --- prepare dataset ---
-    training_dataset = Dataset().prepare(
-        config=config, partition="train", dictionary=dictionary
-    )
-    valid_dataset = Dataset().prepare(
-        config=config, partition="valid", dictionary=dictionary
-    )
-    test_dataset = Dataset().prepare(
-        config=config, partition="test", dictionary=dictionary
-    )
+    training_dataset = Dataset().prepare(config=config, partition="train", dictionary=dictionary)
+    valid_dataset = Dataset().prepare(config=config, partition="valid", dictionary=dictionary)
+    test_dataset = Dataset().prepare(config=config, partition="test", dictionary=dictionary)
 
     # --- initialize trainer ---
     trainer = Trainer(
@@ -76,9 +70,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.
-        (arguments,) = parser.parse_json_file(
-            json_file=os.path.abspath(sys.argv[1])
-        )
+        (arguments,) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
         (arguments,) = parser.parse_args_into_dataclasses()
 
@@ -87,7 +79,6 @@ if __name__ == "__main__":
 
     set_logging(log_path=arguments.log_path)
     set_seed(arguments.seed)
-    torch.autograd.set_detect_anomaly(True)
 
     if arguments.deploy:
         try:

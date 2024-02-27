@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: September 27th, 2023
+# Modified: November 30th, 2023
 # ---------------------------------------
 # Description:
 
@@ -67,6 +67,7 @@ class Trainer:
         test_dataset=None,
         collate_fn=None,
         scalar=None,
+        **kwargs,
     ):
         """
         Initialize the Trainer object.
@@ -85,7 +86,14 @@ class Trainer:
             Function to collate data samples into batches.
         scalar : StandardScaler, optional
             Scaler for standardizing input data.
+        **kwargs : dict, optional
+            Additional keyword arguments.
         """
+        # make a deep copy of the config to avoid modifying the original config
+        config = copy.deepcopy(config)
+        for k, v in kwargs.items():
+            setattr(config, k, v)
+
         self._config = config
         self._training_dataset = training_dataset
         self._valid_dataset = valid_dataset
@@ -99,6 +107,17 @@ class Trainer:
         self._scheduler = None
         self._loss_fn = None
         self._timer = Timer(device=self._device)
+
+        # --- initialize wandb ---
+        if config.apply_wandb and config.wandb_api_key:
+            wandb.login(key=config.wandb_api_key)
+
+        wandb.init(
+            project=config.wandb_project,
+            name=config.wandb_name,
+            config=config.__dict__,
+            mode="online" if config.apply_wandb else "disabled",
+        )
 
         # Validation variables and flags
         self._valid_metric = (
@@ -371,6 +390,7 @@ class Trainer:
         """
         if self.config.task_type == "classification":
             return self
+
         if self._training_dataset is None and self._scaler is None:
             logger.warning(
                 "Encounter regression task with no training dataset specified and label scaling disabled! "
@@ -378,11 +398,15 @@ class Trainer:
             )
             return self
 
+        # just to make sure that the lbs are not already standardized
+        self._training_dataset.toggle_standardized_lbs(False)
+
         lbs = copy.deepcopy(self._training_dataset.lbs)
         lbs[~self._training_dataset.masks.astype(bool)] = np.nan
         self._scaler = StandardScaler(replace_nan_token=0).fit(lbs)
 
-        self._training_dataset.update_lbs(self._scaler.transform(self._training_dataset.lbs))
+        if not self._training_dataset.has_standardized_lbs:
+            self._training_dataset.set_standardized_lbs(self._scaler.transform(self._training_dataset.lbs))
 
         return self
 
@@ -590,7 +614,7 @@ class Trainer:
 
         if self.config.test_on_training_data:
             logger.info("[SWAG] Testing on training data.")
-            self.test_on_training_data()
+            self.test_on_training_data(load_best_model=False)
 
         return self
 
@@ -653,7 +677,7 @@ class Trainer:
 
         if self.config.test_on_training_data:
             logger.info("[Temperature Scaling] Testing on training data.")
-            self.test_on_training_data()
+            self.test_on_training_data(load_best_model=False)
 
         return self
 
@@ -795,6 +819,7 @@ class Trainer:
         """
 
         self.model.to(self._device)
+        self.training_dataset.toggle_standardized_lbs(True)
         data_loader = self.get_dataloader(
             self.training_dataset if not use_valid_dataset else self.valid_dataset,
             shuffle=True,
@@ -836,6 +861,7 @@ class Trainer:
                 self._status.n_eval_no_improve = 0
                 break
 
+        self.training_dataset.toggle_standardized_lbs()
         return None
 
     def training_epoch(self, data_loader):
@@ -1160,7 +1186,7 @@ class Trainer:
 
         return None
 
-    def test(self, load_best_model=True):
+    def test(self, load_best_model=True, return_preds=False):
         """
         Test the model's performance on the test dataset.
 
@@ -1168,11 +1194,13 @@ class Trainer:
         ----------
         load_best_model : bool, optional
             Whether to load the best model saved during training for testing, default is True.
+        return_preds : bool, optional
+            Whether to return the predictions along with metrics, default is False.
 
         Returns
         -------
-        dict
-            Evaluation metrics for the test dataset.
+        dict, tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Evaluation metrics (and predictions) for the test dataset.
         """
         self.set_mode("test")
 
@@ -1207,7 +1235,7 @@ class Trainer:
 
         return metrics
 
-    def test_on_training_data(self, load_best_model=True):
+    def test_on_training_data(self, load_best_model=True, return_preds=False, disable_result_saving=False):
         """
         Test the model's performance on the training dataset.
 
@@ -1215,13 +1243,17 @@ class Trainer:
         ----------
         load_best_model : bool, optional
             Whether to load the best model saved during training for testing, default is True.
+        return_preds : bool, optional
+            Whether to return the predictions along with metrics, default is False.
 
         Returns
         -------
-        dict
-            Evaluation metrics for the test dataset.
+        dict, tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]
+            Evaluation metrics (and predictions) for the training dataset.
         """
         self.set_mode("test")
+        self._training_dataset.use_full_dataset = True
+        self._training_dataset.toggle_standardized_lbs(False)
 
         if load_best_model and self._checkpoint_container.state_dict:
             self._load_model_state_dict()
@@ -1236,23 +1268,27 @@ class Trainer:
                 preds = tuple([p.reshape(1, *p.shape) for p in preds])
 
         if isinstance(preds, np.ndarray):
+            means = preds
             variances = [None] * len(preds)
         elif isinstance(preds, tuple) and len(preds) == 2:
-            preds, variances = preds
+            means, variances = preds
         else:
             raise ValueError("Unrecognized type or shape of `preds`.")
 
-        for idx, (pred, variance) in enumerate(zip(preds, variances)):
-            file_path = op.join(self._status.result_dir, "preds-train", f"{idx}.pt")
-            self.save_results(
-                path=file_path,
-                preds=pred,
-                variances=variance,
-                lbs=self._test_dataset.lbs,
-                masks=self.test_dataset.masks,
-            )
+        if not disable_result_saving:
+            for idx, (mean, variance) in enumerate(zip(means, variances)):
+                file_path = op.join(self._status.result_dir, "preds-train", f"{idx}.pt")
+                self.save_results(
+                    path=file_path,
+                    preds=mean,
+                    variances=variance,
+                    lbs=self._test_dataset.lbs,
+                    masks=self.test_dataset.masks,
+                )
 
-        return metrics
+        self._training_dataset.use_full_dataset = False
+
+        return (metrics, preds) if return_preds else metrics
 
     def get_metrics(self, lbs, preds, masks):
         """
