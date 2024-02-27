@@ -1,11 +1,10 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: Implementation of (adjusted) TorchMD-NET.
 # Reference: Modified from https://github.com/shehzaidi/pre-training-via-denoising.
 """
-
 
 import re
 import torch
@@ -18,7 +17,7 @@ from .et import TorchMDET
 from .layers import EquivariantScalar, EquivariantVectorOutput
 from .modules import act_class_mapping
 
-from muben.base.model import OutputLayer
+from ..layers import OutputLayer
 
 logger = logging.getLogger(__name__)
 
@@ -76,15 +75,11 @@ class TorchMDNET(nn.Module):
             config["activation"],
             external_output_layer=True,
         )
-        self.output_model_noise = EquivariantVectorOutput(
-            config["embedding_dimension"], config["activation"]
-        )
+        self.output_model_noise = EquivariantVectorOutput(config["embedding_dimension"], config["activation"])
 
         self.dropout = nn.Dropout(config.dropout)
         self.activation = act_class_mapping[config.activation]()
-        self.linear = nn.Linear(
-            config.embedding_dimension // 2, config.embedding_dimension // 2
-        )
+        self.linear = nn.Linear(config.embedding_dimension // 2, config.embedding_dimension // 2)
 
         self.output_layer = OutputLayer(
             config.embedding_dimension // 2,
@@ -104,20 +99,13 @@ class TorchMDNET(nn.Module):
         return None
 
     def load_from_checkpoint(self, ckpt):
-        state_dict = {
-            re.sub(r"^model\.", "", k): v
-            for k, v in ckpt["state_dict"].items()
-        }
+        state_dict = {re.sub(r"^model\.", "", k): v for k, v in ckpt["state_dict"].items()}
         loading_return = self.load_state_dict(state_dict, strict=False)
 
         if len(loading_return.unexpected_keys) > 0:
-            logger.warning(
-                f"Unexpected model layers: {loading_return.unexpected_keys}"
-            )
+            logger.warning(f"Unexpected model layers: {loading_return.unexpected_keys}")
         if len(loading_return.missing_keys) > 0:
-            logger.warning(
-                f"Missing model layers: {loading_return.missing_keys}"
-            )
+            logger.warning(f"Missing model layers: {loading_return.missing_keys}")
         return self
 
     def forward(self, batch):
@@ -140,19 +128,13 @@ class TorchMDNET(nn.Module):
         assert atoms.dim() == 1 and atoms.dtype == torch.long
 
         # run the representation model
-        hidden, v, atoms, coords, batch = self.representation_model(
-            atoms, coords, batch=mol_ids
-        )
+        hidden, v, atoms, coords, batch = self.representation_model(atoms, coords, batch=mol_ids)
 
         # apply the output network
-        hidden = self.output_model.pre_reduce(
-            hidden, v, atoms, coords, mol_ids
-        )
+        hidden = self.output_model.pre_reduce(hidden, v, atoms, coords, mol_ids)
         # aggregate atoms
         hidden = scatter(hidden, mol_ids, dim=0, reduce="add")
 
-        out = self.output_layer(
-            self.dropout(self.activation(self.linear(self.dropout(hidden))))
-        )
+        out = self.output_layer(self.dropout(self.activation(self.linear(self.dropout(hidden)))))
 
         return out

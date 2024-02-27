@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: The Uni-Mol model
 # Reference: Modified from https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
@@ -13,10 +13,11 @@
 
 import logging
 import torch.nn as nn
+
+from ..layers import OutputLayer
 from .layers import init_bert_params
 from .encoder import TransformerEncoderWithPair
 from .module import NonLinearHead, DistanceHead, GaussianLayer
-from muben.base.model import OutputLayer
 
 
 logger = logging.getLogger(__name__)
@@ -41,9 +42,7 @@ class UniMol(nn.Module):
         super().__init__()
         self.config = config
         self.padding_idx = dictionary.pad()
-        self.embed_tokens = nn.Embedding(
-            len(dictionary), config.encoder_embed_dim, self.padding_idx
-        )
+        self.embed_tokens = nn.Embedding(len(dictionary), config.encoder_embed_dim, self.padding_idx)
         self._num_updates = None
         self.encoder = TransformerEncoderWithPair(
             encoder_layers=config.encoder_layers,
@@ -61,19 +60,13 @@ class UniMol(nn.Module):
 
         k = 128
         n_edge_type = len(dictionary) * len(dictionary)
-        self.gbf_proj = NonLinearHead(
-            k, config.encoder_attention_heads, config.activation_fn
-        )
+        self.gbf_proj = NonLinearHead(k, config.encoder_attention_heads, config.activation_fn)
         self.gbf = GaussianLayer(k, n_edge_type)
 
         if config.masked_coord_loss > 0:
-            self.pair2coord_proj = NonLinearHead(
-                config.encoder_attention_heads, 1, config.activation_fn
-            )
+            self.pair2coord_proj = NonLinearHead(config.encoder_attention_heads, 1, config.activation_fn)
         if config.masked_dist_loss > 0:
-            self.dist_head = DistanceHead(
-                config.encoder_attention_heads, config.activation_fn
-            )
+            self.dist_head = DistanceHead(config.encoder_attention_heads, config.activation_fn)
 
         self.apply(init_bert_params)
 
@@ -121,21 +114,13 @@ class UniMol(nn.Module):
             gbf_feature = self.gbf(dist, et)
             gbf_result = self.gbf_proj(gbf_feature)
             graph_attn_bias_inner = gbf_result
-            graph_attn_bias_inner = graph_attn_bias_inner.permute(
-                0, 3, 1, 2
-            ).contiguous()
-            graph_attn_bias_inner = graph_attn_bias_inner.view(
-                -1, n_node, n_node
-            )
+            graph_attn_bias_inner = graph_attn_bias_inner.permute(0, 3, 1, 2).contiguous()
+            graph_attn_bias_inner = graph_attn_bias_inner.view(-1, n_node, n_node)
             return graph_attn_bias_inner
 
         graph_attn_bias = get_dist_features(src_distance, src_edge_type)
-        encoder_rep, _, _, _, _ = self.encoder(
-            x, padding_mask=padding_mask, attn_mask=graph_attn_bias
-        )
+        encoder_rep, _, _, _, _ = self.encoder(x, padding_mask=padding_mask, attn_mask=graph_attn_bias)
 
-        hidden_state = self.hidden_layer(
-            encoder_rep[:, 0, :]
-        )  # take <s> token (equiv. to [CLS])
+        hidden_state = self.hidden_layer(encoder_rep[:, 0, :])  # take <s> token (equiv. to [CLS])
         logits = self.output_layer(hidden_state)
         return logits
