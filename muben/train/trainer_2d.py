@@ -10,7 +10,7 @@ import logging
 from ..gin.model import GIN
 from ..gin.args import Config
 
-from muben.base.train import Trainer as BaseTrainer
+from .trainer import Trainer as BaseTrainer
 
 logger = logging.getLogger(__name__)
 

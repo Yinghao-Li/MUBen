@@ -9,9 +9,8 @@ from abc import ABC
 
 import logging
 
-from muben.base.train import Trainer as BaseTrainer
 from ..chemberta.model import ChemBERTa
-from ..chemberta.args import Config
+from .trainer import Trainer as BaseTrainer
 
 logger = logging.getLogger(__name__)
 

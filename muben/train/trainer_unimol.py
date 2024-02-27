@@ -17,7 +17,7 @@ from muben.dataset.dataset_unimol import Collator, Dictionary
 from ..unimol.model import UniMol
 from ..unimol.args import Config
 from muben.utils.macro import UncertaintyMethods
-from muben.base.train import Trainer as BaseTrainer
+from .trainer import Trainer as BaseTrainer
 from muben.base.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 from muben.base.uncertainty.ts import TSModel
 

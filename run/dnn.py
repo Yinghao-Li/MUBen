@@ -18,7 +18,7 @@ from muben.utils.argparser import ArgumentParser
 from muben.dataset import DatasetRDKit, CollatorRDKit
 from muben.dnn.model import DNN
 from muben.dnn.args import Arguments, Config
-from muben.base.train import Trainer
+from muben.train import Trainer
 
 
 logger = logging.getLogger(__name__)

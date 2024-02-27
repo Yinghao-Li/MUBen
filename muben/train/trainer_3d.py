@@ -11,7 +11,7 @@ import logging
 from ..torchmdnet.model import TorchMDNET
 from ..torchmdnet.args import Config
 
-from muben.base.train import Trainer as BaseTrainer
+from .trainer import Trainer as BaseTrainer
 
 logger = logging.getLogger(__name__)
 

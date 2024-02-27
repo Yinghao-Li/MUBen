@@ -17,7 +17,7 @@ from ..grover.args import Config
 from ..grover.model import load_checkpoint
 from ..grover.uncertainty.ts import TSModel
 from muben.utils.macro import UncertaintyMethods
-from muben.base.train import Trainer as BaseTrainer
+from .trainer import Trainer as BaseTrainer
 
 logger = logging.getLogger(__name__)
 

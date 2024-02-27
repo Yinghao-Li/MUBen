@@ -36,9 +36,8 @@ from .metric import (
 from .state import TrainerState
 from .timer import Timer
 
-from ..args import Config
-from ..model import CheckpointContainer, UpdateCriteria
-from ..uncertainty import (
+from .container import CheckpointContainer, UpdateCriteria
+from muben.base.uncertainty import (
     SWAModel,
     update_bn,
     TSModel,
@@ -179,7 +178,7 @@ class Trainer:
         return self._model
 
     @property
-    def config(self) -> Config:
+    def config(self):
         """
         Retrieve the configuration of the Trainer.
 
