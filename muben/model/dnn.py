@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description: A simple deep neural network with customizable activation function.
 """
@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from typing import Optional
 
-from muben.base.model import OutputLayer
+from .layers import OutputLayer
 
 __all__ = ["DNN"]
 
@@ -94,9 +94,7 @@ class DNN(nn.Module):
         ]
         self.hidden_layers = nn.Sequential(*hidden_layers)
 
-        self.output_layer = OutputLayer(
-            hidden_dims[-1], n_lbs * n_tasks, uncertainty_method, **kwargs
-        )
+        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, uncertainty_method, **kwargs)
 
         self.initialize()
 

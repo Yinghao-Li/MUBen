@@ -7,10 +7,10 @@ import torch
 from torch import nn as nn
 from typing import List, Dict
 
+from ..layers import OutputLayer
 from .layers import Readout, GTransEncoder
 from .utils import get_activation_function, get_model_args
 from muben.dataset.dataset_grover.molgraph import get_atom_fdim, get_bond_fdim
-from muben.base.model import OutputLayer
 
 
 logger = logging.getLogger(__name__)

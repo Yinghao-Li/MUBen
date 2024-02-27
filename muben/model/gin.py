@@ -1,19 +1,18 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 27th, 2024
 # ---------------------------------------
 # Description:
 
 A simple GIN (Graph Isomorphism Network) architecture modified from the torch_geometric example.
 """
 
-
 import torch
 import torch.nn as nn
 import torch_geometric.nn as pygnn
 from typing import Optional
 
-from muben.base.model import OutputLayer
+from .layers import OutputLayer
 
 
 class GIN(nn.Module):
@@ -60,12 +59,8 @@ class GIN(nn.Module):
         """
         super().__init__()
         self.emb = nn.Embedding(max_atomic_num, d_hidden)
-        self.gnn = pygnn.GIN(
-            d_hidden, d_hidden, n_layers, dropout=dropout, jk="cat"
-        )
-        self.output_layer = OutputLayer(
-            d_hidden, n_lbs * n_tasks, uncertainty_method, **kwargs
-        )
+        self.gnn = pygnn.GIN(d_hidden, d_hidden, n_layers, dropout=dropout, jk="cat")
+        self.output_layer = OutputLayer(d_hidden, n_lbs * n_tasks, uncertainty_method, **kwargs)
 
     def forward(self, batch, **kwargs) -> torch.Tensor:
         """
