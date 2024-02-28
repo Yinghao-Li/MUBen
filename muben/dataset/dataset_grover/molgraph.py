@@ -305,7 +305,7 @@ class BatchMolGraph(Batch):
 
         for k, v in self.__dict__.items():
             if isinstance(v, torch.Tensor):
-                self.register_tensor_members(k, v)
+                self._register_tensor_members(k, v)
 
     @property
     def components(self):

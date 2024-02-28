@@ -1,9 +1,10 @@
 """
 # Author: Yinghao Li
-# Modified: November 23rd, 2023
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Base classes for dataset creation and batch processing.
 """
+
 import json
 import os
 import regex
@@ -315,15 +316,14 @@ class Batch:
 
     def __init__(self, **kwargs):
         self.size = 0
-        super().__init__()
         self._tensor_members = dict()
         for k, v in kwargs.items():
             if k == "batch_size":
                 self.size = v
             setattr(self, k, v)
-            self.register_tensor_members(k, v)
+            self._register_tensor_members(k, v)
 
-    def register_tensor_members(self, k, v):
+    def _register_tensor_members(self, k, v):
         """
         Register tensor members to the batch
         """

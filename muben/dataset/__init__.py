@@ -4,7 +4,7 @@ from .dataset_3d import Dataset3D, Collator3D
 from .dataset_rdkit import DatasetRDKit, CollatorRDKit
 from .dataset_linear import DatasetLinear, CollatorLinear
 from .dataset_unimol import DatasetUniMol, CollatorUniMol, DictionaryUniMol
-from .dataset_grover import DatasetGrover as DatasetGrover, CollatorGrover
+from .dataset_grover import DatasetGrover, CollatorGrover
 
 
 __all__ = [
