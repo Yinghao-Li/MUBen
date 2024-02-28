@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with GIN backbone model.
@@ -16,16 +16,16 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.dataset import Dataset2D, Collator2D
 from muben.model import GIN
-from muben.args import Arguments2D as Arguments, Config2D as Config
+from muben.args import Arguments2D as Arguments2D, Config2D as Config2D
 from muben.train import Trainer
 
 
 logger = logging.getLogger(__name__)
 
 
-def main(args: Arguments):
+def main(args: Arguments2D):
     # --- construct and validate configuration ---
-    config = Config().from_args(args).get_meta().validate().log()
+    config = Config2D().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
     training_dataset = Dataset2D().prepare(config=config, partition="train")
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(Arguments)
+    parser = ArgumentParser(Arguments2D)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Arguments(BaseArguments):
+class ArgumentsGrover(BaseArguments):
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(default="GROVER", metadata={"help": "Name of the model", "choices": MODEL_NAMES})
@@ -72,7 +72,7 @@ class Arguments(BaseArguments):
 
 
 @dataclass
-class Config(Arguments, BaseConfig):
+class ConfigGrover(ArgumentsGrover, BaseConfig):
     # activation function, will be overwritten during model loading
     activation = "PReLU"
     # weight decay, will be overwritten during model loading

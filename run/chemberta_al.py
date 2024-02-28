@@ -18,16 +18,16 @@ from transformers import set_seed
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.chemberta.dataset import Dataset
-from muben.args.args_linear import Arguments, Config
+from muben.args.args_linear import ArgumentsLinear, ConfigLinear
 from muben.train.trainer_string import Trainer
 
 
 logger = logging.getLogger(__name__)
 
 
-def main(args: Arguments):
+def main(args: ArgumentsLinear):
     # --- construct and validate configuration ---
-    config = Config().from_args(args).get_meta().validate().log()
+    config = ConfigLinear().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
     training_dataset = Dataset().prepare(config=config, partition="train").downsample_by(config.init_inst_path)
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(Arguments)
+    parser = ArgumentParser(ArgumentsLinear)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.

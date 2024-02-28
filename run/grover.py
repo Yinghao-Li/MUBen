@@ -18,16 +18,16 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.model import GROVER
 from muben.dataset import DatasetGrover, CollatorGrover
-from muben.args import ArgumentsGrover as Arguments, ConfigGrover as Config
+from muben.args import ArgumentsGrover as ArgumentsGrover, ConfigGrover as ConfigGrover
 from muben.train import TrainerGrover
 
 
 logger = logging.getLogger(__name__)
 
 
-def main(args: Arguments):
+def main(args: ArgumentsGrover):
     # --- construct and validate configuration ---
-    config = Config().from_args(args).get_meta().validate().log()
+    config = ConfigGrover().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
     training_dataset = DatasetGrover().prepare(config=config, partition="train")
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(Arguments)
+    parser = ArgumentParser(ArgumentsGrover)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.

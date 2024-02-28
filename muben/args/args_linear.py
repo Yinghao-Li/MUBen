@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Arguments(BaseArguments):
+class ArgumentsLinear(BaseArguments):
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
@@ -30,5 +30,5 @@ class Arguments(BaseArguments):
 
 
 @dataclass
-class Config(Arguments, BaseConfig):
+class ConfigLinear(ArgumentsLinear, BaseConfig):
     pass

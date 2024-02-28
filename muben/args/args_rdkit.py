@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Arguments(BaseArguments):
+class ArgumentsRDKit(BaseArguments):
 
     # --- Model Arguments ---
     model_name: Optional[str] = field(
@@ -44,7 +44,7 @@ class Arguments(BaseArguments):
 
 
 @dataclass
-class Config(Arguments, BaseConfig):
+class ConfigRDKit(ArgumentsRDKit, BaseConfig):
     """
     Configuration dataclass for the DNN model.
 

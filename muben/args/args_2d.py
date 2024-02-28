@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Arguments(BaseArguments):
+class Arguments2D(BaseArguments):
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
@@ -47,7 +47,7 @@ class Arguments(BaseArguments):
 
 
 @dataclass
-class Config(Arguments, BaseConfig):
+class Config2D(Arguments2D, BaseConfig):
     # Default hyperparameters of the checkpoint, should not be changed
     embedding_dimension = 256
     max_atomic_num = 100

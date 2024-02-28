@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with TorchMD-NET backbone model.
@@ -16,7 +16,7 @@ from transformers import set_seed
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.dataset import Dataset3D, Collator3D
-from muben.args.args_3d import Arguments, Config
+from muben.args.args_3d import Arguments3D, Config3D
 from muben.train import Trainer
 from muben.model import TorchMDNET
 
@@ -24,9 +24,9 @@ from muben.model import TorchMDNET
 logger = logging.getLogger(__name__)
 
 
-def main(args: Arguments):
+def main(args: Arguments3D):
     # --- construct and validate configuration ---
-    config = Config().from_args(args).get_meta().validate().log()
+    config = Config3D().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
     training_dataset = Dataset3D().prepare(config=config, partition="train")
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(Arguments)
+    parser = ArgumentParser(Arguments3D)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Arguments(BaseArguments):
+class ArgumentsUniMol(BaseArguments):
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
@@ -134,7 +134,7 @@ class Arguments(BaseArguments):
 
 
 @dataclass
-class Config(Arguments, BaseConfig):
+class ConfigUniMol(ArgumentsUniMol, BaseConfig):
     """
     Configuration class for Uni-Mol.
     """

@@ -16,16 +16,16 @@ from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.dataset import DatasetRDKit, CollatorRDKit
 from muben.model import DNN
-from muben.args import ArgumentsRDKit as Arguments, ConfigRDKit as Config
+from muben.args import ArgumentsRDKit as ArgumentsRDKit, ConfigRDKit as ConfigRDKit
 from muben.train import Trainer
 
 
 logger = logging.getLogger(__name__)
 
 
-def main(args: Arguments):
+def main(args: ArgumentsRDKit):
     # --- construct and validate configuration ---
-    config = Config().from_args(args).get_meta().validate().log()
+    config = ConfigRDKit().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
     training_dataset = DatasetRDKit().prepare(config=config, partition="train")
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(Arguments)
+    parser = ArgumentParser(ArgumentsRDKit)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.
