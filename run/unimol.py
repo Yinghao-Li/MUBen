@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with Uni-Mol backbone model.
@@ -14,9 +14,10 @@ from transformers import set_seed
 
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
-from muben.dataset import DatasetUniMol, DictionaryUniMol
+from muben.dataset import DatasetUniMol, DictionaryUniMol, CollatorUniMol
+from muben.model import UniMol
 from muben.args import ArgumentsUnimol as Arguments, ConfigUnimol as Config
-from muben.train.trainer_unimol import Trainer
+from muben.train import TrainerUnimol
 
 
 logger = logging.getLogger(__name__)
@@ -36,13 +37,15 @@ def main(args: Arguments):
     test_dataset = DatasetUniMol().prepare(config=config, partition="test", dictionary=dictionary)
 
     # --- initialize trainer ---
-    trainer = Trainer(
+    trainer = TrainerUnimol(
         config=config,
+        model_class=UniMol,
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
         dictionary=dictionary,
-    )
+        collate_fn=CollatorUniMol(config),
+    ).initialize(config=config)
 
     # --- run training and testing ---
     trainer.run()
