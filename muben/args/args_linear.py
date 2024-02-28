@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Special arguments and configurations for ChemBERTa.
 """
@@ -17,17 +17,18 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Arguments(BaseArguments):
-    """
-    Arguments regarding the training of Neural hidden Markov Model
-    """
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(
         default="ChemBERTa",
         metadata={"help": "Name of the model", "choices": MODEL_NAMES},
     )
+    pretrained_model_name_or_path: str = field(
+        default="DeepChem/ChemBERTa-77M-MLM",
+        metadata={"help": "The name or path of the Huggingface model to be used."},
+    )
 
 
 @dataclass
 class Config(Arguments, BaseConfig):
-    pretrained_model_name_or_path = "DeepChem/ChemBERTa-77M-MLM"
+    pass

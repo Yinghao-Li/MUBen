@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: GROVER arguments.
 """
@@ -18,9 +18,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Arguments(BaseArguments):
-    """
-    Grover fine-tuning/prediction arguments
-    """
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(default="GROVER", metadata={"help": "Name of the model", "choices": MODEL_NAMES})

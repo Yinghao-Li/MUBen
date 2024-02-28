@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: TorchMD-NET arguments.
 """
@@ -17,9 +17,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Arguments(BaseArguments):
-    """
-    Arguments regarding the training of Neural hidden Markov Model
-    """
 
     # --- Reload model arguments to adjust default values ---
     model_name: Optional[str] = field(

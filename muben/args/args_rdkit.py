@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Arguments for DNN model
 """
@@ -19,11 +19,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Arguments(BaseArguments):
-    """
-    Dataclass for arguments regarding the training of the DNN model.
-
-    Inherits from BaseArguments and adds specific fields relevant to the DNN model.
-    """
 
     # --- Model Arguments ---
     model_name: Optional[str] = field(

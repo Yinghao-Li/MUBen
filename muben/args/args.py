@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: December 1st, 2023
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Base classes for arguments and configurations.
 """
@@ -25,7 +25,7 @@ __all__ = ["Arguments", "Config"]
 @dataclass
 class Arguments:
     """
-    Arguments regarding the training of Neural hidden Markov Model
+    Arguments
     """
 
     # --- wandb parameters ---

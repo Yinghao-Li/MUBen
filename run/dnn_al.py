@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with DNN backbone model.
@@ -17,7 +17,7 @@ from transformers import set_seed
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
 from muben.dnn.dataset import Dataset
-from muben.args.args_dnn import Arguments, Config
+from muben.args.args_rdkit import Arguments, Config
 from muben.train.trainer_rdkit import Trainer
 
 
