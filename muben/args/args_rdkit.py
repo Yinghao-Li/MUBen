@@ -37,9 +37,13 @@ class ArgumentsRDKit(BaseArguments):
 
     # --- DNN Arguments ---
     n_dnn_hidden_layers: Optional[int] = field(default=8, metadata={"help": "The number of DNN hidden layers."})
-    d_dnn_hidden: Optional[int] = field(
+    d_dnn_hidden: int = field(
         default=128,
         metadata={"help": "The dimensionality of DNN hidden layers."},
+    )
+    activation: str = field(
+        default="ReLU",
+        metadata={"help": "The activation function for hidden layers."},
     )
 
 

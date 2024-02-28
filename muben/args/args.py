@@ -19,7 +19,19 @@ from muben.utils.io import prettify_json
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Arguments", "Config"]
+__all__ = ["DescriptorArguments", "Arguments", "Config"]
+
+
+@dataclass
+class DescriptorArguments:
+    """
+    Model type arguments
+    """
+
+    descriptor_type: str = field(
+        default=None,
+        metadata={"help": "Descriptor type", "choices": ["RDKit", "Linear", "2D", "3D"]},
+    )
 
 
 @dataclass
@@ -66,6 +78,10 @@ class Arguments:
     log_path: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the logging file. Set to `disabled` to disable log saving."},
+    )
+    descriptor_type: str = field(
+        default=None,
+        metadata={"help": "Descriptor type", "choices": ["RDKit", "Linear", "2D", "3D"]},
     )
 
     # --- Model Arguments ---

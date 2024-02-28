@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: A simple deep neural network with customizable activation function.
 """
@@ -31,19 +31,7 @@ class DNN(nn.Module):
         The final output layer.
     """
 
-    def __init__(
-        self,
-        d_feature: int,
-        n_lbs: int,
-        n_tasks: int,
-        n_hidden_layers: Optional[int] = 4,
-        d_hidden: Optional[int] = 128,
-        p_dropout: Optional[float] = 0.1,
-        hidden_dims: Optional[list] = None,
-        activation: Optional[str] = "ReLU",
-        uncertainty_method: Optional[int] = "none",
-        **kwargs
-    ):
+    def __init__(self, config, hidden_dims=None, **kwargs):
         """
         Initialize the DNN.
 
@@ -73,6 +61,17 @@ class DNN(nn.Module):
         """
         super().__init__()
 
+        d_feature = config.d_feature
+        n_lbs = config.n_lbs
+        n_tasks = config.n_tasks
+        n_hidden_layers = config.n_dnn_hidden_layers
+        d_hidden = config.d_dnn_hidden
+        p_dropout = config.dropout
+        uncertainty_method = config.uncertainty_method
+        activation = config.activation
+        task_type = config.task_type
+        bbp_prior_sigma = config.bbp_prior_sigma
+
         if hidden_dims is None:
             hidden_dims = [d_hidden] * (n_hidden_layers + 1)
         else:
@@ -94,7 +93,9 @@ class DNN(nn.Module):
         ]
         self.hidden_layers = nn.Sequential(*hidden_layers)
 
-        self.output_layer = OutputLayer(hidden_dims[-1], n_lbs * n_tasks, uncertainty_method, **kwargs)
+        self.output_layer = OutputLayer(
+            hidden_dims[-1], n_lbs * n_tasks, uncertainty_method, task_type=task_type, bbp_prior_sigma=bbp_prior_sigma
+        )
 
         self.initialize()
 

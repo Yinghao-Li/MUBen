@@ -1,4 +1,4 @@
-from .args import Arguments, Config
+from .args import Arguments, DescriptorArguments, Config
 from .args_2d import Arguments2D, Config2D
 from .args_3d import Arguments3D, Config3D
 from .args_rdkit import ArgumentsRDKit, ConfigRDKit
@@ -10,6 +10,7 @@ from .args_unimol import ArgumentsUniMol, ConfigUniMol
 __all__ = [
     "Arguments",
     "Config",
+    "DescriptorArguments",
     "Arguments2D",
     "Config2D",
     "Arguments3D",
