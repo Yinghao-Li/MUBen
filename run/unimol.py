@@ -43,9 +43,8 @@ def main(args: Arguments):
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
-        dictionary=dictionary,
-        collate_fn=CollatorUniMol(config),
-    ).initialize(config=config)
+        collate_fn=CollatorUniMol(config, atom_pad_idx=dictionary.pad()),
+    ).initialize(config=config, dictionary=dictionary)
 
     # --- run training and testing ---
     trainer.run()

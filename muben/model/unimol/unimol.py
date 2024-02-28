@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: The Uni-Mol model
 # Reference: Modified from https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
@@ -12,6 +12,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import logging
+import torch
 import torch.nn as nn
 
 from muben.layers import OutputLayer
@@ -83,6 +84,39 @@ class UniMol(nn.Module):
             task_type=config.task_type,
             bbp_prior_sigma=config.bbp_prior_sigma,
         )
+
+        state = self.load_checkpoint(self.config.checkpoint_path)
+        self.load_state_dict(state["model"], strict=False)
+
+    def load_checkpoint(self, path, arg_overrides=None):
+        """
+        Load a checkpoint to CPU.
+
+        If present, the function also applies overrides to arguments present
+        in the checkpoint.
+
+        Parameters
+        ----------
+        path : str
+            Path to the checkpoint file.
+        arg_overrides : dict, optional
+            Dictionary of arguments to be overridden in the loaded state.
+
+        Returns
+        -------
+        dict
+            Loaded state dictionary.
+        """
+        local_path = path
+        with open(local_path, "rb") as f:
+            state = torch.load(f, map_location=torch.device("cpu"))
+
+        if "args" in state and state["args"] is not None and arg_overrides is not None:
+            args = state["args"]
+            for arg_name, arg_val in arg_overrides.items():
+                setattr(args, arg_name, arg_val)
+
+        return state
 
     def forward(self, batch, **kwargs):
         """

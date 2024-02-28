@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Trainer for GROVER backbone
 """
@@ -13,8 +13,6 @@ import numpy as np
 import torch.nn.functional as F
 from scipy.special import expit
 
-from ..args.args_grover import Config
-from muben.model import load_grover_checkpoint as load_checkpoint
 from muben.model import GROVERTSModel as TSModel
 from muben.utils.macro import UncertaintyMethods
 from .trainer import Trainer as BaseTrainer
@@ -28,42 +26,6 @@ class Trainer(BaseTrainer, ABC):
 
     This class provides mechanisms for initializing, training, and inferring using the GROVER model.
     """
-
-    def __init__(
-        self,
-        config: Config,
-        training_dataset=None,
-        valid_dataset=None,
-        test_dataset=None,
-        collate_fn=None,
-        **kwargs,
-    ):
-        """
-        Initialize the GROVER Trainer.
-
-        Parameters
-        ----------
-        config : Config
-            Configuration object containing necessary hyperparameters and settings.
-        training_dataset : Dataset, optional
-            Dataset used for training.
-        valid_dataset : Dataset, optional
-            Dataset used for validation.
-        test_dataset : Dataset, optional
-            Dataset used for testing.
-        collate_fn : Collator, optional
-            Function to collate data. Default is None.
-
-        """
-
-        super().__init__(
-            config=config,
-            training_dataset=training_dataset,
-            valid_dataset=valid_dataset,
-            test_dataset=test_dataset,
-            collate_fn=collate_fn,
-            **kwargs,
-        )
 
     def ts_session(self):
         """

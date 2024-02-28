@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Trainer function for Uni-Mol.
 """
@@ -9,14 +9,10 @@ from abc import ABC
 
 import logging
 
-import torch
 import numpy as np
 from torch.optim import AdamW
 
 from .trainer import Trainer as BaseTrainer
-from muben.args import ConfigUnimol as Config
-from muben.model import UniMol
-from muben.dataset.dataset_unimol import Collator, Dictionary
 from muben.utils.macro import UncertaintyMethods
 from muben.uncertainty.sgld import SGLDOptimizer, PSGLDOptimizer
 from muben.uncertainty.ts import TSModel
@@ -28,68 +24,6 @@ class Trainer(BaseTrainer, ABC):
     """
     Trainer class responsible for training and managing the Uni-Mol model.
     """
-
-    def __init__(
-        self,
-        config,
-        training_dataset=None,
-        valid_dataset=None,
-        test_dataset=None,
-        collate_fn=None,
-        dictionary=None,
-        **kwargs,
-    ):
-        """
-        Initialize the Trainer.
-
-        Parameters
-        ----------
-        config : Config
-            Configuration object containing various parameters.
-        training_dataset : Dataset, optional
-            Dataset for training.
-        valid_dataset : Dataset, optional
-            Dataset for validation.
-        test_dataset : Dataset, optional
-            Dataset for testing.
-        collate_fn : callable, optional
-            Function to collate data samples into batches.
-        dictionary : Dictionary, optional
-            Dictionary containing symbols used in the training data.
-        """
-        # this should be before super.__init__ as we require self.dictionary to initialize model
-        if dictionary is None:
-            self.dictionary = Dictionary.load()
-            self.dictionary.add_symbol("[MASK]", is_special=True)
-        else:
-            self.dictionary = dictionary
-
-        if not collate_fn:
-            collate_fn = Collator(config, atom_pad_idx=self.dictionary.pad())
-
-        super().__init__(
-            config=config,
-            training_dataset=training_dataset,
-            valid_dataset=valid_dataset,
-            test_dataset=test_dataset,
-            collate_fn=collate_fn,
-            **kwargs,
-        )
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def initialize_model(self):
-        """
-        Load the UniMol model from a checkpoint.
-        """
-        self._model = UniMol(self.config, self.dictionary)
-
-        state = load_checkpoint_to_cpu(self.config.checkpoint_path)
-        model_loading_info = self._model.load_state_dict(state["model"], strict=False)
-        logger.info(model_loading_info)
-        return self
 
     def initialize_optimizer(self):
         """
@@ -186,34 +120,3 @@ class Trainer(BaseTrainer, ABC):
         metrics = super().test_on_training_data(load_best_model)
         self._training_dataset.set_processor_variant("training")
         return metrics
-
-
-def load_checkpoint_to_cpu(path, arg_overrides=None):
-    """
-    Load a checkpoint to CPU.
-
-    If present, the function also applies overrides to arguments present
-    in the checkpoint.
-
-    Parameters
-    ----------
-    path : str
-        Path to the checkpoint file.
-    arg_overrides : dict, optional
-        Dictionary of arguments to be overridden in the loaded state.
-
-    Returns
-    -------
-    dict
-        Loaded state dictionary.
-    """
-    local_path = path
-    with open(local_path, "rb") as f:
-        state = torch.load(f, map_location=torch.device("cpu"))
-
-    if "args" in state and state["args"] is not None and arg_overrides is not None:
-        args = state["args"]
-        for arg_name, arg_val in arg_overrides.items():
-            setattr(args, arg_name, arg_val)
-
-    return state
