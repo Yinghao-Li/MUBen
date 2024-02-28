@@ -8,12 +8,12 @@
 import logging
 
 from transformers import AutoTokenizer
-from muben.dataset.dataset import pack_instances, Dataset as BaseDataset
+from ..dataset import pack_instances, Dataset
 
 logger = logging.getLogger(__name__)
 
 
-class DatasetLinear(BaseDataset):
+class DatasetLinear(Dataset):
     """
     Dataset class for ChemBERTa.
 

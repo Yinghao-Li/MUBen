@@ -17,12 +17,12 @@ from muben.utils.chem import (
     atom_to_atom_ids,
 )
 from muben.utils.io import load_lmdb, load_unimol_preprocessed
-from ..dataset import pack_instances, Dataset as BaseDataset
+from ..dataset import pack_instances, Dataset
 
 logger = logging.getLogger(__name__)
 
 
-class Dataset3D(BaseDataset):
+class Dataset3D(Dataset):
     """
     TorchMD-NET dataset class.
 

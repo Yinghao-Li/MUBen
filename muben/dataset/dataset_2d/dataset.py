@@ -11,13 +11,13 @@ from tqdm.auto import tqdm
 from torch_geometric.data import Data
 
 from muben.utils.chem import smiles_to_2d_graph
-from ..dataset import pack_instances, Dataset as BaseDataset
+from ..dataset import pack_instances, Dataset
 
 
 logger = logging.getLogger(__name__)
 
 
-class Dataset2D(BaseDataset):
+class Dataset2D(Dataset):
     """
     Dataset tailored for the GIN model.
 

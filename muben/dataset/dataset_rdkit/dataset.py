@@ -11,7 +11,7 @@ import numpy as np
 from tqdm.auto import tqdm
 from multiprocessing import get_context
 
-from ..dataset import pack_instances, Dataset as BaseDataset
+from ..dataset import pack_instances, Dataset
 from muben.utils.chem import (
     rdkit_2d_features_normalized_generator,
     morgan_binary_features_generator,
@@ -20,7 +20,7 @@ from muben.utils.chem import (
 logger = logging.getLogger(__name__)
 
 
-class DatasetRDKit(BaseDataset):
+class DatasetRDKit(Dataset):
     """
     Dataset tailored for the Deep Neural Network (DNN) model.
 

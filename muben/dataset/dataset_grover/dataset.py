@@ -11,11 +11,11 @@ in the GROVER format.
 from tqdm.auto import tqdm
 from multiprocessing import get_context
 
-from ..dataset import pack_instances, Dataset as BaseDataset
+from ..dataset import pack_instances, Dataset
 from .molgraph import MolGraph, MolGraphAttrs
 
 
-class DatasetGrover(BaseDataset):
+class DatasetGrover(Dataset):
     def __init__(self) -> None:
         """
         Initialize the Dataset class.

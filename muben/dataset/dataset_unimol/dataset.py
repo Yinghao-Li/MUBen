@@ -11,16 +11,16 @@ from functools import partial
 from multiprocessing import get_context
 from tqdm.auto import tqdm
 
+from ..dataset import Dataset
 from .process import ProcessingPipeline
 from .dictionary import DictionaryUniMol
 from muben.utils.chem import smiles_to_coords
 from muben.utils.io import load_lmdb, load_unimol_preprocessed
-from muben.dataset.dataset import Dataset as BaseDataset
 
 logger = logging.getLogger(__name__)
 
 
-class DatasetUniMol(BaseDataset):
+class DatasetUniMol(Dataset):
     """
     The Dataset class.
 
