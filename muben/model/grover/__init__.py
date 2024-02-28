@@ -1,4 +1,4 @@
-from .model import GROVERFinetuneModel, load_checkpoint
+from .model import GROVER, load_checkpoint
 from .ts import TSModel
 
-__all__ = ["GROVERFinetuneModel", "load_checkpoint", "TSModel"]
+__all__ = ["GROVER", "load_checkpoint", "TSModel"]

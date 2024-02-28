@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with GROVER backbone model.
@@ -8,7 +8,6 @@
 
 import os
 import sys
-import wandb
 import logging
 from rdkit import RDLogger
 from datetime import datetime
@@ -20,7 +19,7 @@ from muben.utils.argparser import ArgumentParser
 from muben.model import GROVER
 from muben.dataset import DatasetGrover, CollatorGrover
 from muben.args import ArgumentsGrover as Arguments, ConfigGrover as Config
-from muben.train.trainer_grover import Trainer
+from muben.train import TrainerGrover
 
 
 logger = logging.getLogger(__name__)
@@ -36,8 +35,9 @@ def main(args: Arguments):
     test_dataset = DatasetGrover().prepare(config=config, partition="test")
 
     # --- initialize trainer ---
-    trainer = Trainer(
+    trainer = TrainerGrover(
         config=config,
+        model_class=GROVER,
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
