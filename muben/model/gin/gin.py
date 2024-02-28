@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description:
 
@@ -10,7 +10,6 @@ A simple GIN (Graph Isomorphism Network) architecture modified from the torch_ge
 import torch
 import torch.nn as nn
 import torch_geometric.nn as pygnn
-from typing import Optional
 
 from muben.layers import OutputLayer
 
@@ -23,17 +22,7 @@ class GIN(nn.Module):
     derive molecular representations that can be used for various prediction tasks.
     """
 
-    def __init__(
-        self,
-        n_lbs: int,
-        n_tasks: int,
-        max_atomic_num: int = 100,
-        d_hidden: int = 64,
-        n_layers: int = 3,
-        uncertainty_method: Optional[int] = "none",
-        dropout: float = 0.1,
-        **kwargs
-    ):
+    def __init__(self, config, **kwargs):
         """
         Initialize the GIN model.
 
@@ -54,13 +43,28 @@ class GIN(nn.Module):
             Method to be used for uncertainty estimation.
         dropout : float, optional, default=0.1
             Dropout rate for the GIN layers.
-        **kwargs
-            Additional keyword arguments for the OutputLayer.
         """
         super().__init__()
+
+        n_lbs = config.n_lbs
+        n_tasks = config.n_tasks
+        max_atomic_num = config.max_atomic_num
+        n_layers = config.n_gin_layers
+        d_hidden = config.d_gin_hidden
+        dropout = config.dropout
+        uncertainty_method = config.uncertainty_method
+        task_type = config.task_type
+        bbp_prior_sigma = config.bbp_prior_sigma
+
         self.emb = nn.Embedding(max_atomic_num, d_hidden)
         self.gnn = pygnn.GIN(d_hidden, d_hidden, n_layers, dropout=dropout, jk="cat")
-        self.output_layer = OutputLayer(d_hidden, n_lbs * n_tasks, uncertainty_method, **kwargs)
+        self.output_layer = OutputLayer(
+            d_hidden,
+            n_lbs * n_tasks,
+            uncertainty_method,
+            task_type=task_type,
+            bbp_prior_sigma=bbp_prior_sigma,
+        )
 
     def forward(self, batch, **kwargs) -> torch.Tensor:
         """

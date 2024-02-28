@@ -5,7 +5,6 @@
 # Description: GIN arguments.
 """
 
-import os.path as op
 import logging
 from typing import Optional
 from dataclasses import dataclass, field
