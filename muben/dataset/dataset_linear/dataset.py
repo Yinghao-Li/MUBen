@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Dataset for ChemBERTa.
 """
@@ -13,7 +13,7 @@ from muben.dataset.dataset import pack_instances, Dataset as BaseDataset
 logger = logging.getLogger(__name__)
 
 
-class Dataset(BaseDataset):
+class DatasetLinear(BaseDataset):
     """
     Dataset class for ChemBERTa.
 

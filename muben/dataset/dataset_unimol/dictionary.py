@@ -42,7 +42,7 @@ UNIMOL_DICT = [
 ]
 
 
-class Dictionary:
+class DictionaryUniMol:
     """A mapping from symbols to consecutive integers"""
 
     def __init__(
@@ -148,9 +148,7 @@ class Dictionary:
             except FileNotFoundError as fnfe:
                 raise fnfe
             except UnicodeError:
-                raise Exception(
-                    f"Incorrect encoding detected in {f}, please rebuild the dataset"
-                )
+                raise Exception(f"Incorrect encoding detected in {f}, please rebuild the dataset")
             return
 
         lines = f.readlines()
@@ -174,9 +172,7 @@ class Dictionary:
                 else:
                     self.add_symbol(word, n=count, overwrite=overwrite)
             except ValueError:
-                raise ValueError(
-                    "Incorrect dictionary format, expected '<token> <cnt> [flags]'"
-                )
+                raise ValueError("Incorrect dictionary format, expected '<token> <cnt> [flags]'")
 
     def add_from_macro(self, token_list):
         """

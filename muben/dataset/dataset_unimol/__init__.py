@@ -1,5 +1,5 @@
-from .dataset import Dataset
-from .dictionary import Dictionary
-from .collate import Collator
+from .dataset import DatasetUniMol
+from .dictionary import DictionaryUniMol
+from .collate import CollatorUniMol
 
-__all__ = ["Dataset", "Dictionary", "Collator"]
+__all__ = ["DatasetUniMol", "DictionaryUniMol", "CollatorUniMol"]

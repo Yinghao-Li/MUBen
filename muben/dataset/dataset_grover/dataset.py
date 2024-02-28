@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: GROVER Dataset.
 
@@ -15,7 +15,7 @@ from ..dataset import pack_instances, Dataset as BaseDataset
 from .molgraph import MolGraph, MolGraphAttrs
 
 
-class Dataset(BaseDataset):
+class DatasetGrover(BaseDataset):
     def __init__(self) -> None:
         """
         Initialize the Dataset class.
@@ -28,7 +28,7 @@ class Dataset(BaseDataset):
         super().__init__()
         self._molecule_graphs = None
 
-    def create_features(self, config: object) -> "Dataset":
+    def create_features(self, config: object) -> "DatasetGrover":
         """
         Create data features for molecules using multiple processes.
 

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Pre-process the data
 # Reference: https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
@@ -10,7 +10,7 @@ import torch
 import numpy as np
 from typing import List, Union, Optional
 from scipy.spatial import distance_matrix
-from .dictionary import Dictionary
+from .dictionary import DictionaryUniMol
 
 Matrix = Union[torch.Tensor, np.ndarray]  # to separate from list
 
@@ -37,7 +37,7 @@ class ProcessingPipeline:
 
     def __init__(
         self,
-        dictionary: Dictionary,
+        dictionary: DictionaryUniMol,
         coordinate_padding: Optional[float] = 0.0,
         max_atoms: Optional[int] = 256,
         max_seq_len: Optional[int] = 512,
@@ -77,25 +77,19 @@ class ProcessingPipeline:
         atoms, coordinates = cropping(atoms, coordinates, self._max_atoms)
 
         atoms = tokenize_atoms(atoms, self._dictionary, self._max_seq_len)
-        atoms = prepend_and_append(
-            atoms, self._dictionary.bos(), self._dictionary.eos()
-        )
+        atoms = prepend_and_append(atoms, self._dictionary.bos(), self._dictionary.eos())
 
         edge_types = get_edge_type(atoms, len(self._dictionary))
 
         coordinates = normalize_coordinates(coordinates)
         coordinates = from_numpy(coordinates)
-        coordinates = prepend_and_append(
-            coordinates, self._coordinate_padding, self._coordinate_padding
-        )
+        coordinates = prepend_and_append(coordinates, self._coordinate_padding, self._coordinate_padding)
 
         distances = get_distance(coordinates)
 
         return atoms, coordinates, distances, edge_types
 
-    def process_training(
-        self, atoms: List[str], coordinates: List[np.ndarray]
-    ):
+    def process_training(self, atoms: List[str], coordinates: List[np.ndarray]):
         """
         Instance processing during the training phase.
 
@@ -113,9 +107,7 @@ class ProcessingPipeline:
         """
         coordinates = conformer_sampling(coordinates)
         atoms = np.array(atoms)
-        atoms, coordinates, distances, edge_types = self.process_instance(
-            atoms, coordinates
-        )
+        atoms, coordinates, distances, edge_types = self.process_instance(atoms, coordinates)
 
         return (
             atoms.unsqueeze(0),
@@ -124,9 +116,7 @@ class ProcessingPipeline:
             edge_types.unsqueeze(0),
         )
 
-    def process_inference(
-        self, atoms: List[str], coordinates: List[np.ndarray]
-    ):
+    def process_inference(self, atoms: List[str], coordinates: List[np.ndarray]):
         """
         Instance processing during the inference phase.
 
@@ -180,9 +170,7 @@ def conformer_sampling(coordinates: List[Matrix]):
     Matrix
         Sampled coordinates.
     """
-    assert (
-        len(coordinates) == 11
-    )  # number of conformations defined in the paper
+    assert len(coordinates) == 11  # number of conformations defined in the paper
 
     size = len(coordinates)
     sample_idx = np.random.randint(size)
@@ -306,7 +294,7 @@ def normalize_coordinates(coordinates: Matrix):
     return coordinates
 
 
-def tokenize_atoms(atoms: np.ndarray, dictionary: Dictionary, max_seq_len=512):
+def tokenize_atoms(atoms: np.ndarray, dictionary: DictionaryUniMol, max_seq_len=512):
     """
     Convert atom names to tokens using a provided dictionary.
 
@@ -350,12 +338,8 @@ def prepend_and_append(item: torch.Tensor, prepend_value, append_value):
     torch.Tensor
         The modified tensor after prepending and appending the specified values.
     """
-    item = torch.cat(
-        [torch.full_like(item[0], prepend_value).unsqueeze(0), item], dim=0
-    )
-    item = torch.cat(
-        [item, torch.full_like(item[0], append_value).unsqueeze(0)], dim=0
-    )
+    item = torch.cat([torch.full_like(item[0], prepend_value).unsqueeze(0), item], dim=0)
+    item = torch.cat([item, torch.full_like(item[0], append_value).unsqueeze(0)], dim=0)
     return item
 
 

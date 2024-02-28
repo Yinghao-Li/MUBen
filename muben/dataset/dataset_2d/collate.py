@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Collate function for the GIN (Graph Isomorphism Network) model.
 """
@@ -15,7 +15,7 @@ from ..dataset import Batch, unpack_instances
 logger = logging.getLogger(__name__)
 
 
-class Collator:
+class Collator2D:
     """
     Collator for the GIN model.
 

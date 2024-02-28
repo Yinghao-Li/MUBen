@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Dataset class for Uni-Mol
 """
@@ -12,7 +12,7 @@ from multiprocessing import get_context
 from tqdm.auto import tqdm
 
 from .process import ProcessingPipeline
-from .dictionary import Dictionary
+from .dictionary import DictionaryUniMol
 from muben.utils.chem import smiles_to_coords
 from muben.utils.io import load_lmdb, load_unimol_preprocessed
 from muben.dataset.dataset import Dataset as BaseDataset
@@ -20,7 +20,7 @@ from muben.dataset.dataset import Dataset as BaseDataset
 logger = logging.getLogger(__name__)
 
 
-class Dataset(BaseDataset):
+class DatasetUniMol(BaseDataset):
     """
     The Dataset class.
 
@@ -116,7 +116,7 @@ class Dataset(BaseDataset):
         self._partition = partition
 
         if not dictionary:
-            dictionary = Dictionary.load()
+            dictionary = DictionaryUniMol.load()
             dictionary.add_symbol("[MASK]", is_special=True)
 
         processor_variant = "training" if partition == "train" else "inference"

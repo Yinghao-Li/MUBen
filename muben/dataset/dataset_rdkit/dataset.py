@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: DNN Dataset.
 """
@@ -20,7 +20,7 @@ from muben.utils.chem import (
 logger = logging.getLogger(__name__)
 
 
-class Dataset(BaseDataset):
+class DatasetRDKit(BaseDataset):
     """
     Dataset tailored for the Deep Neural Network (DNN) model.
 

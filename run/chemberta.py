@@ -15,7 +15,7 @@ from transformers import set_seed
 
 from muben.utils.io import set_logging, set_log_path
 from muben.utils.argparser import ArgumentParser
-from muben.dataset import DatasetString, CollatorString
+from muben.dataset import DatasetLinear, CollatorLinear
 from muben.model import LinearTransformer
 from muben.args import ArgumentsLinear as Arguments, ConfigLinear as Config
 from muben.train import Trainer
@@ -29,9 +29,9 @@ def main(args: Arguments):
     config = Config().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
-    training_dataset = DatasetString().prepare(config=config, partition="train")
-    valid_dataset = DatasetString().prepare(config=config, partition="valid")
-    test_dataset = DatasetString().prepare(config=config, partition="test")
+    training_dataset = DatasetLinear().prepare(config=config, partition="train")
+    valid_dataset = DatasetLinear().prepare(config=config, partition="valid")
+    test_dataset = DatasetLinear().prepare(config=config, partition="test")
 
     # --- initialize trainer ---
     trainer = Trainer(
@@ -40,7 +40,7 @@ def main(args: Arguments):
         training_dataset=training_dataset,
         valid_dataset=valid_dataset,
         test_dataset=test_dataset,
-        collate_fn=CollatorString(config),
+        collate_fn=CollatorLinear(config),
     ).initialize(
         bert_model_name_or_path=config.pretrained_model_name_or_path,
         n_lbs=config.n_lbs,

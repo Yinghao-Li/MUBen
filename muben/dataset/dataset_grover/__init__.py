@@ -1,5 +1,5 @@
-from .dataset import Dataset
+from .dataset import DatasetGrover
 from .molgraph import BatchMolGraph
-from .collate import Collator
+from .collate import CollatorGrover
 
-__all__ = ["Dataset", "BatchMolGraph", "Collator"]
+__all__ = ["DatasetGrover", "BatchMolGraph", "CollatorGrover"]

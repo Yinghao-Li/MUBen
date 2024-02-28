@@ -1,4 +1,4 @@
-from .dataset import Dataset
-from .collate import Collator
+from .dataset import DatasetRDKit
+from .collate import CollatorRDKit
 
-__all__ = ["Dataset", "Collator"]
+__all__ = ["DatasetRDKit", "CollatorRDKit"]

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description: Data collator for DNN
 """
@@ -15,7 +15,7 @@ from ..dataset import Batch, unpack_instances
 logger = logging.getLogger(__name__)
 
 
-class Collator:
+class CollatorRDKit:
     """
     Collator for creating data batches for the Deep Neural Network (DNN).
 

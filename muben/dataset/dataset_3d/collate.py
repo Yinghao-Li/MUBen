@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 28th, 2024
 # ---------------------------------------
 # Description:
 
@@ -19,7 +19,7 @@ from ..dataset import Batch, unpack_instances
 logger = logging.getLogger(__name__)
 
 
-class Collator:
+class Collator3D:
     """
     Collator class for aggregating individual data instances into a batch.
 

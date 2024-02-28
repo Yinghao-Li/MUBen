@@ -1,10 +1,10 @@
-from .dataset_2d import Dataset as Dataset2D, Collator as Collator2D
-from .dataset_3d import Dataset as Dataset3D, Collator as Collator3D
-from .dataset_rdkit import Dataset as DatasetRDKit, Collator as CollatorRDKit
-from .dataset_string import Dataset as DatasetString, Collator as CollatorString
-from .dataset_unimol import Dataset as DatasetUniMol, Collator as CollatorUniMol, Dictionary as DictionaryUniMol
-from .dataset_grover import Dataset as DatasetGrover, Collator as CollatorGrover
 from .dataset import Dataset, Batch
+from .dataset_2d import Dataset2D, Collator2D
+from .dataset_3d import Dataset3D, Collator3D
+from .dataset_rdkit import DatasetRDKit, CollatorRDKit
+from .dataset_linear import DatasetLinear, CollatorLinear
+from .dataset_unimol import DatasetUniMol, CollatorUniMol, DictionaryUniMol
+from .dataset_grover import DatasetGrover as DatasetGrover, CollatorGrover
 
 
 __all__ = [
@@ -14,8 +14,8 @@ __all__ = [
     "Collator3D",
     "DatasetRDKit",
     "CollatorRDKit",
-    "DatasetString",
-    "CollatorString",
+    "DatasetLinear",
+    "CollatorLinear",
     "DatasetUniMol",
     "CollatorUniMol",
     "DictionaryUniMol",

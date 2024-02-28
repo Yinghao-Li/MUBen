@@ -1,4 +1,4 @@
-from .collate import Collator
-from .dataset import Dataset
+from .collate import Collator2D
+from .dataset import Dataset2D
 
-__all__ = ["Collator", "Dataset"]
+__all__ = ["Collator2D", "Dataset2D"]
