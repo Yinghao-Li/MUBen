@@ -3,10 +3,19 @@
 In the following, we give a brief introduction to our experiment pipeline, which might be helpful if you would like to replicate our results or extend MUBen to other datasets, backbone models, or uncertainty quantification (UQ) methods.
 You can also find the example in this [Jupyter Notebook](https://github.com/Yinghao-Li/MUBen/blob/main/demo/demo.ipynb).
 
-## Preparation
+## Installation
 
-Currently, we do not provide Python wheels for installation as we aim to expose as many implementation details as possible.
-You are recommended to directly use or modify the source code to conduct your experiments.
+Our project is hosted on [pypi](https://pypi.org/project/muben/) as a Python package.
+If you would like to use `MUBen` as a package without editing the source code, you can install it via `pip install`.
+```bash
+pip install muben
+```
+
+!!! warning
+    Our current package does not include data or post-processing functions.
+    To access the data, you still need to clone the repo or download the files manually.
+
+As an alternative approach, you are recommended to directly use or modify the source code to conduct your experiments.
 To do that, you can first `fork` the project and `clone` it to local with `git clone`.
 ```bash
 git clone https://github.com/<your GitHub username>/MUBen.git
@@ -40,12 +49,12 @@ pip install -r requirements.txt
 ```
 
 ### Docker
-Alternatively, you can run this project in a docker container.
-You can build your image through
+You can also run this project in a docker container.
+The docker image can be built through `docker build`.
 ```bash
 docker build -t muben ./docker
 ```
-and run your container in the terminal with
+And `docker run` is the command to start your container in the terminal.
 ```bash
 docker run --gpus all -it --rm  muben
 ```

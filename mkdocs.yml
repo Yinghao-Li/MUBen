@@ -3,7 +3,11 @@ site_name: MUBen - Documentation
 nav:
   - About: index.md
   - Get Started: started.md
+  - Project Overview: overview.md
 
 theme: readthedocs
+
+markdown_extensions:
+  - admonition
 
 extra_css: [extra.css]
