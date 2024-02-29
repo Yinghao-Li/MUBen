@@ -1,9 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: February 28th, 2024
+# Modified: February 29th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
-               with DNN backbone model.
+               with various backbone models.
 """
 
 import os
