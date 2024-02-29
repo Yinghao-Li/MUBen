@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 27th, 2024
+# Modified: February 29th, 2024
 # ---------------------------------------
 # Description: 
 
@@ -23,7 +23,23 @@ class OutputLayer(nn.Module):
     """
     Customizable output layer for various backbone models.
 
-    This class provides an interface to add an output layer with or without uncertainty methods.
+    This class provides an interface to add an output layer with or without uncertainty methods
+    to various backbone models. It supports both classification and regression tasks and allows
+    for the introduction of uncertainty into the model's output.
+
+    Args:
+        last_hidden_dim (int): Dimensionality of the last hidden state from the backbone model.
+        n_output_heads (int): Number of output heads (e.g., number of classes for classification).
+        uncertainty_method (str, optional): Method to introduce uncertainty in the output layer.
+            Available methods are defined in UncertaintyMethods. Defaults to UncertaintyMethods.none.
+        task_type (str, optional): Type of task - "classification" or "regression". Defaults to "classification".
+        **kwargs: Additional keyword arguments to be passed to the specific output layers.
+
+    Attributes:
+        _uncertainty_method (str): The uncertainty method used in the output layer.
+        _task_type (str): The type of task the model is configured for (classification or regression).
+        output_layer (nn.Module): The specific output layer instance used in the model.
+        kld (Optional[torch.Tensor]): Kullback-Leibler Divergence for Bayesian methods, if applicable.
     """
 
     def __init__(
@@ -35,21 +51,15 @@ class OutputLayer(nn.Module):
         **kwargs
     ):
         """
-        Initialize the model output layer.
+        Initializes the OutputLayer instance.
 
-        Parameters
-        ----------
-        last_hidden_dim : int
-            Dimensionality of the last hidden state from the backbone model.
-        n_output_heads : int
-            Number of output heads (e.g., number of classes for classification).
-        uncertainty_method : str, optional
-            Method to introduce uncertainty in the output layer.
-            Available methods are defined in UncertaintyMethods.
-        task_type : str, optional
-            Type of task - "classification" or "regression".
-        kwargs : dict
-            Additional keyword arguments to be passed to the specific output layers.
+        Args:
+            last_hidden_dim (int): Dimensionality of the last hidden state from the backbone model.
+            n_output_heads (int): Number of output heads (e.g., number of classes for classification).
+            uncertainty_method (str, optional): Method to introduce uncertainty in the output layer.
+                Available methods are defined in UncertaintyMethods. Defaults to UncertaintyMethods.none.
+            task_type (str, optional): Type of task - "classification" or "regression". Defaults to "classification".
+            **kwargs: Additional keyword arguments to be passed to the specific output layers.
         """
 
         super().__init__()
@@ -71,15 +81,14 @@ class OutputLayer(nn.Module):
 
     def initialize(self) -> "OutputLayer":
         """
-        Initialize the weights of the output layer.
+        Initializes the weights of the output layer.
 
         Different initializations are applied based on the uncertainty method and task type.
 
-        Returns
-        -------
-        OutputLayer
-            Initialized model instance.
+        Returns:
+            OutputLayer: The initialized model instance.
         """
+
         if self._uncertainty_method == UncertaintyMethods.bbp:
             self.output_layer.initialize()
             self.kld = None
@@ -94,16 +103,13 @@ class OutputLayer(nn.Module):
         """
         Forward pass of the output layer.
 
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input tensor for the output layer.
+        Args:
+            x (torch.Tensor): Input tensor for the output layer.
 
-        Returns
-        -------
-        logits : torch.Tensor
-            The output logits or values of the model.
+        Returns:
+            torch.Tensor: The output logits or values of the model.
         """
+
         if self._uncertainty_method == UncertaintyMethods.bbp:
             logits, self.kld = self.output_layer(x)
         else:
