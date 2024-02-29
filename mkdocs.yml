@@ -1,0 +1,7 @@
+site_name: MUBen - Documentation
+
+nav:
+  - About: index.md
+  - Get Started: started.md
+
+theme: readthedocs
