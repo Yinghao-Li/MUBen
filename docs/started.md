@@ -3,7 +3,7 @@
 In the following, we give a brief introduction to our experiment pipeline, which might be helpful if you would like to replicate our results or extend MUBen to other datasets, backbone models, or uncertainty quantification (UQ) methods.
 You can also find the example in this [Jupyter Notebook](https://github.com/Yinghao-Li/MUBen/blob/main/demo/demo.ipynb).
 
-## Code preparation
+## Preparation
 
 Currently, we do not provide Python wheels for installation as we aim to expose as many implementation details as possible.
 You are recommended to directly use or modify the source code to conduct your experiments.

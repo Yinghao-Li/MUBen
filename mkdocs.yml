@@ -5,3 +5,5 @@ nav:
   - Get Started: started.md
 
 theme: readthedocs
+
+extra_css: [extra.css]
