@@ -1,8 +1,8 @@
 """
 # Author: Yinghao Li
-# Modified: February 28th, 2024
+# Modified: February 29th, 2024
 # ---------------------------------------
-# Description: Base classes for dataset creation and batch processing.
+# Description: This module includes base classes for dataset creation and batch processing.
 """
 
 import json
@@ -29,14 +29,16 @@ class Dataset(TorchDataset):
     Custom Dataset class to handle data storage, manipulation, and preprocessing operations.
 
     Attributes:
-        _smiles (Union[list[str], None]): Chemical structures represented as strings.
-        _lbs (Union[np.ndarray, None]): Label data.
-        _masks (Union[np.ndarray, None]): Data masks.
-        _ori_ids (Union[np.ndarray, None]): Original IDs, specifically useful for randomly split datasets.
+        smiles (Union[list[str], None]): Chemical structures represented as strings.
+        lbs (Union[np.ndarray, None]): data labels.
+        masks (Union[np.ndarray, None]): Data masks.
+        _ori_ids (Union[np.ndarray, None]): Original IDs of the datapoints,
+            specifically used for randomly split datasets.
         data_instances: Packed instances of data.
     """
 
     def __init__(self):
+        """Initialize the Dataset class."""
         super().__init__()
 
         self._smiles: Union[list[str], None] = None
@@ -55,42 +57,36 @@ class Dataset(TorchDataset):
 
     @property
     def data_instances(self):
-        """
-        Be careful with this property and the setter below
-        """
+        """Returns the current data instances, considering whether the full dataset or a selection is being used."""
         if self.use_full_dataset:
             return self.data_instances_all
         return self.data_instances_selected if self.data_instances_selected is not None else self.data_instances_all
 
     @data_instances.setter
     def data_instances(self, x):
-        """
-        Be careful with this property and the setter below
-        """
+        """Sets the data instances."""
         self.data_instances_all = x
 
     @property
     def smiles(self) -> list[str]:
+        """Returns the chemical structures represented as strings."""
         return self._smiles
 
     @property
     def lbs(self) -> np.ndarray:
+        """Returns the label data, considering whether standardized labels are being used."""
         if self.has_standardized_lbs and self._use_standardized_lbs:
             return self._lbs_standardized
         return self._lbs
 
     def toggle_standardized_lbs(self, use_standardized_lbs: bool = None):
-        """
-        Toggle between standardized and unstandardized labels
+        """Toggle between using standardized and unstandardized labels.
 
-        Parameters
-        ----------
-        use_standardized_lbs: bool, optional
-            whether to use standardized labels
+        Args:
+            use_standardized_lbs (bool, optional): Whether to use standardized labels. Defaults to None.
 
-        Returns
-        -------
-        self
+        Returns:
+            self (Dataset): The dataset with the standardized labels toggled.
         """
         if use_standardized_lbs is None:
             self._use_standardized_lbs = not self._use_standardized_lbs
@@ -104,47 +100,57 @@ class Dataset(TorchDataset):
 
     @cached_property
     def masks(self) -> np.ndarray:
-        """
-        Return masks, and if not present, generate masks with ones.
-        """
+        """Returns the data masks, generating masks with ones if not present."""
         return self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
 
     def __len__(self):
+        """Returns the length of the dataset."""
         if self.data_instances is not None:
             return len(self.data_instances)
         return len(self._smiles)
 
     def __getitem__(self, idx):
+        """Gets the dataset item at the specified index."""
         return self.data_instances[idx]
 
     def update_lbs(self, lbs):
-        """
-        Update dataset labels and instance list accordingly
+        """Updates the dataset labels and the instance list accordingly.
+
+        Args:
+            lbs: The new labels.
+
+        Returns:
+            self (Dataset): The dataset with the updated labels.
         """
         self._lbs = lbs
         self.data_instances = self.get_instances()
         return self
 
     def set_standardized_lbs(self, lbs):
-        """
-        Update dataset labels and instance list accordingly
+        """Sets standardized labels and updates the instance list accordingly.
+
+        Args:
+            lbs: The standardized label data.
+
+        Returns:
+            self (Dataset): The dataset with the standardized labels set.
         """
         self._lbs_standardized = lbs
         self.has_standardized_lbs = True
         return self
 
     def prepare(self, config, partition, **kwargs):
-        """
-        Prepare dataset for training and test
+        """Prepares the dataset for training and testing.
 
-        Parameters
-        ----------
-        config: configurations
-        partition: dataset partition; in [train, valid, test]
+        Args:
+            config: Configuration parameters.
+            partition (str): The dataset partition; should be one of 'train', 'valid', 'test'.
 
-        Returns
-        -------
-        self
+        Raises:
+            ValueError: If `partition` is not one of 'train', 'valid', 'test'.
+
+        Returns:
+            self (Dataset): The prepared dataset.
         """
 
         assert partition in ["train", "valid", "test"], ValueError(
@@ -182,19 +188,17 @@ class Dataset(TorchDataset):
         return self
 
     def downsample_by(self, file_path: str = None, ids: list[int] = None):
-        """
-        Down-sample the instances to a subset with the specified indices
+        """Downsamples the dataset to a subset with the specified indices.
 
-        Parameters
-        ----------
-        file_path: str, optional
-            path to the file containing the indices of the selected instances
-        ids: list[int], optional
-            indices of the selected instances
+        Args:
+            file_path (str, optional): Path to the file containing the indices of the selected instances.
+            ids (list[int], optional): Indices of the selected instances.
 
-        Returns
-        -------
-        self
+        Raises:
+            ValueError: If neither `ids` nor `file_path` is specified.
+
+        Returns:
+            self (Dataset): The downsampled dataset.
         """
         assert ids is not None or file_path is not None, ValueError("Either `ids` or `file_path` should be specified!")
 
@@ -207,18 +211,16 @@ class Dataset(TorchDataset):
         return self
 
     def add_sample_by_ids(self, ids: list[int] = None):
-        """
-        Append a subset of data instances to the data_instances_selected
+        """Appends a subset of data instances to the selected data instances.
 
+        Args:
+            ids (list[int], optional): Indices of the selected instances.
 
-        Parameters
-        ----------
-        ids: list[int], optional
-            indices of the selected instances
+        Raises:
+            ValueError: If `ids` is not specified.
 
-        Returns
-        -------
-        self
+        Returns:
+            self (Dataset): The dataset with the added data instances.
         """
         assert ids is not None, ValueError("`ids` should be specified!")
 
@@ -232,31 +234,32 @@ class Dataset(TorchDataset):
 
         return self
 
-    # noinspection PyTypeChecker
     def create_features(self, config):
-        """
-        Create data features
+        """Creates data features. This method should be implemented by subclasses
+        to generate data features according to different descriptors or fingerprints.
 
-        Returns
-        -------
-        self
+        Raises:
+            NotImplementedError: This method should be implemented by subclasses.
         """
         raise NotImplementedError
 
     def get_instances(self):
+        """Gets the instances of the dataset. This method should be implemented by subclasses
+        to pack data, labels, and masks into data instances.
+
+        Raises:
+            NotImplementedError: This method should be implemented by subclasses.
+        """
         raise NotImplementedError
 
     def save(self, file_path: str):
-        """
-        Save the entire dataset for future usage
+        """Saves the entire dataset for future use.
 
-        Parameters
-        ----------
-        file_path: path to the saved file
+        Args:
+            file_path (str): Path to the save file.
 
-        Returns
-        -------
-        self
+        Returns:
+            self (Dataset)
         """
         attr_dict = dict()
         for attr, value in self.__dict__.items():
@@ -269,16 +272,13 @@ class Dataset(TorchDataset):
         return self
 
     def load(self, file_path: str):
-        """
-        Load the entire dataset from disk
+        """Loads the entire dataset from disk.
 
-        Parameters
-        ----------
-        file_path: path to the saved file
+        Args:
+            file_path (str): Path to the saved file.
 
-        Returns
-        -------
-        self
+        Returns:
+            self (Dataset)
         """
         attr_dict = torch.load(file_path)
 
@@ -291,8 +291,17 @@ class Dataset(TorchDataset):
         return self
 
     def read_csv(self, data_dir: str, partition: str):
-        """
-        Read data from csv files
+        """Reads data from CSV files.
+
+        Args:
+            data_dir (str): The directory where data files are stored.
+            partition (str): The dataset partition ('train', 'valid', 'test').
+
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+
+        Returns:
+            self (Dataset)
         """
         file_path = os.path.normpath(os.path.join(data_dir, f"{partition}.csv"))
         logger.info(f"Loading dataset {file_path}")
@@ -310,11 +319,22 @@ class Dataset(TorchDataset):
 
 
 class Batch:
-    """
-    A batch of data instances, each is initialized with a dict with attribute names as keys
+    """Represents a batch of data instances, where each instance is initialized with attributes provided as keyword arguments.
+
+    Each attribute name acts as a key to its corresponding value, allowing for flexible data handling within a batched context.
+
+    Attributes:
+        size (int): The size of the batch. Defaults to 0.
+        _tensor_members (dict): A dictionary to keep track of tensor attributes for device transfer operations.
     """
 
     def __init__(self, **kwargs):
+        """Initializes a Batch object with dynamic attributes based on the provided keyword arguments.
+
+        Args:
+            **kwargs: Arbitrary keyword arguments representing attributes of data instances within the batch.
+                      A special keyword 'batch_size' can be used to explicitly set the batch size.
+        """
         self.size = 0
         self._tensor_members = dict()
         for k, v in kwargs.items():
@@ -324,28 +344,47 @@ class Batch:
             self._register_tensor_members(k, v)
 
     def _register_tensor_members(self, k, v):
-        """
-        Register tensor members to the batch
+        """Registers tensor attributes for later device transfer operations.
+
+        Args:
+            k (str): The name of the attribute.
+            v: The value of the attribute, expected to be a tensor or an object with a 'to' method.
         """
         if isinstance(v, torch.Tensor) or callable(getattr(v, "to", None)):
             self._tensor_members[k] = v
 
     def to(self, device):
-        """
-        Move all tensor members to the target device
+        """Moves all tensor attributes to the specified device (cpu, cuda).
+
+        Args:
+            device: The target device to move the tensor attributes to.
+
+        Returns:
+            self: The batch instance with its tensor attributes moved to the specified device.
         """
         for k, v in self._tensor_members.items():
             setattr(self, k, v.to(device))
         return self
 
     def __len__(self):
+        """Determines the length of the batch.
+
+        Returns:
+            int: The number of instances in the batch, determined by the size of the first tensor attribute if present, or the explicitly set batch size.
+        """
         return len(tuple(self._tensor_members.values())[0]) if not self.size else self.size
 
 
 def pack_instances(**kwargs) -> list[dict]:
-    """
-    Convert attribute lists to a list of data instances, each is a dict with attribute names as keys
-    and one datapoint attribute values as values
+    """Converts lists of attributes into a list of data instances.
+
+    Each data instance is represented as a dictionary with attribute names as keys and the corresponding data point values as values.
+
+    Args:
+        **kwargs: Variable length keyword arguments, where each key is an attribute name and its value is a list of data points.
+
+    Returns:
+        List[Dict]: A list of dictionaries, each representing a data instance.
     """
 
     instance_list = list()
@@ -358,16 +397,17 @@ def pack_instances(**kwargs) -> list[dict]:
     return instance_list
 
 
-def unpack_instances(instance_list: list[dict], attr_names: Optional[list[str]] = None):
-    """
-    Convert a list of dict-type instances to a list of value lists,
-    each contains all values within a batch of each attribute
+def unpack_instances(instance_list: list[dict], attr_names: list[str] = None):
+    """Converts a list of dictionaries (data instances) back into lists of attribute values.
 
-    Parameters
-    ----------
-    instance_list: a list of attributes
-    attr_names: the name of the needed attributes. Notice that this variable should be specified
-        for Python versions that does not natively support ordered dict
+    This function is essentially the inverse of `pack_instances`.
+
+    Args:
+        instance_list (List[Dict]): A list of data instances, where each instance is a dictionary with attribute names as keys.
+        attr_names ([List[str]], optional): A list of attribute names to extract. If not provided, all attributes found in the first instance are used.
+
+    Returns:
+        List[List]: A list of lists, where each sublist contains all values for a particular attribute across all instances.
     """
     if not attr_names:
         attr_names = list(instance_list[0].keys())
