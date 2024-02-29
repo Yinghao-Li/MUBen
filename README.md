@@ -98,7 +98,7 @@ conda create --name <env_name> --file requirements.txt
 ```
 
 ### Docker
-Ulternatively, you can run this project in a docker container.
+Alternatively, you can run this project in a docker container.
 You can build your image through
 ```bash
 docker build -t muben ./docker
