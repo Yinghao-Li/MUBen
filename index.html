@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>MUBen - Documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "About";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> MUBen - Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">About</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#about">About</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#backbones">Backbones</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#uncertainty-quantification-methods">Uncertainty Quantification Methods</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#data">Data</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#data_1">Data</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#other-options">Other Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#using-customized-datasets">Using Customized Datasets</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#run">Run</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#logging-and-wandb">Logging and WandB</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#data-loading">Data Loading</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#calculating-metrics">Calculating Metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#results">Results</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ongoing-works">Ongoing Works</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#active-learning">Active Learning</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#citation">Citation</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="started/">Get Started</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">MUBen - Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">About</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="muben-documentation">MUBen Documentation</h1>
+<p>This is the documentation for <a href="https://github.com/Yinghao-Li/MUBen/">MUBen</a>: Mulecular Uncertainty Benchmark.</p>
+<p>The code is built to expose implementation details as much as possible and be easily extendable.
+Questions and suggestions are welcome if you find any issues while using our code.</p>
+<h2 id="about">About</h2>
+<p>MUBen is a benchmark that aims to investigate the performance of uncertainty quantification (UQ) methods built upon backbone molecular representation models.
+It implements 6 backbone models (4 pre-trained and 2 non-pre-trained), 8 UQ methods (8 compatible for classification and 6 for regression), and 14 datasets from <a href="https://moleculenet.org/">MoleculeNet</a> (8 for classification and 6 for regression).
+We are actively expanding the benchmark to include more backbones, UQ methods and datasets.
+This is an arduous task, and we welcome contribution or collaboration in any form.</p>
+<h3 id="backbones">Backbones</h3>
+<table>
+<thead>
+<tr>
+<th>Backbone Models</th>
+<th>Paper</th>
+<th>Official Repo</th>
+<th>Our Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Pre-Trained Backbones</em></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ChemBERTa</td>
+<td><a href="https://arxiv.org/abs/2209.01712">link</a></td>
+<td><a href="https://github.com/seyonechithrananda/bert-loves-chemistry">link</a></td>
+<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/chemberta">link</a></td>
+</tr>
+<tr>
+<td>GROVER</td>
+<td><a href="https://arxiv.org/abs/2007.02835">link</a></td>
+<td><a href="https://github.com/tencent-ailab/grover">link</a></td>
+<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/grover">link</a></td>
+</tr>
+<tr>
+<td>Uni-Mol</td>
+<td><a href="https://openreview.net/forum?id=6K2RM6wVqKu">link</a></td>
+<td><a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol">link</a></td>
+<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/unimol">link</a></td>
+</tr>
+<tr>
+<td>TorchMD-NET</td>
+<td><a href="https://arxiv.org/abs/2202.02541">Architecture</a>; <a href="https://arxiv.org/abs/2206.00133">Pre-training</a></td>
+<td><a href="https://github.com/shehzaidi/pre-training-via-denoising">link</a></td>
+<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/torchmdnet">link</a></td>
+</tr>
+<tr>
+<td><em>Non-Pre-Trained Backbones</em></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DNN</td>
+<td>-</td>
+<td>-</td>
+<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/dnn">link</a></td>
+</tr>
+<tr>
+<td>GIN</td>
+<td><a href="https://arxiv.org/pdf/1810.00826.pdf">link</a></td>
+<td><a href="https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.GIN.html">pyg</a></td>
+<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/gin">link</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="uncertainty-quantification-methods">Uncertainty Quantification Methods</h3>
+<table>
+<thead>
+<tr>
+<th>UQ Method</th>
+<th>Classification</th>
+<th>Regression</th>
+<th>Paper</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deterministic</td>
+<td>✅︎</td>
+<td>✅︎</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Temperature Scaling</td>
+<td>✅︎</td>
+<td>-</td>
+<td><a href="https://arxiv.org/abs/1706.04599">link</a></td>
+</tr>
+<tr>
+<td>Focal Loss</td>
+<td>✅︎</td>
+<td>-</td>
+<td><a href="https://arxiv.org/abs/1708.02002">link</a></td>
+</tr>
+<tr>
+<td>Deep Ensembles</td>
+<td>✅︎</td>
+<td>✅︎</td>
+<td><a href="https://arxiv.org/abs/1612.01474">link</a></td>
+</tr>
+<tr>
+<td>SWAG</td>
+<td>✅︎</td>
+<td>✅︎</td>
+<td><a href="https://arxiv.org/abs/1808.05326">link</a></td>
+</tr>
+<tr>
+<td>Bayes by Backprop</td>
+<td>✅︎</td>
+<td>✅︎</td>
+<td><a href="https://arxiv.org/abs/1505.05424">link</a></td>
+</tr>
+<tr>
+<td>SGLD</td>
+<td>✅︎</td>
+<td>✅︎</td>
+<td><a href="https://www.stats.ox.ac.uk/~teh/research/compstats/WelTeh2011a.pdf">link</a></td>
+</tr>
+<tr>
+<td>MC Dropout</td>
+<td>✅︎</td>
+<td>✅︎</td>
+<td><a href="https://arxiv.org/abs/1506.02142">link</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="data">Data</h3>
+<p>Please check <a href="https://moleculenet.org/datasets-1">MoleculeNet</a> for a detailed description.
+We use a subset of the MoleculeNet benckmark, including BBBP, Tox21, ToxCast, SIDER, ClinTox, BACE, MUV, HIV, ESOL, FreeSolv, Lipophilicity, QM7, QM8, QM9.</p>
+<h2 id="data_1">Data</h2>
+<blockquote>
+<p>A set of partitioned datasets are already included in this repo. You can find them under the <code>./data/</code> folder: [<a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files">scaffold split</a>]; [<a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files-random">random split</a>].</p>
+</blockquote>
+<p>We utilize the datasets prepared by <a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol">Uni-Mol</a>.
+You find the data <a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol#:~:text=pockets.tar.gz-,molecular%20property,-3.506GB">here</a> or directly download it through <a href="https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz">this link</a>.
+We place the unzipped files into <code>./data/UniMol</code> by default.
+For convenience, you are suggested to rename the <code>qm7dft</code>, <code>qm8dft</code>, and <code>qm9dft</code> folders to <code>qm7</code>, <code>qm8</code>, and <code>qm9</code>.</p>
+<p>Afterwards, you can transfer the dataset format into ours by running</p>
+<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./assist/dataset_build_from_unimol.py
+</code></pre>
+<p>suppose you are in the project root directory.
+You can specify the input (Uni-Mol) and output data directories with <code>--unimol_data_dir</code> and <code>--output_dir</code> arguments.
+The script will convert <em>all</em> datasets by default (excluding PCBA).
+If you want to specify a subset of datasets, you can specify the argument <code>--dataset_names</code> with the target dataset names with lowercase letters.</p>
+<p><strong>Notice</strong>: If you would like to run the Uni-Mol model, you are suggested to keep the original <code>UniMol</code> data as we will use the pre-defined molecule conformations.
+Otherwise, it is safe to remove the original data.</p>
+<h3 id="other-options">Other Options</h3>
+<p>If you do not want to use Uni-Mol data, you can try the scripts within the <code>legacy</code> folder, including <code>build_dgllife_datasets.py</code>, and <code>build_qm[7,8,9]_dataset.py</code>.
+Notice that this may result in training/validation/test partitions different from what is being used in our experiments.</p>
+<h3 id="using-customized-datasets">Using Customized Datasets</h3>
+<p>If you want to test the UQ methods on your own dataset, you can use <code>pandas.DataFrame</code> structure with the following keys:</p>
+<pre><code>{
+  &quot;smiles&quot;: list of `str`,
+  &quot;labels&quot;: list of list of int/float,
+  &quot;masks&quot;: list of list of int/float (with values within {0,1})
+}
+</code></pre>
+<p>and store them as <code>train.csv</code>, <code>valid.csv</code>, and <code>test.csv</code> files.
+<code>mask=1</code> indicates the existence informative label at the position and <code>mask=0</code> indicates missing label.
+You can check the prepared datasets included in our program for reference.
+You are recommended to put the dataset files in the <code>./data/file/&lt;dataset name&gt;</code> directory, but you can of course choose your favorite location and specify the <code>--data_folder</code> argument.</p>
+<p>The <code>.csv</code> files should be accompanied by a <code>meta.json</code> file within the same directory.
+It stores some constant dataset properties, <em>e.g.</em>, <code>task_type</code> (classification or regression), <code>n_tasks</code>, or <code>classes</code> (<code>[0,1]</code> for all our classification datasets).
+For the customized dataset, one <strong>required</strong> property is the <code>eval_metric</code> for validation and test (<em>e.g.</em>, roc-auc, rmse, <em>etc.</em>) since it is not specified in the macro file.
+Please refer to <code>./assist/dataset_build_roe.py</code> for an example (unfortunately, we are not allowed to release the dataset).</p>
+<h2 id="run">Run</h2>
+<p>A simple demo of running our project can be found at <code>./demo/demo.ipynb</code>.</p>
+<p>To run each of the four backbone models with uncertainty estimation methods, you can check the <code>run_*.py</code> files in the root directory.
+Example shell scripts are provided in the <code>./scripts</code> folder as <code>.sh</code> files.
+You can use them through</p>
+<pre><code class="language-bash">./scripts/run_dnn_rdkit.sh &lt;CUDA_VISIBLE_DEVICES&gt;
+</code></pre>
+<p>as an example.
+Notice that we need to comment out the variables <code>train_on_&lt;dataset name&gt;</code> in the <code>.sh</code> files to skip training on the corresponding datasets.
+Setting their value to <code>false</code> <strong>does not work</strong>.</p>
+<p>Another way of specifying arguments is through the <code>.json</code> scripts, for example:</p>
+<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; CUDA_VISIBLE_DEVICES=0 python ./run/dnn.py ./scripts/config_dnn.json
+</code></pre>
+<p>This approach could be helpful for debugging the code through vscode.</p>
+<p>To get a detailed description of each argument, you can use <code>--help</code>:</p>
+<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./run/dnn.py --help
+</code></pre>
+<h3 id="logging-and-wandb">Logging and WandB</h3>
+<p>By default, this project uses local logging files (<code>*.log</code>) and <a href="https://wandb.ai/site">WandB</a> to track training status.</p>
+<p>The log files are stored as <code>./logs/&lt;dataset&gt;/&lt;model&gt;/&lt;uncertainty&gt;/&lt;running_time&gt;.log</code>.
+You can change the file path by specifying the <code>--log_path</code> argument, or disable log saving by setting <code>--log_path="disabled"</code>.</p>
+<p>To use WandB, you first need to register an account and sign in on your machine with <code>wandb login</code>.
+If you are running your code on a public device, you can instead use program-wise signing in by specifying the <code>--wandb_api_key</code> argument while running our code.
+You can find your API key in your browser here: https://wandb.ai/authorize.
+To disable WandB, use <code>--disable_wandb [true]</code>.
+By default, we use <code>MUBen-&lt;dataset&gt;</code> as WandB project name and <code>&lt;model&gt;-&lt;uncertainty&gt;</code> as the model name.
+You can change this behavior by specifying the <code>--wandb_project</code> and <code>--wandb_name</code> arguments.</p>
+<h3 id="data-loading">Data Loading</h3>
+<p>The progress will automatically create the necessary features (molecular descriptors) required by backbone models from the SMILES strings if they are loaded properly.
+The processed features are stored in the <code>&lt;bottom-level data folder&gt;/processed/</code> directory as <code>&lt;train/valid/test&gt;.pt</code> files by default, and will be automatically loaded the next time you apply the same backbone model on the same dataset.
+You can change this behavior with <code>--disable_dataset_saving</code> for disabling dataset saving or <code>--ignore_preprocessed_dataset</code> for not loading from the saved (processed) dataset.</p>
+<p>Constructing Morgan fingerprint, RDKit features or 3D conformations for Uni-Mol may take a while.
+You can accelerate this process by utilizing multiple threads <code>--num_preprocess_workers=n&gt;1</code> (default is 8).
+For 3D conformations, we directly take advantage of the results from Uni-Mol but still keep the choice of generating them by ourselves if the Uni-Mol data files are not found.</p>
+<h3 id="calculating-metrics">Calculating Metrics</h3>
+<p>During training, we only calculate metrics necessary for early stopping and simple prediction performance evaluation.
+To get other metrics, you need to use the <code>./assist/results_get_metrics.py</code> file.</p>
+<p>Specifically, you need to save the model predictions by <strong>not</strong> setting <code>--disable_dataset_saving</code>.
+The results are saved as <code>./&lt;result_folder&gt;/&lt;dataset_name&gt;/&lt;model_name&gt;/&lt;uncertainty_method&gt;/seed-&lt;seed&gt;/preds/&lt;test_idx&gt;.pt</code> files.
+When the training is finished, you can run the <code>./assist/results_get_metrics.py</code> file to generate all metrics for your model predictions.
+For example:</p>
+<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./assist/results_get_metrics.py ./scripts/config_metrics.json
+</code></pre>
+<p>Make sure the hyper-parameters in the configuration file are updated to your needs.</p>
+<p>The metrics will be saved in the <code>./&lt;result_folder&gt;/RESULTS/&lt;model_name&gt;-&lt;dataset_name&gt;.csv</code> files.
+~~Notice that these files already exist in the repo if you keep the default <code>--result_folder=./output</code> argument and you need to check whether it is updated to reveal your experiment results.~~</p>
+<h3 id="results">Results</h3>
+<p>We provided a more comprehensive copy of our experiment results <a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/output">here</a> that are presented in the tables in our paper's appendix.
+We hope it can ease some effort if you want to further analyze the behavior of our backbone models and uncertainty quantification methods. </p>
+<h2 id="ongoing-works">Ongoing Works</h2>
+<h3 id="active-learning">Active Learning</h3>
+<p>We are developing code to integrate <em>active learning</em> into the pipeline.
+Specifically, we assume we have a small set of labeled data points (<code>--n_init_instances</code>) at the beginning.
+Within each active learning iteration, we use the labeled dataset to fine-tune the model parameters and select a batch of data points (<code>--n_al_select</code>) from the unlabeled set with the least predicted certainty (<em>i.e.</em>, max predicted entropy for classification and max predicted variance for regression).
+The process is repeated for several loops (<code>--n_al_loops</code>), and the intermediate performance is tracked.</p>
+<p>The code is still under construction and currently is <strong>only available under the <code>dev</code> branch</strong>.
+In addition, several points are worth attention:</p>
+<ul>
+<li>Currently, only DNN and ChemBERTa backbones are supported (<code>./run/dnn_al.py</code> and <code>./run/chemberta_al.py</code>). Migrating AL to other backbones is not difficult but requires updating some Trainer functions if they are reloaded.</li>
+<li>To enable active learning, make sure you set <code>--enable_active_learning</code> to <code>true</code>.</li>
+<li>Currently, Deep Ensembles is not supported for AL.</li>
+<li>We cannot guarantee the correctness of our implementation. If you notice any abnormalities in the code, please do not hesitate to post an issue.</li>
+</ul>
+<p>One example is</p>
+<pre><code class="language-bash">python ./run/dnn_al.py \
+  --enable_active_learning \
+  --n_init_instances 100 \
+  --n_al_loops 20 \
+  --n_al_select 20 \
+  # other model and training hyper-parameters...
+</code></pre>
+<h2 id="citation">Citation</h2>
+<p>If you find our work helpful, please consider citing it as</p>
+<pre><code class="language-latex">@misc{li2023muben,
+    title={MUBen: Benchmarking the Uncertainty of Pre-Trained Models for Molecular Property Prediction},
+    author={Yinghao Li and Lingkai Kong and Yuanqi Du and Yue Yu and Yuchen Zhuang and Wenhao Mu and Chao Zhang},
+    year={2023},
+    eprint={2306.10060},
+    archivePrefix={arXiv},
+    primaryClass={physics.chem-ph}
+}
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="started/" class="btn btn-neutral float-right" title="Get Started">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="started/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.5.3
+Build Date UTC : 2024-02-29 00:44:40.082667+00:00
+-->

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Get Started - MUBen - Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Get Started";
+        var mkdocs_page_input_path = "started.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> MUBen - Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">About</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Get Started</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#code-preparation">Code preparation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#docker">Docker</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#external-dependencies">External dependencies</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#a-simple-example">A simple example</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#importing-packages">Importing packages</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#deterministic-method-training">Deterministic method -- training</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#temperature-scaling-training">Temperature Scaling -- training</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#evaluation">Evaluation</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MUBen - Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Get Started</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="get-started">Get Started</h1>
+<p>In the following, we give a brief introduction to our experiment pipeline, which might be helpful if you would like to replicate our results or extend MUBen to other datasets, backbone models, or uncertainty quantification (UQ) methods.
+You can also find the example in this <a href="https://github.com/Yinghao-Li/MUBen/blob/main/demo/demo.ipynb">Jupyter Notebook</a>.</p>
+<h2 id="code-preparation">Code preparation</h2>
+<p>Currently, we do not provide Python wheels for installation as we aim to expose as many implementation details as possible.
+You are recommended to directly use or modify the source code to conduct your experiments.
+To do that, you can first <code>fork</code> the project and <code>clone</code> it to local with <code>git clone</code>.</p>
+<pre><code class="language-bash">git clone https://github.com/&lt;your GitHub username&gt;/MUBen.git
+</code></pre>
+<p>Or, you can directly clone this repository with <code>git</code> or GitHub CLI suppose you do not intend to do change tracking.</p>
+<pre><code class="language-bash"># clone with git
+git clone https://github.com/Yinghao-Li/MUBen.git
+
+# or, you can clone with GitHub CLI
+gh repo clone Yinghao-Li/MUBen
+</code></pre>
+<p>The following operations assume that you are already in the project root directory <code>MUBen/</code>.</p>
+<h2 id="requirements">Requirements</h2>
+<p>Our code is developed with <code>Python 3.10</code>.
+Notice that it may <strong>not</strong> work with <code>Python &lt; 3.9</code>.
+It is recommended to create a new <code>conda</code> environment for this project.</p>
+<pre><code class="language-bash">conda create -n muben python=3.10
+</code></pre>
+<p>The required packages are listed in <code>requirements.txt</code>.
+It is recommended to install these dependencies with <code>pip install</code> as <code>conda install</code> may sometimes encounter dependency resolution issue.</p>
+<pre><code class="language-bash">conda activate muben
+pip install -r requirements.txt
+</code></pre>
+<h3 id="docker">Docker</h3>
+<p>Alternatively, you can run this project in a docker container.
+You can build your image through</p>
+<pre><code class="language-bash">docker build -t muben ./docker
+</code></pre>
+<p>and run your container in the terminal with</p>
+<pre><code class="language-bash">docker run --gpus all -it --rm  muben
+</code></pre>
+<h3 id="external-dependencies">External dependencies</h3>
+<p>The backbone models <code>GROVER</code> and <code>Uni-Mol</code> require loading pre-trained model checkpoints.</p>
+<ul>
+<li>The <code>GROVER-base</code> checkpoint is available at GROVER's <a href="https://github.com/tencent-ailab/grover">project repo</a> or can be directly downloaded through <a href="https://ai.tencent.com/ailab/ml/ml-data/grover-models/pretrain/grover_base.tar.gz">this link</a>.
+Unzip the downloaded <code>.tar.gz</code> file to get the <code>.pt</code> checkpoint.</li>
+<li>The <code>Uni-Mol</code> checkpoint is available at Uni-Mol's <a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol">project repo</a> or can be directly downloaded through <a href="https://github.com/dptech-corp/Uni-Mol/releases/download/v0.1/mol_pre_no_h_220816.pt">this link</a>.</li>
+</ul>
+<p>By default, the code will look for the models at locations <code>./models/grover_base.pt</code> and <code>./models/unimol_base.pt</code>, respectively.
+You need to specify the <code>--checkpoint_path</code> argument if you prefer other locations and checkpoint names.</p>
+<h2 id="a-simple-example">A simple example</h2>
+<p>In this demonstration, we'll guide you through foundational training and testing of MUBen using the BBBP dataset as a minimal example.
+We've chosen the DNN as our backbone model because it is both efficient and offers satisfactory performance.
+For uncertainty quantification (UQ), we'll evaluate both the Deterministic method (referred to as "none" within MUBen) and Temperature Scaling.
+While the procedures for other backbone models, UQ methods, or datasets are largely similar, you can explore specific variations by referring to API documentation.</p>
+<h3 id="importing-packages">Importing packages</h3>
+<p>The first step is to import all the necessary packages from the MUBen source code that defines the datasets, backbone models, UQ methods, and trainers.</p>
+<pre><code class="language-python">import logging
+import wandb
+from transformers import set_seed
+
+from muben.utils.selectors import configure_selector, dataset_selector, model_selector
+from muben.train import Trainer
+from muben.utils.io import set_logging
+
+# initialize logger
+logger = logging.getLogger(__name__)
+</code></pre>
+<h3 id="deterministic-method-training">Deterministic method -- training</h3>
+<p>We first train the DNN model Deterministically.
+That is, we do not apply any UQ method to the model.
+Instead, we directly use its post-output-activation probabilities as its estimated reliability to its prediction.</p>
+<p>Here we pass necessary hyper-parameters to the configuration to control the training process.</p>
+<pre><code class="language-python"># Set up the logging format and random seed.
+# We do not use wandb for this demo, so we set its mode to &quot;disabled&quot;.
+set_logging()
+set_seed(42)
+wandb.init(mode=&quot;disabled&quot;,)
+
+# Select the classes based on the descriptor type.
+# DNN uses RDKit features, so we set the descriptor type to RDKit and select configuration, dataset,
+# and model classes according to it.
+descriptor_type = &quot;RDKit&quot;
+config_class = configure_selector(descriptor_type)
+dataset_class = dataset_selector(descriptor_type)
+model_class = model_selector(descriptor_type)
+
+# Specify the configuration of the experiment.
+# Notice that although we directly edit the config object here, a more appropriate way of doing this is 
+# passing arguments through the shell or json scripts when we are running the experiments through the terminal.
+config = config_class()
+config.model_name = &quot;DNN&quot;
+config.feature_type = &quot;rdkit&quot;
+config.data_folder = &quot;../data/files/&quot;
+config.dataset_name = &quot;bbbp&quot;
+config.result_folder = &quot;../output-demo/&quot;
+config.uncertainty_method = &quot;none&quot;  # here &quot;none&quot; refers to &quot;Deterministic&quot;
+config.retrain_model = True
+
+# We only train the model for a few epochs for the demo.
+config.n_epochs = 50
+# activate training timer
+config.time_training = True
+
+# Post initialization of the arguments.
+config.__post_init__()
+
+# Load dataset metadata, validate the arguments, and log the configuration.
+_ = config.get_meta().validate().log()
+</code></pre>
+<p>The configuration details are printed out in your terminal by calling <code>config.log()</code>.</p>
+<p>Similar to configuration, we automatically infer the dataset and collate function classes according to the descriptor type we set above.
+Then, we initialize the training, validation, and test datasets.</p>
+<pre><code class="language-python"># Load and process the training, validation and test datasets
+dataset_class, collator_class = dataset_selector(descriptor_type)
+training_dataset = dataset_class().prepare(config=config, partition=&quot;train&quot;)
+valid_dataset = dataset_class().prepare(config=config, partition=&quot;valid&quot;)
+test_dataset = dataset_class().prepare(config=config, partition=&quot;test&quot;)
+</code></pre>
+<p>Afterward, we can initialize the trainer and model with our configuration.
+<code>model_selector</code> automatically detects the model type according to the descriptor.
+In this case, <a href="https://github.com/Yinghao-Li/MUBen/blob/0972667c69a3543ce0f6c3ce7689407d97dac153/muben/model/dnn/dnn.py#L17"><code>DNN</code></a> is the selected model.
+Then, the trainer initializes the model with arguments defined in the configuration.</p>
+<pre><code class="language-python"># Inintialized the trainer with the configuration and datasets
+# Inintialized the trainer with the configuration and datasets
+trainer = Trainer(
+    config=config,
+    model_class=model_selector(descriptor_type),
+    training_dataset=training_dataset,
+    valid_dataset=valid_dataset,
+    test_dataset=test_dataset,
+    collate_fn=collator_class(config),
+).initialize(config=config)
+</code></pre>
+<p>Once the trainer is initialized, we can call <code>trainer.run()</code> to do the training.</p>
+<pre><code class="language-python"># Run the training, validation and test process.
+# The model checkpoint and predicted results will be automatically saved in the specified output folder.
+trainer.run()
+</code></pre>
+<h3 id="temperature-scaling-training">Temperature Scaling -- training</h3>
+<p>Training the DNN model with Temperature Scaling is basically identical to training with the Deterministic method.
+The only difference is that we need to define the <code>uncertainty_method</code> in <code>config</code> as <code>"TemperatureScaling"</code> instead of <code>"none"</code>.</p>
+<pre><code class="language-python">wandb.init(mode=&quot;disabled&quot;,)
+# Change some configuration items.
+config.uncertainty_method = &quot;TemperatureScaling&quot;
+config.retrain_model = False
+config.n_ts_epochs = 10  # number of epochs for training the temperature scaling layer.
+config.__post_init__()
+_ = config.validate().log()
+
+# Re-inintialized the trainer with the updated configuration.
+# The datasets are not changed.
+trainer = Trainer(
+    config=config,
+    model_class=model_selector(descriptor_type),
+    training_dataset=training_dataset,
+    valid_dataset=valid_dataset,
+    test_dataset=test_dataset,
+    collate_fn=collator_class(config),
+).initialize(config=config)
+
+# Run the training, validation and test process.
+# The trainer will load the model checkpoint from the Deterministic run and
+# continue training the temperature scaling layer.
+# Notice that not all UQ methods support continued training. For example, BBP requires training from scratch.
+trainer.run()
+</code></pre>
+<h3 id="evaluation">Evaluation</h3>
+<p>Here, we provide a simplified version of metric calculation.
+Please check <code>&lt;project root&gt;/assist/result_get_metrics.py</code> for the full function.</p>
+<pre><code class="language-python">import os.path as osp
+import pandas as pd
+from muben.utils.metrics import classification_metrics
+from muben.utils.io import load_results
+
+
+# Define the path to the predicted results. &quot;det&quot; stands for &quot;Deterministic&quot;; &quot;ts&quot; stands for &quot;Temperature Scaling&quot;.
+det_result = osp.join(
+    config.result_folder, config.dataset_name, f&quot;{config.model_name}-{config.feature_type}&quot;,
+    &quot;none&quot;, f&quot;seed-{config.seed}&quot;, &quot;preds&quot;, &quot;0.pt&quot;
+)
+ts_result = osp.join(
+    config.result_folder, config.dataset_name, f&quot;{config.model_name}-{config.feature_type}&quot;,
+    &quot;TemperatureScaling&quot;, f&quot;seed-{config.seed}&quot;, &quot;preds&quot;, &quot;0.pt&quot;
+)
+
+# Load the predicted results.
+det_preds, _, lbs, masks = load_results([det_result])
+ts_preds, _, _, _ = load_results([ts_result])
+
+# Calculate the metrics.
+det_metrics = classification_metrics(det_preds, lbs, masks)
+ts_metrics = classification_metrics(ts_preds, lbs, masks)
+
+det_metrics = {k: v['macro-avg'] for k, v in det_metrics.items()}
+ts_metrics = {k: v['macro-avg'] for k, v in ts_metrics.items()}
+
+# Present the results in a dataframe.
+det_metrics_df = pd.DataFrame({&quot;Deterministic&quot;: det_metrics, &quot;TemperatureScaling&quot;: ts_metrics})
+print(det_metrics_df.T)
+</code></pre>
+<p>The result will be presented as a table the columns being metrics and rows being the UQ method.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="About"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
