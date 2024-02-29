@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 29th, 2024
 # ---------------------------------------
 # Description: Molecular descriptors and features
 """
-
 
 import warnings
 import logging
@@ -28,39 +27,31 @@ __all__ = [
 
 
 def smiles_to_2d_coords(smiles):
-    """
-    Convert smiles to 2d coordinates
+    """Converts SMILES strings to 2D coordinates.
 
-    Parameters
-    ----------
-    smiles: smiles strings
+    Args:
+        smiles (str): A SMILES string representing the molecule.
 
-    Returns
-    -------
-    2d coordinates in numpy array
+    Returns:
+        numpy.ndarray: A 2D array of coordinates for the molecule.
     """
     mol = Chem.MolFromSmiles(smiles)
     mol = AllChem.AddHs(mol)
     AllChem.Compute2DCoords(mol)
     coordinates = mol.GetConformer().GetPositions().astype(np.float32)
-    assert len(mol.GetAtoms()) == len(
-        coordinates
-    ), f"2D coordinates shape is not align with {smiles}"
+    assert len(mol.GetAtoms()) == len(coordinates), f"2D coordinates shape is not align with {smiles}"
     return coordinates
 
 
 def smiles_to_3d_coords(smiles, n_conformer):
-    """
-    Convert smiles to 3d coordinates
+    """Converts SMILES strings to 3D coordinates.
 
-    Parameters
-    ----------
-    smiles: smiles strings
-    n_conformer: conformer num, default (uni-mol) all==11, 10 3d + 1 2d
+    Args:
+        smiles (str): A SMILES string representing the molecule.
+        n_conformer (int): Number of conformers to generate for the molecule.
 
-    Returns
-    -------
-    3d coordinates in list of numpy array
+    Returns:
+        list[numpy.ndarray]: A list of 3D arrays of coordinates for each conformer of the molecule.
     """
     mol = Chem.MolFromSmiles(smiles)
     mol = AllChem.AddHs(mol)
@@ -72,54 +63,40 @@ def smiles_to_3d_coords(smiles, n_conformer):
             res = AllChem.EmbedMolecule(mol, randomSeed=seed)
             if res == 0:
                 try:
-                    AllChem.MMFFOptimizeMolecule(
-                        mol
-                    )  # some conformer can not use MMFF optimize
+                    AllChem.MMFFOptimizeMolecule(mol)  # some conformer can not use MMFF optimize
                     coordinates = mol.GetConformer().GetPositions()
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to generate 3D, replace with 2D: {e}"
-                    )
+                    logger.warning(f"Failed to generate 3D, replace with 2D: {e}")
                     coordinates = smiles_to_2d_coords(smiles)
 
             elif res == -1:
                 mol_tmp = Chem.MolFromSmiles(smiles)
-                AllChem.EmbedMolecule(
-                    mol_tmp, maxAttempts=5000, randomSeed=seed
-                )
+                AllChem.EmbedMolecule(mol_tmp, maxAttempts=5000, randomSeed=seed)
                 mol_tmp = AllChem.AddHs(mol_tmp, addCoords=True)
                 try:
-                    AllChem.MMFFOptimizeMolecule(
-                        mol_tmp
-                    )  # some conformer can not use MMFF optimize
+                    AllChem.MMFFOptimizeMolecule(mol_tmp)  # some conformer can not use MMFF optimize
                     coordinates = mol_tmp.GetConformer().GetPositions()
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to generate 3D, replace with 2D: {e}"
-                    )
+                    logger.warning(f"Failed to generate 3D, replace with 2D: {e}")
                     coordinates = smiles_to_2d_coords(smiles)
         except Exception as e:
             logger.warning(f"Failed to generate 3D, replace with 2D: {e}")
             coordinates = smiles_to_2d_coords(smiles)
 
-        assert len(mol.GetAtoms()) == len(
-            coordinates
-        ), f"3D coordinates shape is not align with {smiles}"
+        assert len(mol.GetAtoms()) == len(coordinates), f"3D coordinates shape is not align with {smiles}"
         coordinate_list.append(coordinates.astype(np.float32))
     return coordinate_list
 
 
 def smiles_to_coords(smiles, n_conformer=10):
-    """
+    """Converts SMILES strings to 3D coordinates.
 
-    Parameters
-    ----------
-    smiles: the smile string
-    n_conformer: conformer num, default (uni-mol) all==11, 10 3d + 1 2d
+    Args:
+        smiles (str): A SMILES string representing the molecule.
+        n_conformer (int): Number of conformers to generate for the molecule.
 
-    Returns
-    -------
-    atoms and coordinates
+    Returns:
+        list[numpy.ndarray]: A list of 3D arrays of coordinates for each conformer of the molecule.
     """
 
     mol = Chem.MolFromSmiles(smiles)
@@ -135,23 +112,18 @@ def smiles_to_coords(smiles, n_conformer=10):
 
 
 def rdkit_2d_features_normalized_generator(mol) -> np.ndarray:
-    """
-    Generates RDKit 2D normalized features for a molecule.
+    """Generates RDKit 2D normalized features for a molecule.
 
-    Parameters
-    ----------
-    mol: A molecule (i.e. either a SMILES string or an RDKit molecule).
+    Args:
+        mol (str or Chem.Mol): A molecule represented as a SMILES string or an RDKit molecule object.
 
-    Returns
-    -------
-    An 1D numpy array containing the RDKit 2D normalized features.
+    Returns:
+        numpy.ndarray: An array containing the RDKit 2D normalized features.
     """
     from rdkit import Chem
     from descriptastorus.descriptors import rdNormalizedDescriptors
 
-    smiles = (
-        Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
-    )
+    smiles = Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
     generator = rdNormalizedDescriptors.RDKit2DNormalized()
     features = generator.process(smiles)[1:]
     # replace nan values
@@ -159,29 +131,22 @@ def rdkit_2d_features_normalized_generator(mol) -> np.ndarray:
     return features
 
 
-def morgan_binary_features_generator(
-    mol, radius: int = 2, num_bits: int = 1024
-) -> np.ndarray:
-    """
-    Generates a binary Morgan fingerprint for a molecule.
+def morgan_binary_features_generator(mol, radius: int = 2, num_bits: int = 1024) -> np.ndarray:
+    """Generates a binary Morgan fingerprint for a molecule.
 
-    Parameters
-    ----------
-    mol: A molecule (i.e. either a SMILES string or an RDKit molecule).
-    radius: Morgan fingerprint radius.
-    num_bits: Number of bits in Morgan fingerprint.
+    Args:
+        mol (str or Chem.Mol): A molecule represented as a SMILES string or an RDKit molecule object.
+        radius (int): Radius of the Morgan fingerprint.
+        num_bits (int): Number of bits in the Morgan fingerprint.
 
-    Returns
-    -------
-    An 1-D numpy array containing the binary Morgan fingerprint.
+    Returns:
+        numpy.ndarray: An array containing the binary Morgan fingerprint.
     """
     from rdkit import Chem, DataStructs
     from rdkit.Chem import AllChem
 
     mol = Chem.MolFromSmiles(mol) if type(mol) == str else mol
-    features_vec = AllChem.GetMorganFingerprintAsBitVect(
-        mol, radius, nBits=num_bits
-    )
+    features_vec = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=num_bits)
     features = np.zeros((1,))
     DataStructs.ConvertToNumpyArray(features_vec, features)
 
@@ -191,16 +156,13 @@ def morgan_binary_features_generator(
 
 
 def smiles_to_atom_ids(smiles: str) -> list[int]:
-    """
-    Convert smiles strings to a list of atom ids with H included
+    """Converts SMILES strings to a list of atom IDs with hydrogens included.
 
-    Parameters
-    ----------
-    smiles: a smiles string
+    Args:
+        smiles (str): A SMILES string representing the molecule.
 
-    Returns
-    -------
-    atom ids
+    Returns:
+        list[int]: A list of atomic numbers corresponding to the atoms in the molecule.
     """
 
     mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
@@ -325,32 +287,26 @@ ATOMIC_NUMBER_MAP = {
 
 
 def atom_to_atom_ids(atoms: list[str]) -> list[int]:
-    """
-    Convert a list of atoms strings to a list of atom ids
+    """Converts a list of atom symbols to a list of atom IDs.
 
-    Parameters
-    ----------
-    atoms: a list of atoms strings
+    Args:
+        atoms (list[str]): A list of atom symbols.
 
-    Returns
-    -------
-    atom ids
+    Returns:
+        list[int]: A list of atomic numbers corresponding to the provided atom symbols.
     """
     atoms_ids = [ATOMIC_NUMBER_MAP[atom] for atom in atoms]
     return atoms_ids
 
 
 def smiles_to_2d_graph(smiles):
-    """
-    Convert smiles to 2d graphs
+    """Converts SMILES strings to 2D graph representations.
 
-    Parameters
-    ----------
-    smiles: smiles strings
+    Args:
+        smiles (str): A SMILES string representing the molecule.
 
-    Returns
-    -------
-    atom ids and bonds
+    Returns:
+        tuple[list[int], list[list[int]]]: A tuple containing a list of atom IDs and a list of bonds represented as pairs of atom indices.
     """
     mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
     atoms = smiles_to_atom_ids(smiles)

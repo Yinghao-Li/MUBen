@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: August 26th, 2023
+# Modified: February 29th, 2024
 # ---------------------------------------
 # Description: IO functions
 """
-
 
 import os
 import os.path as op
@@ -35,17 +34,19 @@ __all__ = [
 
 
 def set_log_path(args, time):
-    """
-    Setup log path.
-    Notice that the log path is specified for muben and may not be
-    directly compatible with other projects.
+    """Sets up the log path based on given arguments and time.
+
+    Args:
+        args: Command-line arguments or any object with attributes `dataset_name`, `model_name`, `feature_type`, and `uncertainty_method`.
+        time (str): A string representing the current time or a unique identifier for the log file.
+
+    Returns:
+        str: The constructed log path.
     """
     log_path = op.join(
         "logs",
         args.dataset_name,
-        args.model_name
-        if args.feature_type == "none"
-        else f"{args.model_name}-{args.feature_type}",
+        args.model_name if args.feature_type == "none" else f"{args.model_name}-{args.feature_type}",
         args.uncertainty_method,
         f"{time}.log",
     )
@@ -53,16 +54,10 @@ def set_log_path(args, time):
 
 
 def set_logging(log_path: Optional[str] = None):
-    """
-    setup logging format
+    """Sets up logging format and file handler.
 
-    Parameters
-    ----------
-    log_path: where to save logging file. Leave None to save no log files
-
-    Returns
-    -------
-    None
+    Args:
+        log_path (Optional[str]): Path where to save the logging file. If None, no log file is saved.
     """
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)
@@ -95,24 +90,15 @@ def set_logging(log_path: Optional[str] = None):
 
 
 def logging_args(args):
-    """
-    Logging model arguments into logs
-    Last modified: 08/19/21
+    """Logs model arguments.
 
-    Parameters
-    ----------
-    args: arguments
-
-    Returns
-    -------
-    None
+    Args:
+        args: The arguments to be logged. Can be an argparse Namespace or similar object.
     """
     arg_elements = {
         attr: getattr(args, attr)
         for attr in dir(args)
-        if not callable(getattr(args, attr))
-        and not attr.startswith("__")
-        and not attr.startswith("_")
+        if not callable(getattr(args, attr)) and not attr.startswith("__") and not attr.startswith("_")
     }
     logger.info(f"Configurations: ({type(args)})")
     for arg_element, value in arg_elements.items():
@@ -122,8 +108,10 @@ def logging_args(args):
 
 
 def remove_dir(directory: str):
-    """
-    Remove a directory and its subtree folders/files
+    """Removes a directory and its subtree.
+
+    Args:
+        directory (str): The directory to remove.
     """
     dirpath = Path(directory)
     if dirpath.exists() and dirpath.is_dir():
@@ -132,8 +120,11 @@ def remove_dir(directory: str):
 
 
 def init_dir(directory: str, clear_original_content: Optional[bool] = True):
-    """
-    Create the target directory. If the directory exists, remove all subtree folders/files in it.
+    """Initializes a directory. Clears content if specified and directory exists.
+
+    Args:
+        directory (str): The directory to initialize.
+        clear_original_content (Optional[bool]): Whether to clear the original content of the directory if it exists.
     """
 
     if clear_original_content:
@@ -143,19 +134,12 @@ def init_dir(directory: str, clear_original_content: Optional[bool] = True):
 
 
 def save_json(obj, path: str, collapse_level: Optional[int] = None):
-    """
-    Save objective to a json file.
-    Create this function so that we don't need to worry about creating parent folders every time
+    """Saves an object to a JSON file.
 
-    Parameters
-    ----------
-    obj: the objective to save
-    path: the path to save
-    collapse_level: set to any collapse value to prettify output json accordingly
-
-    Returns
-    -------
-    None
+    Args:
+        obj: The object to save.
+        path (str): The path to the file where the object will be saved.
+        collapse_level (Optional[int]): Specifies how to prettify the JSON output. If set, collapses levels greater than this.
     """
     file_dir = op.dirname(op.normpath(path))
     if file_dir:
@@ -172,24 +156,15 @@ def save_json(obj, path: str, collapse_level: Optional[int] = None):
 
 
 def prettify_json(text, indent=2, collapse_level=4):
-    """
-    Make json file more readable by collapsing indent levels higher than `collapse_level`.
+    """Prettifies JSON text by collapsing indent levels higher than `collapse_level`.
 
-    Parameters
-    ----------
-    text: input json text obj
-    indent: the indent value of your json text. Notice that this value needs to be larger than 0
-    collapse_level: the level from which the program stops adding new lines
+    Args:
+        text (str): Input JSON text.
+        indent (int): The indentation value of the JSON text.
+        collapse_level (int): The level from which to stop adding new lines.
 
-    Usage
-    -----
-    ```
-    my_instance = list()  # user-defined serializable data structure
-    json_obj = json.dumps(my_instance, indent=2, ensure_ascii=False)
-    json_obj = prettify_json(json_text, indent=2, collapse_level=4)
-    with open(path_to_file, 'w', encoding='utf=8') as f:
-        f.write(json_text)
-    ```
+    Returns:
+        str: The prettified JSON text.
     """
     pattern = r"[\r\n]+ {%d,}" % (indent * collapse_level)
     text = regex.sub(pattern, " ", text)
@@ -204,17 +179,13 @@ def prettify_json(text, indent=2, collapse_level=4):
 
 
 def convert_arguments_from_argparse(args):
-    """
-    Convert argparse Namespace to transformers style arguments parser strings.
-    Used to transfer code style.
+    """Converts argparse Namespace to transformers-style arguments.
 
-    Parameters
-    ----------
-    args: Namespace
+    Args:
+        args: argparse Namespace object.
 
-    Returns
-    -------
-    str
+    Returns:
+        str: Transformers style arguments string.
     """
     args_string = ""
     for k, v in args.__dict__.items():
@@ -227,20 +198,14 @@ def convert_arguments_from_argparse(args):
 
 
 def save_results(path, preds, variances, lbs, masks):
-    """
-    Save muben prediction results.
+    """Saves prediction results to a file.
 
-    Parameters
-    ----------
-    path: path to save
-    preds: model predictions
-    variances: variances for regression tasks
-    lbs: ground truth labels
-    masks: label masks
-
-    Returns
-    -------
-    None
+    Args:
+        path (str): Path where to save the results.
+        preds: Predictions to save.
+        variances: Variances associated with predictions.
+        lbs: Ground truth labels.
+        masks: Masks indicating valid entries.
     """
     if not path.endswith(".pt"):
         path = f"{path}.pt"
@@ -259,13 +224,13 @@ def save_results(path, preds, variances, lbs, masks):
 
 
 def load_results(result_paths: list[str]):
-    """
-    Load muben prediction results.
+    """Loads prediction results from files.
 
-    Parameters
-    ----------
-    result_paths : list[str]
-        paths to the result files
+    Args:
+        result_paths (list[str]): Paths to the result files.
+
+    Returns:
+        tuple: Predictions, variances, labels, and masks loaded from the files.
     """
     lbs = masks = np.nan
     preds_list = list()
@@ -297,15 +262,11 @@ def load_results(result_paths: list[str]):
             except KeyError:
                 pass
         else:
-            raise ValueError(
-                f"Undefined result version: {results.get('version', 1)}"
-            )
+            raise ValueError(f"Undefined result version: {results.get('version', 1)}")
 
     # aggregate mean and variance
     preds = np.stack(preds_list).mean(axis=0)
-    if (
-        variances_list and not (np.asarray(variances_list) == None).any()
-    ):  # regression
+    if variances_list and not (np.asarray(variances_list) == None).any():  # regression
         # variances = np.mean(np.stack(preds_list) ** 2 + np.stack(variances_list), axis=0) - preds ** 2
         variances = np.stack(variances_list).mean(axis=0)
     else:
@@ -314,21 +275,16 @@ def load_results(result_paths: list[str]):
     return preds, variances, lbs, masks
 
 
-def load_lmdb(
-    data_path, keys_to_load: list[str] = None, return_dict: bool = False
-):
-    """
-    Load the lmdb-formatted dataset splits used in Uni-Mol
+def load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = False):
+    """Loads data from an LMDB file.
 
-    Parameters
-    ----------
-    data_path: path to data split (*.lmdb)
-    keys_to_load: dict keys to load. The argument `return_dict` is forced to be True if `keys_to_load` is left None
-    return_dict: whether to return a dictionary, will be forced to be True if `keys_to_load` is left None
+    Args:
+        data_path (str): Path to the LMDB file.
+        keys_to_load (list[str], optional): Specific keys to load from the LMDB file. Loads all keys if None.
+        return_dict (bool): Whether to return a dictionary of loaded values.
 
-    Returns
-    -------
-    tuple if return_dict is False else dict of loaded values corresponding to specified keys
+    Returns:
+        dict or tuple: Loaded values from the LMDB file. The format depends on `return_dict`.
     """
 
     if keys_to_load is None:
@@ -370,16 +326,13 @@ def load_lmdb(
 
 
 def load_unimol_preprocessed(data_dir: str):
-    """
-    Load all lmdb-formatted dataset training & valid& test splits used in Uni-Mol
+    """Loads preprocessed UniMol dataset splits from an LMDB file.
 
-    Parameters
-    ----------
-    data_dir: dir to data splits
+    Args:
+        data_dir (str): Directory containing the LMDB dataset splits.
 
-    Returns
-    -------
-    tuple if return_dict is False else dict of loaded values corresponding to specified keys
+    Returns:
+        dict: Loaded dataset splits (train, valid, test).
     """
 
     result_dict = None

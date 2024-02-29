@@ -25,7 +25,6 @@ from muben.dataset import (
     CollatorLinear,
     DatasetUniMol,
     CollatorUniMol,
-    DictionaryUniMol,
     DatasetGrover,
     CollatorGrover,
 )
@@ -40,6 +39,14 @@ from muben.model import (
 
 
 def argument_selector(descriptor_type: str):
+    """Selects argument class based on the descriptor type.
+
+    Args:
+        descriptor_type (str): The type of descriptor (e.g., "2D", "3D", "RDKit").
+
+    Returns:
+        Class: The argument class corresponding to the descriptor type.
+    """
     if descriptor_type == "2D":
         return Arguments2D
     elif descriptor_type == "3D":
@@ -57,6 +64,14 @@ def argument_selector(descriptor_type: str):
 
 
 def configure_selector(descriptor_type: str):
+    """Selects configuration class based on the descriptor type.
+
+    Args:
+        descriptor_type (str): The type of descriptor (e.g., "2D", "3D", "RDKit").
+
+    Returns:
+        Class: The configuration class corresponding to the descriptor type.
+    """
     if descriptor_type == "2D":
         return Config2D
     elif descriptor_type == "3D":
@@ -74,6 +89,18 @@ def configure_selector(descriptor_type: str):
 
 
 def dataset_selector(descriptor_type: str):
+    """Selects dataset and collator classes based on the descriptor type.
+
+    Args:
+        descriptor_type (str): The type of descriptor (e.g., "2D", "3D", "RDKit").
+
+    Returns:
+        tuple: A tuple containing the dataset class and collator class corresponding to the descriptor type.
+               For "UniMol", it returns a tuple of three elements: Dataset class, Collator class, and Dictionary class.
+
+    Raises:
+        ValueError: If an invalid descriptor type is provided.
+    """
     if descriptor_type == "2D":
         return Dataset2D, Collator2D
     elif descriptor_type == "3D":
@@ -85,12 +112,23 @@ def dataset_selector(descriptor_type: str):
     elif descriptor_type == "Grover":
         return DatasetGrover, CollatorGrover
     elif descriptor_type == "UniMol":
-        return DatasetUniMol, CollatorUniMol, DictionaryUniMol
+        return DatasetUniMol, CollatorUniMol
     else:
         raise ValueError("Invalid descriptor type")
 
 
 def model_selector(descriptor_type: str):
+    """Selects model class based on the descriptor type.
+
+    Args:
+        descriptor_type (str): The type of descriptor (e.g., "2D", "3D", "RDKit").
+
+    Returns:
+        The model class corresponding to the descriptor type.
+
+    Raises:
+        ValueError: If an invalid descriptor type is provided.
+    """
     if descriptor_type == "2D":
         return GIN
     elif descriptor_type == "3D":

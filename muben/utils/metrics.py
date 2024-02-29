@@ -1,10 +1,12 @@
 """
 # Author: Yinghao Li
-# Modified: December 1st, 2023
+# Modified: February 29th, 2024
 # ---------------------------------------
-# Description: Calculate the metrics for the uncertainty quantification
-"""
+# Description:
 
+These Python functions are designed to calculate various metrics for classification and regression tasks,
+particularly focusing on evaluating the performance of models on tasks involving predictions with associated uncertainties.
+"""
 
 import torch
 import torch.nn.functional as F
@@ -23,22 +25,18 @@ from scipy.stats import norm as gaussian
 
 
 def classification_metrics(preds, lbs, masks, exclude: list = None):
-    """
-    Calculate the metrics for classification tasks
+    """Calculates various metrics for classification tasks.
 
-    Parameters
-    ----------
-    preds : numpy array
-        The predicted values
-    lbs : numpy array
-        The ground truth values
-    masks : numpy array
-        The mask for the ground truth values
+    This function computes ROC-AUC, PRC-AUC, ECE, MCE, NLL, and Brier score for classification predictions.
 
-    Returns
-    -------
-    result_metrics_dict : dict
-        The dictionary of the metrics
+    Args:
+        preds (numpy.ndarray): Predicted probabilities for each class.
+        lbs (numpy.ndarray): Ground truth labels.
+        masks (numpy.ndarray): Masks indicating valid data points for evaluation.
+        exclude (list, optional): List of metrics to exclude from the calculation.
+
+    Returns:
+        dict: A dictionary containing calculated metrics.
     """
     if not exclude:
         exclude = list()
@@ -160,24 +158,19 @@ def classification_metrics(preds, lbs, masks, exclude: list = None):
 
 
 def regression_metrics(preds, variances, lbs, masks, exclude: list = None):
-    """
-    Calculate the metrics for regression tasks
+    """Calculates various metrics for regression tasks.
 
-    Parameters
-    ----------
-    preds : numpy array
-        The predicted values (means)
-    variances : numpy array
-        The predicted variances
-    lbs : numpy array
-        The ground truth values
-    masks : numpy array
-        The mask for the ground truth values
+    Computes RMSE, MAE, NLL, and calibration error for regression predictions and their associated uncertainties.
 
-    Returns
-    -------
-    result_metrics_dict : dict
-        The dictionary of the metrics
+    Args:
+        preds (numpy.ndarray): Predicted values (means).
+        variances (numpy.ndarray): Predicted variances.
+        lbs (numpy.ndarray): Ground truth values.
+        masks (numpy.ndarray): Masks indicating valid data points for evaluation.
+        exclude (list, optional): List of metrics to exclude from the calculation.
+
+    Returns:
+        dict: A dictionary containing calculated metrics.
     """
     if not exclude:
         exclude = list()
@@ -245,24 +238,18 @@ def regression_metrics(preds, variances, lbs, masks, exclude: list = None):
 
 
 def regression_calibration_error(lbs, preds, variances, n_bins=20):
-    """
-    Calculate the calibration error for regression tasks
+    """Calculates the calibration error for regression tasks.
 
-    Parameters
-    ----------
-    lbs : numpy array
-        The ground truth values
-    preds : numpy array
-        The predicted values (means)
-    variances : numpy array
-        The predicted variances
-    n_bins : int
-        The number of bins to use
+    Uses the predicted means and variances to estimate the calibration error across a specified number of bins.
 
-    Returns
-    -------
-    calibration_error : float
-        The calibration error
+    Args:
+        lbs (numpy.ndarray): Ground truth values.
+        preds (numpy.ndarray): Predicted values (means).
+        variances (numpy.ndarray): Predicted variances.
+        n_bins (int, optional): Number of bins to use for calculating calibration error. Defaults to 20.
+
+    Returns:
+        float: The calculated calibration error.
     """
     sigma = np.sqrt(variances)
     phi_lbs = gaussian.cdf(lbs, loc=preds.reshape(-1, 1), scale=sigma.reshape(-1, 1))
