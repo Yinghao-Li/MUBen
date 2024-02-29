@@ -1,6 +1,6 @@
 <!-- markdownlint-disable -->
 
-# muben.layers
+# <kbd>module</kbd> `muben.layers`
 
 Versatile Output Layer for Backbone Models 
 

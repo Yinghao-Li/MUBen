@@ -4,6 +4,7 @@ nav:
   - About: index.md
   - Get Started: started.md
   - Project Overview: overview.md
+  - muben.args: muben.args.md
   - muben.layers: muben.layers.md
 
 theme: readthedocs
