@@ -6,6 +6,7 @@ nav:
   - Project Overview: overview.md
   - muben.args: muben.args.md
   - muben.layers: muben.layers.md
+  - muben.dataset: muben.dataset.md
 
 theme: readthedocs
 
