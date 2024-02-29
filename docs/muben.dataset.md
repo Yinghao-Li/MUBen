@@ -414,9 +414,3 @@ Updates the dataset labels and the instance list accordingly.
  
  - <b>`self`</b> (Dataset):  The dataset with the updated labels. 
 
-
-
-
----
-
-_This file was automatically generated via [lazydocs](https://github.com/ml-tooling/lazydocs)._
