@@ -8,6 +8,7 @@ nav:
   - muben.layers: muben.layers.md
   - muben.dataset: muben.dataset.md
   - muben.train: muben.train.md
+  - muben.utils: muben.utils.md
 
 theme: readthedocs
 
