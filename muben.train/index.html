@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>muben.train - MUBen - Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "muben.train";
+        var mkdocs_page_input_path = "muben.train.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> MUBen - Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../started/">Get Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../overview/">Project Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.args/">muben.args</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.layers/">muben.layers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.dataset/">muben.dataset</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">muben.train</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#class-trainer">class Trainer</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#method-__init__">method __init__</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-backbone_params">property backbone_params</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-config">property config</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-model">property model</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-n_model_parameters">property n_model_parameters</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-n_training_steps">property n_training_steps</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-n_update_steps_per_epoch">property n_update_steps_per_epoch</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-n_valid_steps">property n_valid_steps</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-test_dataset">property test_dataset</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-training_dataset">property training_dataset</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-valid_dataset">property valid_dataset</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-eval_and_save">method eval_and_save</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-evaluate">method evaluate</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-freeze">method freeze</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-freeze_backbone">method freeze_backbone</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-get_dataloader">method get_dataloader</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-get_loss">method get_loss</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-get_metrics">method get_metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-inference">method inference</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-initialize">method initialize</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-initialize_loss">method initialize_loss</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-initialize_model">method initialize_model</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-initialize_optimizer">method initialize_optimizer</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-initialize_scheduler">method initialize_scheduler</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-inverse_standardize_preds">method inverse_standardize_preds</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-load_checkpoint">method load_checkpoint</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-log_results">method log_results</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-process_logits">method process_logits</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run">method run</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run_ensembles">method run_ensembles</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run_focal_loss">method run_focal_loss</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run_iso_calibration">method run_iso_calibration</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run_sgld">method run_sgld</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run_single_shot">method run_single_shot</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run_swag">method run_swag</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-run_temperature_scaling">method run_temperature_scaling</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-save_checkpoint">method save_checkpoint</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-save_results">method save_results</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-set_mode">method set_mode</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-standardize_training_lbs">method standardize_training_lbs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-swa_session">method swa_session</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-test">method test</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-test_on_training_data">method test_on_training_data</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-train">method train</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-training_epoch">method training_epoch</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-ts_session">method ts_session</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-unfreeze">method unfreeze</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#method-unfreeze_backbone">method unfreeze_backbone</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.utils/">muben.utils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../customize/">Customization</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MUBen - Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">muben.train</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!-- markdownlint-disable -->
+
+<h1 id="module-mubentrain"><kbd>module</kbd> <code>muben.train</code></h1>
+<p>Base trainer functions to facilitate training, validation, and testing  of machine learning models. This Trainer class is designed to seamlessly  integrate with various datasets, loss functions, metrics, and uncertainty  estimation methods. It provides convenient mechanisms to standardize,  initialize and manage training states, and is also integrated with logging  and Weights &amp; Biases (wandb) for experiment tracking. </p>
+<hr />
+<h2 id="class-trainer"><kbd>class</kbd> <code>Trainer</code></h2>
+<p>This Trainer class is designed to facilitate the training, validation, and testing of machine learning models. It integrates with various datasets, loss functions, metrics, and uncertainty estimation methods, providing mechanisms to standardize, initialize, and manage training states. It supports logging and integration with Weights &amp; Biases (wandb) for experiment tracking. </p>
+<h3 id="method-__init__"><kbd>method</kbd> <code>__init__</code></h3>
+<pre><code class="language-python">__init__(
+    config,
+    model_class=None,
+    training_dataset=None,
+    valid_dataset=None,
+    test_dataset=None,
+    collate_fn=None,
+    scalar=None,
+    **kwargs
+)
+</code></pre>
+<p>Initializes the Trainer object. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>config</code></b> (Config):  Configuration object containing all necessary parameters for training. </li>
+<li><b><code>model_class</code></b> (optional):  The class of the model to be trained. </li>
+<li><b><code>training_dataset</code></b> (Dataset, optional):  Dataset for training the model. </li>
+<li><b><code>valid_dataset</code></b> (Dataset, optional):  Dataset for validating the model. </li>
+<li><b><code>test_dataset</code></b> (Dataset, optional):  Dataset for testing the model. </li>
+<li><b><code>collate_fn</code></b> (Callable, optional):  Function to collate data samples into batches. </li>
+<li><b><code>scalar</code></b> (StandardScaler, optional):  Scaler for standardizing input data. </li>
+<li><b><code>**kwargs</code></b>:  Additional keyword arguments for configuration adjustments. </li>
+</ul>
+<hr />
+<h3 id="property-backbone_params"><kbd>property</kbd> backbone_params</h3>
+<p>Retrieves parameters of the model's backbone, excluding the output layer. </p>
+<p>Useful for operations that need to differentiate between backbone and output layer parameters, such as freezing the backbone during training. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>list</code></b>:  Parameters of the model's backbone. </li>
+</ul>
+<h3 id="property-config"><kbd>property</kbd> config</h3>
+<p>Retrieves the configuration of the Trainer. </p>
+<h3 id="property-model"><kbd>property</kbd> model</h3>
+<p>Retrieves the scaled model if available, otherwise returns the base model. </p>
+<h3 id="property-n_model_parameters"><kbd>property</kbd> n_model_parameters</h3>
+<p>Computes the total number of trainable parameters in the model. </p>
+<h3 id="property-n_training_steps"><kbd>property</kbd> n_training_steps</h3>
+<p>The number of total training steps </p>
+<h3 id="property-n_update_steps_per_epoch"><kbd>property</kbd> n_update_steps_per_epoch</h3>
+<p>Calculates the number of update steps required per epoch. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>int</code></b>:  Number of update steps per epoch. </li>
+</ul>
+<h3 id="property-n_valid_steps"><kbd>property</kbd> n_valid_steps</h3>
+<p>The number of total validation steps </p>
+<h3 id="property-test_dataset"><kbd>property</kbd> test_dataset</h3>
+<h3 id="property-training_dataset"><kbd>property</kbd> training_dataset</h3>
+<h3 id="property-valid_dataset"><kbd>property</kbd> valid_dataset</h3>
+<hr />
+<h3 id="method-eval_and_save"><kbd>method</kbd> <code>eval_and_save</code></h3>
+<pre><code class="language-python">eval_and_save()
+</code></pre>
+<p>Evaluates the model's performance on the validation dataset and saves it if its performance is improved. </p>
+<p>This method is part of the training loop where the model is periodically evaluated on the validation dataset, and the best-performing model state is saved. </p>
+<hr />
+<h3 id="method-evaluate"><kbd>method</kbd> <code>evaluate</code></h3>
+<pre><code class="language-python">evaluate(
+    dataset,
+    n_run: Optional[int] = 1,
+    return_preds: Optional[bool] = False
+)
+</code></pre>
+<p>Evaluates the model's performance on the given dataset. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>dataset</code></b> (Dataset):  The dataset to evaluate the model on. </li>
+<li><b><code>n_run</code></b> (int, optional):  Number of runs for evaluation. Defaults to 1. </li>
+<li><b><code>return_preds</code></b> (bool, optional):  Whether to return the predictions along with metrics. Defaults to False. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict, or (dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray])</code></b>:  Evaluation metrics, or tuple containing metrics and predictions based on <code>return_preds</code>. </li>
+</ul>
+<hr />
+<h3 id="method-freeze"><kbd>method</kbd> <code>freeze</code></h3>
+<pre><code class="language-python">freeze()
+</code></pre>
+<p>Freezes all model parameters, preventing them from being updated during training. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The current instance with model parameters frozen. </li>
+</ul>
+<hr />
+<h3 id="method-freeze_backbone"><kbd>method</kbd> <code>freeze_backbone</code></h3>
+<pre><code class="language-python">freeze_backbone()
+</code></pre>
+<p>Freezes the backbone parameters of the model, preventing them from being updated during training. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The current instance with backbone parameters frozen. </li>
+</ul>
+<hr />
+<h3 id="method-get_dataloader"><kbd>method</kbd> <code>get_dataloader</code></h3>
+<pre><code class="language-python">get_dataloader(
+    dataset,
+    shuffle: Optional[bool] = False,
+    batch_size: Optional[int] = 0
+)
+</code></pre>
+<p>Creates a DataLoader for the specified dataset. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>dataset</code></b>:  Dataset for which the DataLoader is to be created. </li>
+<li><b><code>shuffle</code></b> (bool, optional):  Whether to shuffle the data. Defaults to False. </li>
+<li><b><code>batch_size</code></b> (int, optional):  Batch size for the DataLoader. Uses the batch size from the configuration if not specified. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>DataLoader</code></b>:  The created DataLoader for the provided dataset. </li>
+</ul>
+<hr />
+<h3 id="method-get_loss"><kbd>method</kbd> <code>get_loss</code></h3>
+<pre><code class="language-python">get_loss(logits, batch, n_steps_per_epoch=None) → Tensor
+</code></pre>
+<p>Computes the loss for a batch of data. </p>
+<p>This method can be overridden by subclasses to implement custom loss computation logic. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>logits</code></b> (torch.Tensor):  The predictions or logits produced by the model for the given batch. </li>
+<li><b><code>batch</code></b> (Batch):  The batch of training data. </li>
+<li><b><code>n_steps_per_epoch</code></b> (int, optional):  Represents the number of batches in a training epoch,  used specifically for certain uncertainty methods like Bayesian Backpropagation (BBP). </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>torch.Tensor</code></b>:  The computed loss for the batch. </li>
+</ul>
+<hr />
+<h3 id="method-get_metrics"><kbd>method</kbd> <code>get_metrics</code></h3>
+<pre><code class="language-python">get_metrics(lbs, preds, masks)
+</code></pre>
+<p>Calculates evaluation metrics based on the given labels, predictions, and masks. </p>
+<p>This method computes the appropriate metrics based on the task type (classification or regression). </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>lbs</code></b> (numpy.ndarray):  Ground truth labels. </li>
+<li><b><code>preds</code></b> (numpy.ndarray):  Model predictions. </li>
+<li><b><code>masks</code></b> (numpy.ndarray):  Masks indicating valid entries in labels and predictions. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict</code></b>:  Computed metrics for evaluation. </li>
+</ul>
+<hr />
+<h3 id="method-inference"><kbd>method</kbd> <code>inference</code></h3>
+<pre><code class="language-python">inference(dataset, **kwargs)
+</code></pre>
+<p>Conducts inference over an entire dataset using the model. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>dataset</code></b> (Dataset):  The dataset for which inference needs to be performed. </li>
+<li><b><code>**kwargs</code></b>:  Additional keyword arguments. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>numpy.ndarray</code></b>:  The model outputs as logits or a tuple of logits. </li>
+</ul>
+<hr />
+<h3 id="method-initialize"><kbd>method</kbd> <code>initialize</code></h3>
+<pre><code class="language-python">initialize(*args, **kwargs)
+</code></pre>
+<p>Initializes the trainer's status and its key components including the model, optimizer, learning rate scheduler, and loss function. </p>
+<p>This method sets up the training environment by initializing the model, optimizer, learning rate scheduler, and the loss function based on the provided configuration. It also prepares the trainer for logging and checkpointing mechanisms. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>*args</code></b>:  Variable length argument list for model initialization. </li>
+<li><b><code>**kwargs</code></b>:  Arbitrary keyword arguments for model initialization. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The initialized Trainer instance ready for training. </li>
+</ul>
+<hr />
+<h3 id="method-initialize_loss"><kbd>method</kbd> <code>initialize_loss</code></h3>
+<pre><code class="language-python">initialize_loss(disable_focal_loss=False)
+</code></pre>
+<p>Initializes the loss function based on the task type and specified uncertainty method. </p>
+<p>This method sets up the appropriate loss function for the training process, considering the task type (classification or regression) and whether any specific uncertainty methods (e.g., evidential or focal loss) are applied. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>disable_focal_loss</code></b> (bool, optional):  If True, disables the use of focal loss, even if  specified by the uncertainty method. Defaults to False. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The Trainer instance with the initialized loss function. </li>
+</ul>
+<hr />
+<h3 id="method-initialize_model"><kbd>method</kbd> <code>initialize_model</code></h3>
+<pre><code class="language-python">initialize_model(*args, **kwargs)
+</code></pre>
+<p>Abstract method to initialize the model. </p>
+<p>This method should be implemented in subclasses of Trainer, providing the specific logic to initialize the model that will be used for training. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The Trainer instance with the model initialized. </li>
+</ul>
+<hr />
+<h3 id="method-initialize_optimizer"><kbd>method</kbd> <code>initialize_optimizer</code></h3>
+<pre><code class="language-python">initialize_optimizer(*args, **kwargs)
+</code></pre>
+<p>Initializes the model's optimizer based on the set configurations. </p>
+<p>This method sets up the optimizer for the model's parameters. It includes special handling for SGLD-based uncertainty methods by differentiating between backbone and output layer parameters. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>*args</code></b>:  Variable length argument list for optimizer initialization. </li>
+<li><b><code>**kwargs</code></b>:  Arbitrary keyword arguments for optimizer initialization. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The Trainer instance with the initialized optimizer. </li>
+</ul>
+<hr />
+<h3 id="method-initialize_scheduler"><kbd>method</kbd> <code>initialize_scheduler</code></h3>
+<pre><code class="language-python">initialize_scheduler()
+</code></pre>
+<p>Initializes the learning rate scheduler based on the training configuration. </p>
+<p>This method sets up the learning rate scheduler using the total number of training steps and the specified warmup ratio. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The Trainer instance with the initialized scheduler. </li>
+</ul>
+<hr />
+<h3 id="method-inverse_standardize_preds"><kbd>method</kbd> <code>inverse_standardize_preds</code></h3>
+<pre><code class="language-python">inverse_standardize_preds(
+    preds: Union[ndarray, Tuple[ndarray, ndarray]]
+) → Union[ndarray, Tuple[ndarray, ndarray]]
+</code></pre>
+<p>Transforms predictions back to their original scale if they have been standardized. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>preds</code></b> (numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]):  Model predictions, can either be a single  array or a tuple containing two arrays for mean and variance, respectively. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]</code></b>:  Inverse-standardized predictions. </li>
+</ul>
+<hr />
+<h3 id="method-load_checkpoint"><kbd>method</kbd> <code>load_checkpoint</code></h3>
+<pre><code class="language-python">load_checkpoint()
+</code></pre>
+<p>Loads the model from a checkpoint. </p>
+<p>This method attempts to load the model checkpoint from the configured path. It supports loading with and without considering the uncertainty estimation method used during training. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>bool</code></b>:  True if the model is successfully loaded from a checkpoint, otherwise False. </li>
+</ul>
+<hr />
+<h3 id="method-log_results"><kbd>method</kbd> <code>log_results</code></h3>
+<pre><code class="language-python">log_results(
+    metrics: dict,
+    logging_func=&lt;bound method Logger.info of &lt;Logger trainer.trainer (WARNING)&gt;&gt;
+)
+</code></pre>
+<p>Logs evaluation metrics using the specified logging function. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>metrics</code></b> (dict):  Dictionary containing evaluation metrics to be logged. </li>
+<li><b><code>logging_func</code></b> (function, optional):  Logging function to which metrics will be sent. Defaults to <code>logger.info</code>. </li>
+</ul>
+<p><strong>Returns:</strong>
+ None </p>
+<hr />
+<h3 id="method-process_logits"><kbd>method</kbd> <code>process_logits</code></h3>
+<pre><code class="language-python">process_logits(logits: ndarray) → Union[ndarray, Tuple[ndarray, ndarray]]
+</code></pre>
+<p>Processes the output logits based on the training tasks or variants. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>logits</code></b> (numpy.ndarray):  The raw logits produced by the model. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]</code></b>:  Processed logits or a tuple containing processed logits based on the task type. </li>
+</ul>
+<hr />
+<h3 id="method-run"><kbd>method</kbd> <code>run</code></h3>
+<pre><code class="language-python">run()
+</code></pre>
+<p>Executes the training and evaluation process. </p>
+<p>This method serves as the main entry point for the training process, orchestrating the execution based on the specified uncertainty method. It handles different training strategies like ensembles, SWAG, temperature scaling, and more. </p>
+<p><strong>Returns:</strong>
+  None </p>
+<hr />
+<h3 id="method-run_ensembles"><kbd>method</kbd> <code>run_ensembles</code></h3>
+<pre><code class="language-python">run_ensembles()
+</code></pre>
+<p>Trains and evaluates an ensemble of models. </p>
+<p>This method is used for uncertainty estimation through model ensembles, training multiple models with different seeds and evaluating their collective performance. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-run_focal_loss"><kbd>method</kbd> <code>run_focal_loss</code></h3>
+<pre><code class="language-python">run_focal_loss()
+</code></pre>
+<p>Runs the training and evaluation pipeline utilizing focal loss. </p>
+<p>Focal loss is used to address class imbalance by focusing more on hard-to-classify examples. Temperature scaling can optionally be applied after training with focal loss. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-run_iso_calibration"><kbd>method</kbd> <code>run_iso_calibration</code></h3>
+<pre><code class="language-python">run_iso_calibration()
+</code></pre>
+<p>Performs isotonic calibration. </p>
+<p>Isotonic calibration is applied to calibrate the uncertainties of the model's predictions, based on the approach described in 'Accurate Uncertainties for Deep Learning Using Calibrated Regression'. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-run_sgld"><kbd>method</kbd> <code>run_sgld</code></h3>
+<pre><code class="language-python">run_sgld()
+</code></pre>
+<p>Executes training and evaluation with Stochastic Gradient Langevin Dynamics (SGLD). </p>
+<p>SGLD is used for uncertainty estimation, incorporating random noise into the gradients to explore the model's parameter space more broadly. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-run_single_shot"><kbd>method</kbd> <code>run_single_shot</code></h3>
+<pre><code class="language-python">run_single_shot(apply_test=True)
+</code></pre>
+<p>Runs the training and evaluation pipeline for a single iteration. </p>
+<p>This method handles the process of training the model and optionally evaluating it on a test dataset. It is designed for a straightforward, single iteration of training and testing. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>apply_test</code></b> (bool, optional):  Whether to run the test function as part of the process. Defaults to True. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-run_swag"><kbd>method</kbd> <code>run_swag</code></h3>
+<pre><code class="language-python">run_swag()
+</code></pre>
+<p>Executes the training and evaluation pipeline using the SWAG method. </p>
+<p>Stochastic Weight Averaging Gaussian (SWAG) is used for uncertainty estimation. This method involves training the model with early stopping and applying SWAG for post-training uncertainty estimation. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-run_temperature_scaling"><kbd>method</kbd> <code>run_temperature_scaling</code></h3>
+<pre><code class="language-python">run_temperature_scaling()
+</code></pre>
+<p>Executes the training and evaluation pipeline with temperature scaling. </p>
+<p>Temperature scaling is applied as a post-processing step to calibrate the confidence of the model's predictions. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-save_checkpoint"><kbd>method</kbd> <code>save_checkpoint</code></h3>
+<pre><code class="language-python">save_checkpoint()
+</code></pre>
+<p>Saves the current model state as a checkpoint. </p>
+<p>This method checks the <code>disable_result_saving</code> configuration flag before saving. If saving is disabled, it logs a warning and does not perform the save operation. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The current instance after attempting to save the model checkpoint. </li>
+</ul>
+<hr />
+<h3 id="method-save_results"><kbd>method</kbd> <code>save_results</code></h3>
+<pre><code class="language-python">save_results(path, preds, variances, lbs, masks)
+</code></pre>
+<p>Saves the model predictions, variances, ground truth labels, and masks to disk. </p>
+<p>This method saves the results of model predictions to a specified path. It is capable of handling both the predictions and their associated variances, along with the ground truth labels and masks that indicate which data points should be considered in the analysis. If the configuration flag <code>disable_result_saving</code> is set to True, the method will log a warning and not perform any saving operation. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>path</code></b> (str):  The destination path where the results will be saved. </li>
+<li><b><code>preds</code></b> (array_like):  The predictions generated by the model. </li>
+<li><b><code>variances</code></b> (array_like):  The variances associated with each prediction, indicating the uncertainty of the predictions. </li>
+<li><b><code>lbs</code></b> (array_like):  The ground truth labels against which the model's predictions can be evaluated. </li>
+<li><b><code>masks</code></b> (array_like):  Masks indicating which data points are valid and should be considered in the evaluation. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>None</code></b>:  This method does not return any value. </li>
+</ul>
+<hr />
+<h3 id="method-set_mode"><kbd>method</kbd> <code>set_mode</code></h3>
+<pre><code class="language-python">set_mode(mode: str)
+</code></pre>
+<p>Sets the training mode for the model. </p>
+<p>Depending on the mode, the model is set to training, evaluation, or testing. This method is essential for correctly configuring the model's state for different phases of the training and evaluation process. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>mode</code></b> (str):  The mode to set the model to. Should be one of 'train', 'eval', or 'test'. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The Trainer instance with the model set to the specified mode. </li>
+</ul>
+<hr />
+<h3 id="method-standardize_training_lbs"><kbd>method</kbd> <code>standardize_training_lbs</code></h3>
+<pre><code class="language-python">standardize_training_lbs()
+</code></pre>
+<p>Standardizes the label distribution of the training dataset for regression tasks. </p>
+<p>This method applies standardization to the labels of the training dataset, transforming them to a standard Gaussian distribution. It's applicable only for regression tasks. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The Trainer instance with standardized training labels. </li>
+</ul>
+<hr />
+<h3 id="method-swa_session"><kbd>method</kbd> <code>swa_session</code></h3>
+<pre><code class="language-python">swa_session()
+</code></pre>
+<p>Executes the SWA session. </p>
+<p>This method is intended to be overridden by child classes for specialized handling of optimizer or model initialization required by SWA (Stochastic Weight Averaging). </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-test"><kbd>method</kbd> <code>test</code></h3>
+<pre><code class="language-python">test(load_best_model=True, return_preds=False)
+</code></pre>
+<p>Tests the model's performance on the test dataset. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>load_best_model</code></b> (bool, optional):  Whether to load the best model saved during training for testing. Defaults to True. </li>
+<li><b><code>return_preds</code></b> (bool, optional):  Whether to return the predictions along with metrics. Defaults to False. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict, or tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]]</code></b>:  Evaluation metrics (and predictions) for the test dataset. </li>
+</ul>
+<hr />
+<h3 id="method-test_on_training_data"><kbd>method</kbd> <code>test_on_training_data</code></h3>
+<pre><code class="language-python">test_on_training_data(
+    load_best_model=True,
+    return_preds=False,
+    disable_result_saving=False
+)
+</code></pre>
+<p>Tests the model's performance on the training dataset. </p>
+<p>This method is useful for understanding the model's performance on the data it was trained on, which can provide insights into overfitting or underfitting. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>load_best_model</code></b> (bool, optional):  If True, loads the best model saved during training. Defaults to True. </li>
+<li><b><code>return_preds</code></b> (bool, optional):  If True, returns the predictions along with the evaluation metrics. Defaults to False. </li>
+<li><b><code>disable_result_saving</code></b> (bool, optional):  If True, disables saving the results to disk. Defaults to False. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict, or tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]]</code></b>:  Evaluation metrics, or a tuple containing metrics and predictions if <code>return_preds</code> is True. </li>
+</ul>
+<hr />
+<h3 id="method-train"><kbd>method</kbd> <code>train</code></h3>
+<pre><code class="language-python">train(use_valid_dataset=False)
+</code></pre>
+<p>Executes the training process for the model. </p>
+<p>Optionally allows for training using the validation dataset instead of the training dataset. This option can be useful for certain model calibration techniques like temperature scaling. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>use_valid_dataset</code></b> (bool, optional):  Determines if the validation dataset should be used  for training instead of the training dataset. Defaults to False. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>None</code></b>:  This method returns None. </li>
+</ul>
+<hr />
+<h3 id="method-training_epoch"><kbd>method</kbd> <code>training_epoch</code></h3>
+<pre><code class="language-python">training_epoch(data_loader)
+</code></pre>
+<p>Performs a single epoch of training using the provided data loader. </p>
+<p>This method iterates over the data loader, performs the forward pass, computes the loss, and updates the model parameters. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>data_loader</code></b> (DataLoader):  DataLoader object providing batches of training data. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>float</code></b>:  The average training loss for the epoch. </li>
+</ul>
+<hr />
+<h3 id="method-ts_session"><kbd>method</kbd> <code>ts_session</code></h3>
+<pre><code class="language-python">ts_session()
+</code></pre>
+<p>Executes the temperature scaling session. </p>
+<p>This session involves retraining the model on the validation set with a modified learning rate and epochs to apply temperature scaling for model calibration. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  Self reference to the Trainer object, allowing for method chaining. </li>
+</ul>
+<hr />
+<h3 id="method-unfreeze"><kbd>method</kbd> <code>unfreeze</code></h3>
+<pre><code class="language-python">unfreeze()
+</code></pre>
+<p>Unfreezes all model parameters, allowing them to be updated during training. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The current instance with model parameters unfrozen. </li>
+</ul>
+<hr />
+<h3 id="method-unfreeze_backbone"><kbd>method</kbd> <code>unfreeze_backbone</code></h3>
+<pre><code class="language-python">unfreeze_backbone()
+</code></pre>
+<p>Unfreezes the backbone parameters of the model, allowing them to be updated during training. </p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Trainer</code></b>:  The current instance with backbone parameters unfrozen. </li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../muben.dataset/" class="btn btn-neutral float-left" title="muben.dataset"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../muben.utils/" class="btn btn-neutral float-right" title="muben.utils">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../muben.dataset/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../muben.utils/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

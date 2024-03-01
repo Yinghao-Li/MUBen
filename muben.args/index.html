@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>muben.args - MUBen - Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "muben.args";
+        var mkdocs_page_input_path = "muben.args.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> MUBen - Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../started/">Get Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../overview/">Project Overview</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">muben.args</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#class-descriptorarguments">class DescriptorArguments</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#class-arguments">class Arguments</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#class-config">class Config</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#function-from_args">function from_args</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-get_meta">function get_meta</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-load">function load</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-log">function log</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-save">function save</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-validate">function validate</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.layers/">muben.layers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.dataset/">muben.dataset</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.train/">muben.train</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.utils/">muben.utils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../customize/">Customization</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MUBen - Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">muben.args</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!-- markdownlint-disable -->
+
+<h1 id="module-mubenargs"><kbd>module</kbd> <code>muben.args</code></h1>
+<p>Base classes for arguments and configurations. </p>
+<p>This module defines base classes for handling arguments and configurations across the application. It includes classes for model descriptor arguments, general arguments, and configurations that encompasses dataset, model, and training settings. </p>
+<hr />
+<h2 id="class-descriptorarguments"><kbd>class</kbd> <code>DescriptorArguments</code></h2>
+<p>Model type arguments. </p>
+<p>This class holds the arguments related to the descriptor type of the model. It allows for specifying the type of descriptor used in model construction, with options including RDKit, Linear, 2D, and 3D descriptors. </p>
+<p><strong>Attributes:</strong></p>
+<ul>
+<li><b><code>descriptor_type</code></b> (str):  Descriptor type. Choices are ["RDKit", "Linear", "2D", "3D"]. </li>
+</ul>
+<hr />
+<h2 id="class-arguments"><kbd>class</kbd> <code>Arguments</code></h2>
+<p>Base class for managing arguments related to model training, evaluation, and data handling. </p>
+<p>This class contains many attributes. Each attribute controls a specific aspect of the training or evaluation process, including but not limited to data handling, model selection, training configurations, and evaluation metrics. </p>
+<p><strong>Attributes:</strong></p>
+<ul>
+<li><b><code>wandb_api_key</code></b> (str):  The API key for Weights &amp; Biases. Default is None. </li>
+<li><b><code>wandb_project</code></b> (str):  The project name on Weights &amp; Biases. Default is None. </li>
+<li><b><code>wandb_name</code></b> (str):  The name of the model on Weights &amp; Biases. Default is None. </li>
+<li><b><code>disable_wandb</code></b> (bool):  Disable integration with Weights &amp; Biases. Default is False. </li>
+<li><b><code>dataset_name</code></b> (str):  Name of the dataset. Default is an empty string. </li>
+<li><b><code>data_folder</code></b> (str):  Folder containing all datasets. Default is an empty string. </li>
+<li><b><code>data_seed</code></b> (int):  Seed used for random data splitting. Default is None. </li>
+<li><b><code>result_folder</code></b> (str):  Directory to save model outputs. Default is "./output". </li>
+<li><b><code>ignore_preprocessed_dataset</code></b> (bool):  Whether to ignore pre-processed datasets. Default is False. </li>
+<li><b><code>disable_dataset_saving</code></b> (bool):  Disable saving of pre-processed datasets. Default is False. </li>
+<li><b><code>disable_result_saving</code></b> (bool):  Disable saving of training results and model checkpoints. Default is False. </li>
+<li><b><code>overwrite_results</code></b> (bool):  Whether to overwrite existing outputs. Default is False. </li>
+<li><b><code>log_path</code></b> (str):  Path for the logging file. Set to <code>disabled</code> to disable log saving. Default is None. </li>
+<li><b><code>descriptor_type</code></b> (str):  Descriptor type. Choices are ["RDKit", "Linear", "2D", "3D"]. Default is None. </li>
+<li><b><code>model_name</code></b> (str):  Name of the model. Default is "DNN". Choices are defined in MODEL_NAMES. </li>
+<li><b><code>dropout</code></b> (float):  Dropout ratio. Default is 0.1. </li>
+<li><b><code>binary_classification_with_softmax</code></b> (bool):  Use softmax for binary classification. Deprecated. Default is False. </li>
+<li><b><code>regression_with_variance</code></b> (bool):  Use two output heads for regression (mean and variance). Default is False. </li>
+<li><b><code>retrain_model</code></b> (bool):  Train model from scratch regardless of existing saved models. Default is False. </li>
+<li><b><code>ignore_uncertainty_output</code></b> (bool):  Ignore saved uncertainty models/results. Load no-uncertainty model if possible. Default is False. </li>
+<li><b><code>ignore_no_uncertainty_output</code></b> (bool):  Ignore checkpoints from no-uncertainty training processes. Default is False. </li>
+<li><b><code>batch_size</code></b> (int):  Batch size for training. Default is 32. </li>
+<li><b><code>batch_size_inference</code></b> (int):  Batch size for inference. Default is None. </li>
+<li><b><code>n_epochs</code></b> (int):  Number of training epochs. Default is 50. </li>
+<li><b><code>lr</code></b> (float):  Learning rate. Default is 1e-4. </li>
+<li><b><code>grad_norm</code></b> (float):  Gradient norm for clipping. 0 means no clipping. Default is 0. </li>
+<li><b><code>lr_scheduler_type</code></b> (str):  Type of learning rate scheduler. Default is "constant".  Choices include ["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"]. </li>
+<li><b><code>warmup_ratio</code></b> (float):  Warm-up ratio for learning rate scheduler. Default is 0.1. </li>
+<li><b><code>seed</code></b> (int):  Random seed for initialization. Default is 0. </li>
+<li><b><code>debug</code></b> (bool):  Enable debugging mode with fewer data. Default is False. </li>
+<li><b><code>deploy</code></b> (bool):  Enable deploy mode, avoiding runtime errors on bugs. Default is False. </li>
+<li><b><code>time_training</code></b> (bool):  Measure training time per training step. Default is False. </li>
+<li><b><code>freeze_backbone</code></b> (bool):  Freeze the backbone model during training. Only update the output layers. Default is False. </li>
+<li><b><code>valid_epoch_interval</code></b> (int):  Interval of training epochs between each validation step. Set to 0 to disable validation. Default is 1. </li>
+<li><b><code>valid_tolerance</code></b> (int):  Maximum allowed validation steps without performance increase. Default is 20. </li>
+<li><b><code>n_test</code></b> (int):  Number of test loops in one training process. Default is 1. For some Bayesian methods, default is 20. </li>
+<li><b><code>test_on_training_data</code></b> (bool):  Include test results on training data. Default is False. </li>
+<li><b><code>uncertainty_method</code></b> (str):  Method for uncertainty estimation. Default is UncertaintyMethods.none. Choices are defined in UncertaintyMethods. </li>
+<li><b><code>n_ensembles</code></b> (int):  Number of ensemble models in deep ensembles method. Default is 5. </li>
+<li><b><code>swa_lr_decay</code></b> (float):  Learning rate decay coefficient during SWA training. Default is 0.5. </li>
+<li><b><code>n_swa_epochs</code></b> (int):  Number of SWA training epochs. Default is 20. </li>
+<li><b><code>k_swa_checkpoints</code></b> (int):  Number of SWA checkpoints for Gaussian covariance matrix. Should not exceed <code>n_swa_epochs</code>. Default is 20. </li>
+<li><b><code>ts_lr</code></b> (float):  Learning rate for training temperature scaling parameters. Default is 0.01. </li>
+<li><b><code>n_ts_epochs</code></b> (int):  Number of Temperature Scaling training epochs. Default is 20. </li>
+<li><b><code>apply_temperature_scaling_after_focal_loss</code></b> (bool):  Apply temperature scaling after training with focal loss. Default is False. </li>
+<li><b><code>bbp_prior_sigma</code></b> (float):  Sigma value for Bayesian Backpropagation prior. Default is 0.1. </li>
+<li><b><code>apply_preconditioned_sgld</code></b> (bool):  Apply pre-conditioned Stochastic Gradient Langevin Dynamics instead of vanilla. Default is False. </li>
+<li><b><code>sgld_prior_sigma</code></b> (float):  Variance of the SGLD Gaussian prior. Default is 0.1. </li>
+<li><b><code>n_langevin_samples</code></b> (int):  Number of model checkpoints sampled from Langevin Dynamics. Default is 30. </li>
+<li><b><code>sgld_sampling_interval</code></b> (int):  Number of epochs per SGLD sampling operation. Default is 2. </li>
+<li><b><code>evidential_reg_loss_weight</code></b> (float):  Weight of evidential loss. Default is 1. </li>
+<li><b><code>evidential_clx_loss_annealing_epochs</code></b> (int):  Epochs before evidential loss weight increases to 1. Default is 10. </li>
+<li><b><code>no_cuda</code></b> (bool):  Disable CUDA even when available. Default is False. </li>
+<li><b><code>no_mps</code></b> (bool):  Disable Metal Performance Shaders (MPS) even when available. Default is False. </li>
+<li><b><code>num_workers</code></b> (int):  Number of threads for processing the dataset. Default is 0. </li>
+<li><b><code>num_preprocess_workers</code></b> (int):  Number of threads for preprocessing the dataset. Default is 8. </li>
+<li><b><code>pin_memory</code></b> (bool):  Pin memory for data loader for faster data transfer to CUDA devices. Default is False. </li>
+<li><b><code>n_feature_generating_threads</code></b> (int):  Number of threads for generating features. Default is 8. </li>
+<li><b><code>enable_active_learning</code></b> (bool):  Enable active learning. Default is False. </li>
+<li><b><code>n_init_instances</code></b> (int):  Number of initial instances for active learning. Default is 100. </li>
+<li><b><code>n_al_select</code></b> (int):  Number of instances to select in each active learning epoch. Default is 50. </li>
+<li><b><code>n_al_loops</code></b> (int):  Number of active learning loops. Default is 5. </li>
+<li><b><code>al_random_sampling</code></b> (bool):  Select instances randomly in active learning. Default is False. </li>
+</ul>
+<hr />
+<h2 id="class-config"><kbd>class</kbd> <code>Config</code></h2>
+<p>Extended configuration class inheriting from Arguments to include dataset-specific arguments. </p>
+<p>Inherits:  Arguments: Inherits all attributes from Arguments for comprehensive configuration management. </p>
+<p><strong>Attributes:</strong></p>
+<ul>
+<li><b><code>classes</code></b> (List[str]):  All possible classification classes. Default is None. </li>
+<li><b><code>task_type</code></b> (str):  Type of task, e.g., "classification" or "regression". Default is "classification". </li>
+<li><b><code>n_tasks</code></b> (int):  Number of tasks (sets of labels to predict). Default is None. </li>
+<li><b><code>eval_metric</code></b> (str):  Metric for evaluating validation and test performance. Default is None. </li>
+<li><b><code>random_split</code></b> (bool):  Whether the dataset is split randomly. Default is False. </li>
+</ul>
+<p><strong>Note:</strong></p>
+<blockquote>
+<p>The attributes defined in Config are meant to be overridden by dataset-specific metadata when used. </p>
+</blockquote>
+<hr />
+<h3 id="function-from_args"><kbd>function</kbd> <code>from_args</code></h3>
+<pre><code class="language-python">from_args(args)
+</code></pre>
+<p>Initialize configuration from an Arguments instance. </p>
+<p>This method updates the current configuration based on the values provided in an instance of the Arguments class or any subclass thereof. It's useful for transferring settings from command-line arguments or other configurations directly into this Config instance. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>args</code></b>:  An instance of Arguments or a subclass containing configuration settings to be applied. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Config</code></b>:  The instance itself, updated with the settings from <code>args</code>. </li>
+</ul>
+<p><strong>Note:</strong></p>
+<blockquote>
+<p>This method iterates through all attributes of <code>args</code> and attempts to set corresponding attributes in the Config instance. Attributes not present in Config will be ignored. </p>
+</blockquote>
+<hr />
+<h3 id="function-get_meta"><kbd>function</kbd> <code>get_meta</code></h3>
+<pre><code class="language-python">get_meta(meta_dir: str = None, meta_file_name: str = 'meta.json')
+</code></pre>
+<p>Load meta file and update class attributes accordingly. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>meta_dir</code></b> (str):  Directory containing the meta file. If not specified, uses <code>data_dir</code> attribute. </li>
+<li><b><code>meta_file_name</code></b> (str):  Name of the meta file to load. Default is "meta.json". </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>Config</code></b>:  The instance itself after updating attributes based on the meta file. </li>
+</ul>
+<hr />
+<h3 id="function-load"><kbd>function</kbd> <code>load</code></h3>
+<pre><code class="language-python">load(file_dir: str, file_name: str = 'config')
+</code></pre>
+<p>Load configuration from a JSON file. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>file_dir</code></b> (str):  The directory where the configuration file is located. </li>
+<li><b><code>file_name</code></b> (str):  The name of the file (without the extension) from which to load the configuration. Defaults to "config". </li>
+</ul>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>FileNotFoundError</code></b>:  If the specified file does not exist or the directory does not contain the configuration file. </li>
+</ul>
+<hr />
+<h3 id="function-log"><kbd>function</kbd> <code>log</code></h3>
+<pre><code class="language-python">log()
+</code></pre>
+<p>Log the current configuration settings. </p>
+<p>Outputs the configuration settings to the logging system, formatted for easy reading. </p>
+<hr />
+<h3 id="function-save"><kbd>function</kbd> <code>save</code></h3>
+<pre><code class="language-python">save(file_dir: str, file_name: str = 'config')
+</code></pre>
+<p>Save the current configuration to a JSON file. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>file_dir</code></b> (str):  The directory where the configuration file will be saved. </li>
+<li><b><code>file_name</code></b> (str):  The name of the file (without the extension) to save the configuration. Defaults to "config". </li>
+</ul>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>FileNotFoundError</code></b>:  If the specified directory does not exist. </li>
+<li><b><code>Exception</code></b>:  If there is an issue saving the file. </li>
+</ul>
+<hr />
+<h3 id="function-validate"><kbd>function</kbd> <code>validate</code></h3>
+<pre><code class="language-python">validate()
+</code></pre>
+<p>Validate the configuration. </p>
+<p>Checks for argument conflicts and resolves them if possible, issuing warnings for any discrepancies found. Ensures that the model name, feature type, and uncertainty methods are compatible with the specified task type. </p>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>AssertionError</code></b>:  If an incompatible configuration is detected that cannot be automatically resolved. </li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../overview/" class="btn btn-neutral float-left" title="Project Overview"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../muben.layers/" class="btn btn-neutral float-right" title="muben.layers">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../overview/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../muben.layers/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

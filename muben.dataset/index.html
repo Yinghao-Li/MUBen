@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>muben.dataset - MUBen - Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "muben.dataset";
+        var mkdocs_page_input_path = "muben.dataset.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> MUBen - Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../started/">Get Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../overview/">Project Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.args/">muben.args</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.layers/">muben.layers</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">muben.dataset</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#function-pack_instances">function pack_instances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#function-unpack_instances">function unpack_instances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#class-batch">class Batch</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#function-__init__">function __init__</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-to">function to</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#class-dataset">class Dataset</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#property-data_instances">property data_instances</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-lbs">property lbs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#property-smiles">property smiles</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-add_sample_by_ids">function add_sample_by_ids</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-create_features">function create_features</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-downsample_by">function downsample_by</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-get_instances">function get_instances</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-load">function load</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-prepare">function prepare</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-read_csv">function read_csv</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-save">function save</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-set_standardized_lbs">function set_standardized_lbs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-toggle_standardized_lbs">function toggle_standardized_lbs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-update_lbs">function update_lbs</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.train/">muben.train</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.utils/">muben.utils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../customize/">Customization</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MUBen - Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">muben.dataset</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!-- markdownlint-disable -->
+
+<h1 id="module-mubendataset"><kbd>module</kbd> <code>muben.dataset</code></h1>
+<p>This module includes base classes for dataset creation and batch processing. </p>
+<hr />
+<h2 id="function-pack_instances"><kbd>function</kbd> <code>pack_instances</code></h2>
+<pre><code class="language-python">pack_instances(**kwargs) → list[dict]
+</code></pre>
+<p>Converts lists of attributes into a list of data instances. </p>
+<p>Each data instance is represented as a dictionary with attribute names as keys and the corresponding data point values as values. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>**kwargs</code></b>:  Variable length keyword arguments, where each key is an attribute name and its value is a list of data points. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>List[Dict]</code></b>:  A list of dictionaries, each representing a data instance. </li>
+</ul>
+<hr />
+<h2 id="function-unpack_instances"><kbd>function</kbd> <code>unpack_instances</code></h2>
+<pre><code class="language-python">unpack_instances(instance_list: list[dict], attr_names: list[str] = None)
+</code></pre>
+<p>Converts a list of dictionaries (data instances) back into lists of attribute values. </p>
+<p>This function is essentially the inverse of <code>pack_instances</code>. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>instance_list</code></b> (List[Dict]):  A list of data instances, where each instance is a dictionary with attribute names as keys. </li>
+<li><b><code>attr_names</code></b> ([List[str]], optional):  A list of attribute names to extract. If not provided, all attributes found in the first instance are used. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>List[List]</code></b>:  A list of lists, where each sublist contains all values for a particular attribute across all instances. </li>
+</ul>
+<hr />
+<h2 id="class-batch"><kbd>class</kbd> <code>Batch</code></h2>
+<p>Represents a batch of data instances, where each instance is initialized with attributes provided as keyword arguments. </p>
+<p>Each attribute name acts as a key to its corresponding value, allowing for flexible data handling within a batched context. </p>
+<p><strong>Attributes:</strong></p>
+<ul>
+<li><b><code>size</code></b> (int):  The size of the batch. Defaults to 0. </li>
+<li><b><code>_tensor_members</code></b> (dict):  A dictionary to keep track of tensor attributes for device transfer operations. </li>
+</ul>
+<h3 id="function-__init__"><kbd>function</kbd> <code>__init__</code></h3>
+<pre><code class="language-python">__init__(**kwargs)
+</code></pre>
+<p>Initializes a Batch object with dynamic attributes based on the provided keyword arguments. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>**kwargs</code></b>:  Arbitrary keyword arguments representing attributes of data instances within the batch.  A special keyword 'batch_size' can be used to explicitly set the batch size. </li>
+</ul>
+<hr />
+<h3 id="function-to"><kbd>function</kbd> <code>to</code></h3>
+<pre><code class="language-python">to(device)
+</code></pre>
+<p>Moves all tensor attributes to the specified device (cpu, cuda). </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>device</code></b>:  The target device to move the tensor attributes to. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>self</code></b>:  The batch instance with its tensor attributes moved to the specified device. </li>
+</ul>
+<hr />
+<h2 id="class-dataset"><kbd>class</kbd> <code>Dataset</code></h2>
+<p>Custom Dataset class to handle data storage, manipulation, and preprocessing operations. </p>
+<p><strong>Attributes:</strong></p>
+<ul>
+<li><b><code>_smiles</code></b> (Union[list[str], None]):  Chemical structures represented as strings. </li>
+<li><b><code>_lbs</code></b> (Union[np.ndarray, None]):  data labels. </li>
+<li><b><code>_masks</code></b> (Union[np.ndarray, None]):  Data masks. </li>
+<li><b><code>_ori_ids</code></b> (Union[np.ndarray, None]):  Original IDs of the datapoints,  specifically used for randomly split datasets. </li>
+<li><b><code>data_instances</code></b>:  Packed instances of data. </li>
+</ul>
+<hr />
+<h4 id="property-data_instances"><kbd>property</kbd> data_instances</h4>
+<p>Returns the current data instances, considering whether the full dataset or a selection is being used. </p>
+<hr />
+<h4 id="property-lbs"><kbd>property</kbd> lbs</h4>
+<p>Returns the label data, considering whether standardized labels are being used. </p>
+<hr />
+<h4 id="property-smiles"><kbd>property</kbd> smiles</h4>
+<p>Returns the chemical structures represented as strings. </p>
+<hr />
+<h3 id="function-add_sample_by_ids"><kbd>function</kbd> <code>add_sample_by_ids</code></h3>
+<pre><code class="language-python">add_sample_by_ids(ids: list[int] = None)
+</code></pre>
+<p>Appends a subset of data instances to the selected data instances. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>ids</code></b> (list[int], optional):  Indices of the selected instances. </li>
+</ul>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>ValueError</code></b>:  If <code>ids</code> is not specified. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>self</code></b> (Dataset):  The dataset with the added data instances. </li>
+</ul>
+<hr />
+<h3 id="function-create_features"><kbd>function</kbd> <code>create_features</code></h3>
+<pre><code class="language-python">create_features(config)
+</code></pre>
+<p>Creates data features. This method should be implemented by subclasses to generate data features according to different descriptors or fingerprints. </p>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>NotImplementedError</code></b>:  This method should be implemented by subclasses. </li>
+</ul>
+<hr />
+<h3 id="function-downsample_by"><kbd>function</kbd> <code>downsample_by</code></h3>
+<pre><code class="language-python">downsample_by(file_path: str = None, ids: list[int] = None)
+</code></pre>
+<p>Downsamples the dataset to a subset with the specified indices. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>file_path</code></b> (str, optional):  Path to the file containing the indices of the selected instances. </li>
+<li><b><code>ids</code></b> (list[int], optional):  Indices of the selected instances. </li>
+</ul>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>ValueError</code></b>:  If neither <code>ids</code> nor <code>file_path</code> is specified. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>self</code></b> (Dataset):  The downsampled dataset. </li>
+</ul>
+<hr />
+<h3 id="function-get_instances"><kbd>function</kbd> <code>get_instances</code></h3>
+<pre><code class="language-python">get_instances()
+</code></pre>
+<p>Gets the instances of the dataset. This method should be implemented by subclasses to pack data, labels, and masks into data instances. </p>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>NotImplementedError</code></b>:  This method should be implemented by subclasses. </li>
+</ul>
+<hr />
+<h3 id="function-load"><kbd>function</kbd> <code>load</code></h3>
+<pre><code class="language-python">load(file_path: str)
+</code></pre>
+<p>Loads the entire dataset from disk. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>file_path</code></b> (str):  Path to the saved file. </li>
+</ul>
+<p><strong>Returns:</strong>
+ self (Dataset) </p>
+<hr />
+<h3 id="function-prepare"><kbd>function</kbd> <code>prepare</code></h3>
+<pre><code class="language-python">prepare(config, partition, **kwargs)
+</code></pre>
+<p>Prepares the dataset for training and testing. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>config</code></b>:  Configuration parameters. </li>
+<li><b><code>partition</code></b> (str):  The dataset partition; should be one of 'train', 'valid', 'test'. </li>
+</ul>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>ValueError</code></b>:  If <code>partition</code> is not one of 'train', 'valid', 'test'. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>self</code></b> (Dataset):  The prepared dataset. </li>
+</ul>
+<hr />
+<h3 id="function-read_csv"><kbd>function</kbd> <code>read_csv</code></h3>
+<pre><code class="language-python">read_csv(data_dir: str, partition: str)
+</code></pre>
+<p>Reads data from CSV files. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>data_dir</code></b> (str):  The directory where data files are stored. </li>
+<li><b><code>partition</code></b> (str):  The dataset partition ('train', 'valid', 'test'). </li>
+</ul>
+<p><strong>Raises:</strong></p>
+<ul>
+<li><b><code>FileNotFoundError</code></b>:  If the specified file does not exist. </li>
+</ul>
+<p><strong>Returns:</strong>
+ self (Dataset) </p>
+<hr />
+<h3 id="function-save"><kbd>function</kbd> <code>save</code></h3>
+<pre><code class="language-python">save(file_path: str)
+</code></pre>
+<p>Saves the entire dataset for future use. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>file_path</code></b> (str):  Path to the save file. </li>
+</ul>
+<p><strong>Returns:</strong>
+ self (Dataset) </p>
+<hr />
+<h3 id="function-set_standardized_lbs"><kbd>function</kbd> <code>set_standardized_lbs</code></h3>
+<pre><code class="language-python">set_standardized_lbs(lbs)
+</code></pre>
+<p>Sets standardized labels and updates the instance list accordingly. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>lbs</code></b>:  The standardized label data. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>self</code></b> (Dataset):  The dataset with the standardized labels set. </li>
+</ul>
+<hr />
+<h3 id="function-toggle_standardized_lbs"><kbd>function</kbd> <code>toggle_standardized_lbs</code></h3>
+<pre><code class="language-python">toggle_standardized_lbs(use_standardized_lbs: bool = None)
+</code></pre>
+<p>Toggle between using standardized and unstandardized labels. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>use_standardized_lbs</code></b> (bool, optional):  Whether to use standardized labels. Defaults to None. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>self</code></b> (Dataset):  The dataset with the standardized labels toggled. </li>
+</ul>
+<hr />
+<h3 id="function-update_lbs"><kbd>function</kbd> <code>update_lbs</code></h3>
+<pre><code class="language-python">update_lbs(lbs)
+</code></pre>
+<p>Updates the dataset labels and the instance list accordingly. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>lbs</code></b>:  The new labels. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>self</code></b> (Dataset):  The dataset with the updated labels. </li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../muben.layers/" class="btn btn-neutral float-left" title="muben.layers"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../muben.train/" class="btn btn-neutral float-right" title="muben.train">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../muben.layers/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../muben.train/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

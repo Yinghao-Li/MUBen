@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>muben.utils - MUBen - Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "muben.utils";
+        var mkdocs_page_input_path = "muben.utils.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> MUBen - Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../started/">Get Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../overview/">Project Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.args/">muben.args</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.layers/">muben.layers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.dataset/">muben.dataset</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../muben.train/">muben.train</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">muben.utils</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#module-argparser">module argparser</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#class-argumentparser">class ArgumentParser</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#method-__init__">method __init__</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#method-parse_args_into_dataclasses">method parse_args_into_dataclasses</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#method-parse_dict">method parse_dict</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#method-parse_json_file">method parse_json_file</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#method-parse_yaml_file">method parse_yaml_file</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#module-chem">module chem</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#function-smiles_to_2d_coords">function smiles_to_2d_coords</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-smiles_to_3d_coords">function smiles_to_3d_coords</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-smiles_to_coords">function smiles_to_coords</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-rdkit_2d_features_normalized_generator">function rdkit_2d_features_normalized_generator</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-morgan_binary_features_generator">function morgan_binary_features_generator</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-smiles_to_atom_ids">function smiles_to_atom_ids</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-atom_to_atom_ids">function atom_to_atom_ids</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-smiles_to_2d_graph">function smiles_to_2d_graph</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#module-metrics">module metrics</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#function-classification_metrics">function classification_metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-regression_metrics">function regression_metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-regression_calibration_error">function regression_calibration_error</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#module-io">module io</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#function-set_log_path">function set_log_path</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-set_logging">function set_logging</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-logging_args">function logging_args</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-remove_dir">function remove_dir</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-init_dir">function init_dir</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-save_json">function save_json</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-prettify_json">function prettify_json</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-convert_arguments_from_argparse">function convert_arguments_from_argparse</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-save_results">function save_results</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-load_results">function load_results</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-load_lmdb">function load_lmdb</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#function-load_unimol_preprocessed">function load_unimol_preprocessed</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../customize/">Customization</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MUBen - Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">muben.utils</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!-- markdownlint-disable -->
+
+<h1 id="module-mubenutils"><kbd>module</kbd> <code>muben.utils</code></h1>
+<p>Utility functions to support argument parsing, data loading, model training and evalution.</p>
+<hr />
+<h2 id="module-argparser"><kbd>module</kbd> <code>argparser</code></h2>
+<p>Argument Parser.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code>ArgumentParser</code> class is modified from <code>huggingface/transformers</code> implementation.</p>
+</div>
+<hr />
+<h3 id="class-argumentparser"><kbd>class</kbd> <code>ArgumentParser</code></h3>
+<p>This subclass of <code>argparse.ArgumentParser</code> uses type hints on dataclasses to generate arguments. </p>
+<p>The class is designed to play well with the native argparse. In particular, you can add more (non-dataclass backed) arguments to the parser after initialization and you'll get the output back after parsing as an additional namespace. Optional: To create sub argument groups use the <code>_argument_group_name</code> attribute in the dataclass. </p>
+<h4 id="method-__init__"><kbd>method</kbd> <code>__init__</code></h4>
+<pre><code class="language-python">__init__(
+    dataclass_types: Union[DataClassType, Iterable[DataClassType]],
+    **kwargs
+)
+</code></pre>
+<p><strong>Args:</strong>
+  dataclass_types:  Dataclass type, or list of dataclass types for which we will "fill" instances with the parsed args. </p>
+<p><strong>kwargs:</strong>
+  (Optional) Passed to <code>argparse.ArgumentParser()</code> in the regular way. </p>
+<hr />
+<h4 id="method-parse_args_into_dataclasses"><kbd>method</kbd> <code>parse_args_into_dataclasses</code></h4>
+<pre><code class="language-python">parse_args_into_dataclasses(
+    args=None,
+    return_remaining_strings=False,
+    look_for_args_file=True,
+    args_filename=None,
+    args_file_flag=None
+) → Tuple[DataClass, ]
+</code></pre>
+<p>Parse command-line args into instances of the specified dataclass types. </p>
+<p>This relies on argparse's <code>ArgumentParser.parse_known_args</code>. See the doc at: docs.python.org/3.7/library/argparse.html#argparse.ArgumentParser.parse_args </p>
+<p><strong>Args:</strong></p>
+<p><strong>args:</strong>
+  List of strings to parse. The default is taken from sys.argv. (same as argparse.ArgumentParser) return_remaining_strings:  If true, also return a list of remaining argument strings. look_for_args_file:  If true, will look for a ".args" file with the same base name as the entry point script for this  process, and will append its potential content to the command line args. args_filename:  If not None, will uses this file instead of the ".args" file specified in the previous argument. args_file_flag:  If not None, will look for a file in the command-line args specified with this flag. The flag can be  specified multiple times and precedence is determined by the order (last one wins). </p>
+<p><strong>Returns:</strong>
+  Tuple consisting of: </p>
+<ul>
+<li>the dataclass instances in the same order as they were passed to the initializer.abspath </li>
+<li>if applicable, an additional namespace for more (non-dataclass backed) arguments added to the parser  after initialization. </li>
+<li>The potential list of remaining argument strings. (same as argparse.ArgumentParser.parse_known_args) </li>
+</ul>
+<hr />
+<h4 id="method-parse_dict"><kbd>method</kbd> <code>parse_dict</code></h4>
+<pre><code class="language-python">parse_dict(args: Dict[str, Any]) → Tuple[DataClass, ]
+</code></pre>
+<p>Alternative helper method that does not use <code>argparse</code> at all, instead uses a dict and populating the dataclass types. </p>
+<p><strong>Args:</strong>
+  args (<code>dict</code>):  dict containing config values </p>
+<p><strong>Returns:</strong>
+  Tuple consisting of: </p>
+<ul>
+<li>the dataclass instances in the same order as they were passed to the initializer. </li>
+</ul>
+<hr />
+<h4 id="method-parse_json_file"><kbd>method</kbd> <code>parse_json_file</code></h4>
+<pre><code class="language-python">parse_json_file(json_file: str) → Tuple[DataClass, ]
+</code></pre>
+<p>Alternative helper method that does not use <code>argparse</code> at all, instead loading a json file and populating the dataclass types. </p>
+<p><strong>Args:</strong>
+  json_file (<code>str</code> or <code>os.PathLike</code>):  File name of the json file to parse </p>
+<p><strong>Returns:</strong>
+  Tuple consisting of: </p>
+<ul>
+<li>the dataclass instances in the same order as they were passed to the initializer. </li>
+</ul>
+<hr />
+<h4 id="method-parse_yaml_file"><kbd>method</kbd> <code>parse_yaml_file</code></h4>
+<pre><code class="language-python">parse_yaml_file(yaml_file: str) → Tuple[DataClass, ]
+</code></pre>
+<p>Alternative helper method that does not use <code>argparse</code> at all, instead loading a yaml file and populating the dataclass types. </p>
+<p><strong>Args:</strong>
+  yaml_file (<code>str</code> or <code>os.PathLike</code>):  File name of the yaml file to parse </p>
+<p><strong>Returns:</strong>
+  Tuple consisting of: </p>
+<ul>
+<li>the dataclass instances in the same order as they were passed to the initializer. </li>
+</ul>
+<hr />
+<h2 id="module-chem"><kbd>module</kbd> <code>chem</code></h2>
+<p>Molecular descriptors and features </p>
+<hr />
+<h3 id="function-smiles_to_2d_coords"><kbd>function</kbd> <code>smiles_to_2d_coords</code></h3>
+<pre><code class="language-python">smiles_to_2d_coords(smiles)
+</code></pre>
+<p>Converts SMILES strings to 2D coordinates. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>smiles</code></b> (str):  A SMILES string representing the molecule. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>numpy.ndarray</code></b>:  A 2D array of coordinates for the molecule. </li>
+</ul>
+<hr />
+<h3 id="function-smiles_to_3d_coords"><kbd>function</kbd> <code>smiles_to_3d_coords</code></h3>
+<pre><code class="language-python">smiles_to_3d_coords(smiles, n_conformer)
+</code></pre>
+<p>Converts SMILES strings to 3D coordinates. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>smiles</code></b> (str):  A SMILES string representing the molecule. </li>
+<li><b><code>n_conformer</code></b> (int):  Number of conformers to generate for the molecule. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>list[numpy.ndarray]</code></b>:  A list of 3D arrays of coordinates for each conformer of the molecule. </li>
+</ul>
+<hr />
+<h3 id="function-smiles_to_coords"><kbd>function</kbd> <code>smiles_to_coords</code></h3>
+<pre><code class="language-python">smiles_to_coords(smiles, n_conformer=10)
+</code></pre>
+<p>Converts SMILES strings to 3D coordinates. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>smiles</code></b> (str):  A SMILES string representing the molecule. </li>
+<li><b><code>n_conformer</code></b> (int):  Number of conformers to generate for the molecule. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>list[numpy.ndarray]</code></b>:  A list of 3D arrays of coordinates for each conformer of the molecule. </li>
+</ul>
+<hr />
+<h3 id="function-rdkit_2d_features_normalized_generator"><kbd>function</kbd> <code>rdkit_2d_features_normalized_generator</code></h3>
+<pre><code class="language-python">rdkit_2d_features_normalized_generator(mol) → ndarray
+</code></pre>
+<p>Generates RDKit 2D normalized features for a molecule. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>mol</code></b> (str or Chem.Mol):  A molecule represented as a SMILES string or an RDKit molecule object. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>numpy.ndarray</code></b>:  An array containing the RDKit 2D normalized features. </li>
+</ul>
+<hr />
+<h3 id="function-morgan_binary_features_generator"><kbd>function</kbd> <code>morgan_binary_features_generator</code></h3>
+<pre><code class="language-python">morgan_binary_features_generator(
+    mol,
+    radius: int = 2,
+    num_bits: int = 1024
+) → ndarray
+</code></pre>
+<p>Generates a binary Morgan fingerprint for a molecule. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>mol</code></b> (str or Chem.Mol):  A molecule represented as a SMILES string or an RDKit molecule object. </li>
+<li><b><code>radius</code></b> (int):  Radius of the Morgan fingerprint. </li>
+<li><b><code>num_bits</code></b> (int):  Number of bits in the Morgan fingerprint. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>numpy.ndarray</code></b>:  An array containing the binary Morgan fingerprint. </li>
+</ul>
+<hr />
+<h3 id="function-smiles_to_atom_ids"><kbd>function</kbd> <code>smiles_to_atom_ids</code></h3>
+<pre><code class="language-python">smiles_to_atom_ids(smiles: str) → list[int]
+</code></pre>
+<p>Converts SMILES strings to a list of atom IDs with hydrogens included. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>smiles</code></b> (str):  A SMILES string representing the molecule. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>list[int]</code></b>:  A list of atomic numbers corresponding to the atoms in the molecule. </li>
+</ul>
+<hr />
+<h3 id="function-atom_to_atom_ids"><kbd>function</kbd> <code>atom_to_atom_ids</code></h3>
+<pre><code class="language-python">atom_to_atom_ids(atoms: list[str]) → list[int]
+</code></pre>
+<p>Converts a list of atom symbols to a list of atom IDs. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>atoms</code></b> (list[str]):  A list of atom symbols. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>list[int]</code></b>:  A list of atomic numbers corresponding to the provided atom symbols. </li>
+</ul>
+<hr />
+<h3 id="function-smiles_to_2d_graph"><kbd>function</kbd> <code>smiles_to_2d_graph</code></h3>
+<pre><code class="language-python">smiles_to_2d_graph(smiles)
+</code></pre>
+<p>Converts SMILES strings to 2D graph representations. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>smiles</code></b> (str):  A SMILES string representing the molecule. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>tuple[list[int], list[list[int]]]</code></b>:  A tuple containing a list of atom IDs and a list of bonds represented as pairs of atom indices. </li>
+</ul>
+<h2 id="module-metrics"><kbd>module</kbd> <code>metrics</code></h2>
+<p>These Python functions are designed to calculate various metrics for classification and regression tasks, particularly focusing on evaluating the performance of models on tasks involving predictions with associated uncertainties. </p>
+<hr />
+<h3 id="function-classification_metrics"><kbd>function</kbd> <code>classification_metrics</code></h3>
+<pre><code class="language-python">classification_metrics(preds, lbs, masks, exclude: list = None)
+</code></pre>
+<p>Calculates various metrics for classification tasks. </p>
+<p>This function computes ROC-AUC, PRC-AUC, ECE, MCE, NLL, and Brier score for classification predictions. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>preds</code></b> (numpy.ndarray):  Predicted probabilities for each class. </li>
+<li><b><code>lbs</code></b> (numpy.ndarray):  Ground truth labels. </li>
+<li><b><code>masks</code></b> (numpy.ndarray):  Masks indicating valid data points for evaluation. </li>
+<li><b><code>exclude</code></b> (list, optional):  List of metrics to exclude from the calculation. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict</code></b>:  A dictionary containing calculated metrics. </li>
+</ul>
+<hr />
+<h3 id="function-regression_metrics"><kbd>function</kbd> <code>regression_metrics</code></h3>
+<pre><code class="language-python">regression_metrics(preds, variances, lbs, masks, exclude: list = None)
+</code></pre>
+<p>Calculates various metrics for regression tasks. </p>
+<p>Computes RMSE, MAE, NLL, and calibration error for regression predictions and their associated uncertainties. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>preds</code></b> (numpy.ndarray):  Predicted values (means). </li>
+<li><b><code>variances</code></b> (numpy.ndarray):  Predicted variances. </li>
+<li><b><code>lbs</code></b> (numpy.ndarray):  Ground truth values. </li>
+<li><b><code>masks</code></b> (numpy.ndarray):  Masks indicating valid data points for evaluation. </li>
+<li><b><code>exclude</code></b> (list, optional):  List of metrics to exclude from the calculation. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict</code></b>:  A dictionary containing calculated metrics. </li>
+</ul>
+<hr />
+<h3 id="function-regression_calibration_error"><kbd>function</kbd> <code>regression_calibration_error</code></h3>
+<pre><code class="language-python">regression_calibration_error(lbs, preds, variances, n_bins=20)
+</code></pre>
+<p>Calculates the calibration error for regression tasks. </p>
+<p>Uses the predicted means and variances to estimate the calibration error across a specified number of bins. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>lbs</code></b> (numpy.ndarray):  Ground truth values. </li>
+<li><b><code>preds</code></b> (numpy.ndarray):  Predicted values (means). </li>
+<li><b><code>variances</code></b> (numpy.ndarray):  Predicted variances. </li>
+<li><b><code>n_bins</code></b> (int, optional):  Number of bins to use for calculating calibration error. Defaults to 20. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>float</code></b>:  The calculated calibration error. </li>
+</ul>
+<h2 id="module-io"><kbd>module</kbd> <code>io</code></h2>
+<h3 id="function-set_log_path"><kbd>function</kbd> <code>set_log_path</code></h3>
+<pre><code class="language-python">set_log_path(args, time)
+</code></pre>
+<p>Sets up the log path based on given arguments and time. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>args</code></b>:  Command-line arguments or any object with attributes <code>dataset_name</code>, <code>model_name</code>, <code>feature_type</code>, and <code>uncertainty_method</code>. </li>
+<li><b><code>time</code></b> (str):  A string representing the current time or a unique identifier for the log file. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>str</code></b>:  The constructed log path. </li>
+</ul>
+<hr />
+<h3 id="function-set_logging"><kbd>function</kbd> <code>set_logging</code></h3>
+<pre><code class="language-python">set_logging(log_path: Optional[str] = None)
+</code></pre>
+<p>Sets up logging format and file handler. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>log_path</code></b> (Optional[str]):  Path where to save the logging file. If None, no log file is saved. </li>
+</ul>
+<hr />
+<h3 id="function-logging_args"><kbd>function</kbd> <code>logging_args</code></h3>
+<pre><code class="language-python">logging_args(args)
+</code></pre>
+<p>Logs model arguments. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>args</code></b>:  The arguments to be logged. Can be an argparse Namespace or similar object. </li>
+</ul>
+<hr />
+<h3 id="function-remove_dir"><kbd>function</kbd> <code>remove_dir</code></h3>
+<pre><code class="language-python">remove_dir(directory: str)
+</code></pre>
+<p>Removes a directory and its subtree. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>directory</code></b> (str):  The directory to remove. </li>
+</ul>
+<hr />
+<h3 id="function-init_dir"><kbd>function</kbd> <code>init_dir</code></h3>
+<pre><code class="language-python">init_dir(directory: str, clear_original_content: Optional[bool] = True)
+</code></pre>
+<p>Initializes a directory. Clears content if specified and directory exists. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>directory</code></b> (str):  The directory to initialize. </li>
+<li><b><code>clear_original_content</code></b> (Optional[bool]):  Whether to clear the original content of the directory if it exists. </li>
+</ul>
+<hr />
+<h3 id="function-save_json"><kbd>function</kbd> <code>save_json</code></h3>
+<pre><code class="language-python">save_json(obj, path: str, collapse_level: Optional[int] = None)
+</code></pre>
+<p>Saves an object to a JSON file. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>obj</code></b>:  The object to save. </li>
+<li><b><code>path</code></b> (str):  The path to the file where the object will be saved. </li>
+<li><b><code>collapse_level</code></b> (Optional[int]):  Specifies how to prettify the JSON output. If set, collapses levels greater than this. </li>
+</ul>
+<hr />
+<h3 id="function-prettify_json"><kbd>function</kbd> <code>prettify_json</code></h3>
+<pre><code class="language-python">prettify_json(text, indent=2, collapse_level=4)
+</code></pre>
+<p>Prettifies JSON text by collapsing indent levels higher than <code>collapse_level</code>. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>text</code></b> (str):  Input JSON text. </li>
+<li><b><code>indent</code></b> (int):  The indentation value of the JSON text. </li>
+<li><b><code>collapse_level</code></b> (int):  The level from which to stop adding new lines. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>str</code></b>:  The prettified JSON text. </li>
+</ul>
+<hr />
+<h3 id="function-convert_arguments_from_argparse"><kbd>function</kbd> <code>convert_arguments_from_argparse</code></h3>
+<pre><code class="language-python">convert_arguments_from_argparse(args)
+</code></pre>
+<p>Converts argparse Namespace to transformers-style arguments. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>args</code></b>:  argparse Namespace object. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>str</code></b>:  Transformers style arguments string. </li>
+</ul>
+<hr />
+<h3 id="function-save_results"><kbd>function</kbd> <code>save_results</code></h3>
+<pre><code class="language-python">save_results(path, preds, variances, lbs, masks)
+</code></pre>
+<p>Saves prediction results to a file. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>path</code></b> (str):  Path where to save the results. </li>
+<li><b><code>preds</code></b>:  Predictions to save. </li>
+<li><b><code>variances</code></b>:  Variances associated with predictions. </li>
+<li><b><code>lbs</code></b>:  Ground truth labels. </li>
+<li><b><code>masks</code></b>:  Masks indicating valid entries. </li>
+</ul>
+<hr />
+<h3 id="function-load_results"><kbd>function</kbd> <code>load_results</code></h3>
+<pre><code class="language-python">load_results(result_paths: list[str])
+</code></pre>
+<p>Loads prediction results from files. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>result_paths</code></b> (list[str]):  Paths to the result files. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>tuple</code></b>:  Predictions, variances, labels, and masks loaded from the files. </li>
+</ul>
+<hr />
+<h3 id="function-load_lmdb"><kbd>function</kbd> <code>load_lmdb</code></h3>
+<pre><code class="language-python">load_lmdb(data_path, keys_to_load: list[str] = None, return_dict: bool = False)
+</code></pre>
+<p>Loads data from an LMDB file. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>data_path</code></b> (str):  Path to the LMDB file. </li>
+<li><b><code>keys_to_load</code></b> (list[str], optional):  Specific keys to load from the LMDB file. Loads all keys if None. </li>
+<li><b><code>return_dict</code></b> (bool):  Whether to return a dictionary of loaded values. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict or tuple</code></b>:  Loaded values from the LMDB file. The format depends on <code>return_dict</code>. </li>
+</ul>
+<hr />
+<h3 id="function-load_unimol_preprocessed"><kbd>function</kbd> <code>load_unimol_preprocessed</code></h3>
+<pre><code class="language-python">load_unimol_preprocessed(data_dir: str)
+</code></pre>
+<p>Loads preprocessed UniMol dataset splits from an LMDB file. </p>
+<p><strong>Args:</strong></p>
+<ul>
+<li><b><code>data_dir</code></b> (str):  Directory containing the LMDB dataset splits. </li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><b><code>dict</code></b>:  Loaded dataset splits (train, valid, test). </li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../muben.train/" class="btn btn-neutral float-left" title="muben.train"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../customize/" class="btn btn-neutral float-right" title="Customization">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../muben.train/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../customize/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

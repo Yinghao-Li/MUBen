@@ -54,24 +54,6 @@
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#data_1">Data</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#other-options">Other Options</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#using-customized-datasets">Using Customized Datasets</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#run">Run</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#logging-and-wandb">Logging and WandB</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#data-loading">Data Loading</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#calculating-metrics">Calculating Metrics</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#results">Results</a>
-    </li>
-        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#ongoing-works">Ongoing Works</a>
         <ul>
@@ -86,6 +68,34 @@
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="started/">Get Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="overview/">Project Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="muben.args/">muben.args</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="muben.layers/">muben.layers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="muben.dataset/">muben.dataset</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="muben.train/">muben.train</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="muben.utils/">muben.utils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="customize/">Customization</a>
                 </li>
               </ul>
       </div>
@@ -262,74 +272,6 @@ The script will convert <em>all</em> datasets by default (excluding PCBA).
 If you want to specify a subset of datasets, you can specify the argument <code>--dataset_names</code> with the target dataset names with lowercase letters.</p>
 <p><strong>Notice</strong>: If you would like to run the Uni-Mol model, you are suggested to keep the original <code>UniMol</code> data as we will use the pre-defined molecule conformations.
 Otherwise, it is safe to remove the original data.</p>
-<h3 id="other-options">Other Options</h3>
-<p>If you do not want to use Uni-Mol data, you can try the scripts within the <code>legacy</code> folder, including <code>build_dgllife_datasets.py</code>, and <code>build_qm[7,8,9]_dataset.py</code>.
-Notice that this may result in training/validation/test partitions different from what is being used in our experiments.</p>
-<h3 id="using-customized-datasets">Using Customized Datasets</h3>
-<p>If you want to test the UQ methods on your own dataset, you can use <code>pandas.DataFrame</code> structure with the following keys:</p>
-<pre><code>{
-  &quot;smiles&quot;: list of `str`,
-  &quot;labels&quot;: list of list of int/float,
-  &quot;masks&quot;: list of list of int/float (with values within {0,1})
-}
-</code></pre>
-<p>and store them as <code>train.csv</code>, <code>valid.csv</code>, and <code>test.csv</code> files.
-<code>mask=1</code> indicates the existence informative label at the position and <code>mask=0</code> indicates missing label.
-You can check the prepared datasets included in our program for reference.
-You are recommended to put the dataset files in the <code>./data/file/&lt;dataset name&gt;</code> directory, but you can of course choose your favorite location and specify the <code>--data_folder</code> argument.</p>
-<p>The <code>.csv</code> files should be accompanied by a <code>meta.json</code> file within the same directory.
-It stores some constant dataset properties, <em>e.g.</em>, <code>task_type</code> (classification or regression), <code>n_tasks</code>, or <code>classes</code> (<code>[0,1]</code> for all our classification datasets).
-For the customized dataset, one <strong>required</strong> property is the <code>eval_metric</code> for validation and test (<em>e.g.</em>, roc-auc, rmse, <em>etc.</em>) since it is not specified in the macro file.
-Please refer to <code>./assist/dataset_build_roe.py</code> for an example (unfortunately, we are not allowed to release the dataset).</p>
-<h2 id="run">Run</h2>
-<p>A simple demo of running our project can be found at <code>./demo/demo.ipynb</code>.</p>
-<p>To run each of the four backbone models with uncertainty estimation methods, you can check the <code>run_*.py</code> files in the root directory.
-Example shell scripts are provided in the <code>./scripts</code> folder as <code>.sh</code> files.
-You can use them through</p>
-<pre><code class="language-bash">./scripts/run_dnn_rdkit.sh &lt;CUDA_VISIBLE_DEVICES&gt;
-</code></pre>
-<p>as an example.
-Notice that we need to comment out the variables <code>train_on_&lt;dataset name&gt;</code> in the <code>.sh</code> files to skip training on the corresponding datasets.
-Setting their value to <code>false</code> <strong>does not work</strong>.</p>
-<p>Another way of specifying arguments is through the <code>.json</code> scripts, for example:</p>
-<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; CUDA_VISIBLE_DEVICES=0 python ./run/dnn.py ./scripts/config_dnn.json
-</code></pre>
-<p>This approach could be helpful for debugging the code through vscode.</p>
-<p>To get a detailed description of each argument, you can use <code>--help</code>:</p>
-<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./run/dnn.py --help
-</code></pre>
-<h3 id="logging-and-wandb">Logging and WandB</h3>
-<p>By default, this project uses local logging files (<code>*.log</code>) and <a href="https://wandb.ai/site">WandB</a> to track training status.</p>
-<p>The log files are stored as <code>./logs/&lt;dataset&gt;/&lt;model&gt;/&lt;uncertainty&gt;/&lt;running_time&gt;.log</code>.
-You can change the file path by specifying the <code>--log_path</code> argument, or disable log saving by setting <code>--log_path="disabled"</code>.</p>
-<p>To use WandB, you first need to register an account and sign in on your machine with <code>wandb login</code>.
-If you are running your code on a public device, you can instead use program-wise signing in by specifying the <code>--wandb_api_key</code> argument while running our code.
-You can find your API key in your browser here: https://wandb.ai/authorize.
-To disable WandB, use <code>--disable_wandb [true]</code>.
-By default, we use <code>MUBen-&lt;dataset&gt;</code> as WandB project name and <code>&lt;model&gt;-&lt;uncertainty&gt;</code> as the model name.
-You can change this behavior by specifying the <code>--wandb_project</code> and <code>--wandb_name</code> arguments.</p>
-<h3 id="data-loading">Data Loading</h3>
-<p>The progress will automatically create the necessary features (molecular descriptors) required by backbone models from the SMILES strings if they are loaded properly.
-The processed features are stored in the <code>&lt;bottom-level data folder&gt;/processed/</code> directory as <code>&lt;train/valid/test&gt;.pt</code> files by default, and will be automatically loaded the next time you apply the same backbone model on the same dataset.
-You can change this behavior with <code>--disable_dataset_saving</code> for disabling dataset saving or <code>--ignore_preprocessed_dataset</code> for not loading from the saved (processed) dataset.</p>
-<p>Constructing Morgan fingerprint, RDKit features or 3D conformations for Uni-Mol may take a while.
-You can accelerate this process by utilizing multiple threads <code>--num_preprocess_workers=n&gt;1</code> (default is 8).
-For 3D conformations, we directly take advantage of the results from Uni-Mol but still keep the choice of generating them by ourselves if the Uni-Mol data files are not found.</p>
-<h3 id="calculating-metrics">Calculating Metrics</h3>
-<p>During training, we only calculate metrics necessary for early stopping and simple prediction performance evaluation.
-To get other metrics, you need to use the <code>./assist/results_get_metrics.py</code> file.</p>
-<p>Specifically, you need to save the model predictions by <strong>not</strong> setting <code>--disable_dataset_saving</code>.
-The results are saved as <code>./&lt;result_folder&gt;/&lt;dataset_name&gt;/&lt;model_name&gt;/&lt;uncertainty_method&gt;/seed-&lt;seed&gt;/preds/&lt;test_idx&gt;.pt</code> files.
-When the training is finished, you can run the <code>./assist/results_get_metrics.py</code> file to generate all metrics for your model predictions.
-For example:</p>
-<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./assist/results_get_metrics.py ./scripts/config_metrics.json
-</code></pre>
-<p>Make sure the hyper-parameters in the configuration file are updated to your needs.</p>
-<p>The metrics will be saved in the <code>./&lt;result_folder&gt;/RESULTS/&lt;model_name&gt;-&lt;dataset_name&gt;.csv</code> files.
-~~Notice that these files already exist in the repo if you keep the default <code>--result_folder=./output</code> argument and you need to check whether it is updated to reveal your experiment results.~~</p>
-<h3 id="results">Results</h3>
-<p>We provided a more comprehensive copy of our experiment results <a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/output">here</a> that are presented in the tables in our paper's appendix.
-We hope it can ease some effort if you want to further analyze the behavior of our backbone models and uncertainty quantification methods. </p>
 <h2 id="ongoing-works">Ongoing Works</h2>
 <h3 id="active-learning">Active Learning</h3>
 <p>We are developing code to integrate <em>active learning</em> into the pipeline.
@@ -411,5 +353,5 @@ In addition, several points are worth attention:</p>
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-02-29 16:19:54.861445+00:00
+Build Date UTC : 2024-03-01 01:50:48.508393+00:00
 -->
