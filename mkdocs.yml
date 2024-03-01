@@ -9,6 +9,7 @@ nav:
   - muben.dataset: muben.dataset.md
   - muben.train: muben.train.md
   - muben.utils: muben.utils.md
+  - Customization: customize.md
 
 theme: readthedocs
 

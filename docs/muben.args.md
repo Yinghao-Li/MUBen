@@ -27,6 +27,7 @@ This class holds the arguments related to the descriptor type of the model. It a
 ## <kbd>class</kbd> `Arguments`
 Base class for managing arguments related to model training, evaluation, and data handling. 
 
+This class contains many attributes. Each attribute controls a specific aspect of the training or evaluation process, including but not limited to data handling, model selection, training configurations, and evaluation metrics. 
 
 
 **Attributes:**
@@ -94,13 +95,6 @@ Base class for managing arguments related to model training, evaluation, and dat
  - <b>`n_al_select`</b> (int):  Number of instances to select in each active learning epoch. Default is 50. 
  - <b>`n_al_loops`</b> (int):  Number of active learning loops. Default is 5. 
  - <b>`al_random_sampling`</b> (bool):  Select instances randomly in active learning. Default is False. 
-
-
-
-**Note:**
-
-> This class contains many attributes. Each attribute controls a specific aspect of the training or evaluation process, including but not limited to data handling, model selection, training configurations, and evaluation metrics. 
-
 
 
 

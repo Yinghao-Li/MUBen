@@ -105,8 +105,6 @@ Here we pass necessary hyper-parameters to the configuration to control the trai
 # We do not use wandb for this demo, so we set its mode to "disabled".
 set_logging()
 set_seed(42)
-wandb.init(mode="disabled",)
-
 # Select the classes based on the descriptor type.
 # DNN uses RDKit features, so we set the descriptor type to RDKit and select configuration, dataset,
 # and model classes according to it.
@@ -118,7 +116,7 @@ model_class = model_selector(descriptor_type)
 # Specify the configuration of the experiment.
 # Notice that although we directly edit the config object here, a more appropriate way of doing this is 
 # passing arguments through the shell or json scripts when we are running the experiments through the terminal.
-config = config_class()
+config = config_class(descriptor_type)
 config.model_name = "DNN"
 config.feature_type = "rdkit"
 config.data_folder = "../data/files/"
@@ -157,7 +155,6 @@ In this case, [`DNN`](https://github.com/Yinghao-Li/MUBen/blob/0972667c69a3543ce
 Then, the trainer initializes the model with arguments defined in the configuration.
 
 ```python
-# Inintialized the trainer with the configuration and datasets
 # Inintialized the trainer with the configuration and datasets
 trainer = Trainer(
     config=config,
@@ -248,3 +245,72 @@ print(det_metrics_df.T)
 ```
 
 The result will be presented as a table the columns being metrics and rows being the UQ method.
+
+
+## Model Training with CLI
+
+To run each of the four backbone models with uncertainty estimation methods, you can check the `run_*.py` files in the root directory.
+Example shell scripts are provided in the `./scripts` folder as `.sh` files.
+For example, you can start running through
+```bash
+./scripts/run_dnn.sh <CUDA_VISIBLE_DEVICES>
+```
+Notice that we need to comment out the variables `train_on_<dataset name>` in the `.sh` files to skip training on the corresponding datasets.
+Setting their value to `false` **does not work**.
+
+Another way of specifying arguments is through the `.json` scripts, for example:
+```bash
+PYTHONPATH="." CUDA_VISIBLE_DEVICES=0 python ./run/dnn.py ./scripts/config_dnn.json
+```
+This approach could be helpful for debugging the code through vscode.
+
+To get a detailed description of each argument, you can use `--help`:
+```bash
+PYTHONPATH="." python ./run/dnn.py --help
+```
+
+### Logging and WandB
+
+By default, this project uses local logging files (`*.log`) and [WandB](https://wandb.ai/site) to track training status.
+
+The log files are stored as `./logs/<dataset>/<model>/<uncertainty>/<running_time>.log`.
+You can change the file path by specifying the `--log_path` argument, or disable log saving by setting `--log_path="disabled"`.
+
+To use WandB, you first need to register an account and sign in on your machine with `wandb login`.
+If you are running your code on a public device, you can instead use program-wise signing in by specifying the `--wandb_api_key` argument while running our code.
+You can find your API key in your browser here: https://wandb.ai/authorize.
+To disable WandB, use `--disable_wandb [true]`.
+By default, we use `MUBen-<dataset>` as WandB project name and `<model>-<uncertainty>` as the model name.
+You can change this behavior by specifying the `--wandb_project` and `--wandb_name` arguments.
+
+### Data Loading
+
+The progress will automatically create the necessary features (molecular descriptors) required by backbone models from the SMILES strings if they are loaded properly.
+The processed features are stored in the `<bottom-level data folder>/processed/` directory as `<train/valid/test>.pt` files by default, and will be automatically loaded the next time you apply the same backbone model on the same dataset.
+You can change this behavior with `--disable_dataset_saving` for disabling dataset saving or `--ignore_preprocessed_dataset` for not loading from the saved (processed) dataset.
+
+Constructing Morgan fingerprint, RDKit features or 3D conformations for Uni-Mol may take a while.
+You can accelerate this process by utilizing multiple threads `--num_preprocess_workers=n>1` (default is 8).
+For 3D conformations, we directly take advantage of the results from Uni-Mol but still keep the choice of generating them by ourselves if the Uni-Mol data files are not found.
+
+### Calculating Metrics
+
+During training, we only calculate metrics necessary for early stopping and simple prediction performance evaluation.
+To get other metrics, you need to use the `./assist/results_get_metrics.py` file.
+
+Specifically, you need to save the model predictions by **not** setting `--disable_dataset_saving`.
+The results are saved as `./<result_folder>/<dataset_name>/<model_name>/<uncertainty_method>/seed-<seed>/preds/<test_idx>.pt` files.
+When the training is finished, you can run the `./assist/results_get_metrics.py` file to generate all metrics for your model predictions.
+For example:
+```bash
+PYTHONPATH="." python ./assist/results_get_metrics.py ./scripts/config_metrics.json
+```
+Make sure the hyper-parameters in the configuration file are updated to your needs.
+
+The metrics will be saved in the `./<result_folder>/RESULTS/<model_name>-<dataset_name>.csv` files.
+~~Notice that these files already exist in the repo if you keep the default `--result_folder=./output` argument and you need to check whether it is updated to reveal your experiment results.~~
+
+### Results
+
+We provided a more comprehensive copy of our experiment results [here](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/output) that are presented in the tables in our paper's appendix.
+We hope it can ease some effort if you want to further analyze the behavior of our backbone models and uncertainty quantification methods. 
