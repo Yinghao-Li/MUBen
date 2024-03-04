@@ -157,28 +157,30 @@ class GROVER(nn.Module):
             bbp_prior_sigma=config.bbp_prior_sigma,
         )
 
-        # Build model
-        model_state_dict = self.state_dict()
+        if not config.disable_checkpoint_loading:
 
-        # Skip missing parameters and parameters of mismatched size
-        pretrained_state_dict = {}
-        for param_name in loaded_state_dict.keys():
-            new_param_name = param_name
-            if new_param_name not in model_state_dict:
-                logger.info(f'Pretrained parameter "{param_name}" cannot be found in model parameters.')
-            elif model_state_dict[new_param_name].shape != loaded_state_dict[param_name].shape:
-                logger.info(
-                    f'Pretrained parameter "{param_name}" '
-                    f"of shape {loaded_state_dict[param_name].shape} does not match corresponding "
-                    f"model parameter of shape {model_state_dict[new_param_name].shape}."
-                )
-            else:
-                pretrained_state_dict[new_param_name] = loaded_state_dict[param_name]
-        logger.info(f"Pretrained parameter loaded.")
-        # Load pretrained weights
-        model_state_dict.update(pretrained_state_dict)
+            # Build model
+            model_state_dict = self.state_dict()
 
-        self.load_state_dict(model_state_dict)
+            # Skip missing parameters and parameters of mismatched size
+            pretrained_state_dict = {}
+            for param_name in loaded_state_dict.keys():
+                new_param_name = param_name
+                if new_param_name not in model_state_dict:
+                    logger.info(f'Pretrained parameter "{param_name}" cannot be found in model parameters.')
+                elif model_state_dict[new_param_name].shape != loaded_state_dict[param_name].shape:
+                    logger.info(
+                        f'Pretrained parameter "{param_name}" '
+                        f"of shape {loaded_state_dict[param_name].shape} does not match corresponding "
+                        f"model parameter of shape {model_state_dict[new_param_name].shape}."
+                    )
+                else:
+                    pretrained_state_dict[new_param_name] = loaded_state_dict[param_name]
+            logger.info(f"Pretrained parameter loaded.")
+            # Load pretrained weights
+            model_state_dict.update(pretrained_state_dict)
+
+            self.load_state_dict(model_state_dict)
 
     def init_backbone_weights(self):
         for param in self.parameters():
