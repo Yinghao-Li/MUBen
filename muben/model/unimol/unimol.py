@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 28th, 2024
+# Modified: March 4th, 2024
 # ---------------------------------------
 # Description: The Uni-Mol model
 # Reference: Modified from https://github.com/dptech-corp/Uni-Mol/tree/main/unimol
@@ -85,8 +85,9 @@ class UniMol(nn.Module):
             bbp_prior_sigma=config.bbp_prior_sigma,
         )
 
-        state = self.load_checkpoint(self.config.checkpoint_path)
-        self.load_state_dict(state["model"], strict=False)
+        if not config.disable_checkpoint_loading:
+            state = self.load_checkpoint(self.config.checkpoint_path)
+            self.load_state_dict(state["model"], strict=False)
 
     def load_checkpoint(self, path, arg_overrides=None):
         """

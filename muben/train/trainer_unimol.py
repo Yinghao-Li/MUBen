@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 28th, 2024
+# Modified: March 4th, 2024
 # ---------------------------------------
 # Description: Trainer function for Uni-Mol.
 """
@@ -25,7 +25,7 @@ class Trainer(BaseTrainer, ABC):
     Trainer class responsible for training and managing the Uni-Mol model.
     """
 
-    def initialize_optimizer(self):
+    def initialize_optimizer(self, *args, **kwargs):
         """
         Initialize the optimizer for the model.
 

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 29th, 2024
+# Modified: March 4th, 2024
 # ---------------------------------------
 # Description: 
 
@@ -242,6 +242,10 @@ class Arguments:
             "help": "Whether freeze the backbone model during training. "
             "If set to True, only the output layers will be updated."
         },
+    )
+    disable_checkpoint_loading: bool = field(
+        default=False,
+        metadata={"help": "Disable loading pre-trained model from checkpoint."},
     )
 
     # --- Evaluation Arguments ---
