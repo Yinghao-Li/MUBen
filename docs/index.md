@@ -5,7 +5,10 @@ This is the documentation for [MUBen](https://github.com/Yinghao-Li/MUBen/): Mul
 The code is built to expose implementation details as much as possible and be easily extendable.
 Questions and suggestions are welcome if you find any issues while using our code.
 
+
 ## About
+
+![](./img/f1.summarization.png)
 
 MUBen is a benchmark that aims to investigate the performance of uncertainty quantification (UQ) methods built upon backbone molecular representation models.
 It implements 6 backbone models (4 pre-trained and 2 non-pre-trained), 8 UQ methods (8 compatible for classification and 6 for regression), and 14 datasets from [MoleculeNet](https://moleculenet.org/) (8 for classification and 6 for regression).
