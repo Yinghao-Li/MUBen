@@ -137,7 +137,6 @@ wandb/
 test/
 __MACOSX/
 test.ipynb
-*.csv
 *.bin
 *.ckpt
 *.pt
