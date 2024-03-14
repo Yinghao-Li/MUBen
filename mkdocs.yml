@@ -1,15 +1,18 @@
 site_name: MUBen - Documentation
 
 nav:
-  - About: index.md
-  - Get Started: started.md
-  - Project Overview: overview.md
-  - muben.args: muben.args.md
-  - muben.layers: muben.layers.md
-  - muben.dataset: muben.dataset.md
-  - muben.train: muben.train.md
-  - muben.utils: muben.utils.md
-  - Customization: customize.md
+  - About MUBen:
+    - About: index.md
+    - Get Started: started.md
+  - MUBen API:
+    - Overview: overview.md
+    - muben.args: muben.args.md
+    - muben.layers: muben.layers.md
+    - muben.dataset: muben.dataset.md
+    - muben.train: muben.train.md
+    - muben.utils: muben.utils.md
+  - Examples:
+    - Customization: customize.md
 
 theme: readthedocs
 
