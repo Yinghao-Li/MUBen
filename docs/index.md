@@ -46,7 +46,8 @@ We use a subset of the MoleculeNet benckmark, including BBBP, Tox21, ToxCast, SI
 
 ## Data
 
-> A set of partitioned datasets are already included in this repo. You can find them under the `./data/` folder: [[scaffold split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files)]; [[random split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files-random)].
+!!! info
+    A set of partitioned datasets are already included in this repo. You can find them under the `./data/` folder: [[scaffold split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files)]; [[random split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files-random)].
 
 We utilize the datasets prepared by [Uni-Mol](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol).
 You find the data [here](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol#:~:text=pockets.tar.gz-,molecular%20property,-3.506GB) or directly download it through [this link](https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz).
