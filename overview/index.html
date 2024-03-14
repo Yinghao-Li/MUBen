@@ -51,19 +51,19 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="./">Project Overview</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#mubenargs">muben.args</a>
+    <li class="toctree-l2"><a class="reference internal" href="#module-mubenargs">module muben.args</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mubendataset">muben.dataset</a>
+    <li class="toctree-l2"><a class="reference internal" href="#module-mubendataset">module muben.dataset</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mubenlayers">muben.layers</a>
+    <li class="toctree-l2"><a class="reference internal" href="#module-mubenlayers">module muben.layers</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mubenmodel">muben.model</a>
+    <li class="toctree-l2"><a class="reference internal" href="#module-mubenmodel">module muben.model</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mubenuncertainty">muben.uncertainty</a>
+    <li class="toctree-l2"><a class="reference internal" href="#module-mubenuncertainty">module muben.uncertainty</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mubentrain">muben.train</a>
+    <li class="toctree-l2"><a class="reference internal" href="#module-mubentrain">module muben.train</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mubenutils">muben.utils</a>
+    <li class="toctree-l2"><a class="reference internal" href="#module-mubenutils">module muben.utils</a>
     </li>
     </ul>
                 </li>
@@ -118,13 +118,13 @@
                 <h1 id="project-overview">Project Overview</h1>
 <p>The <code>muben</code> package consists of several sub-packages, each tailored for specific functionalities within the backbond and/or UQ method trainig workflow.
 Below is a detailed overview of each sub-package and its purpose:</p>
-<h2 id="mubenargs"><code>muben.args</code></h2>
+<h2 id="module-mubenargs"><kbd>module</kbd> <a href="../muben.args/"><code>muben.args</code></a></h2>
 <p>Manages command-line arguments and configuration settings for the <code>muben</code> package.</p>
 <ul>
 <li>Command-line argument/configuration file parsing</li>
 <li>Parameter validation and defaults</li>
 </ul>
-<h2 id="mubendataset"><code>muben.dataset</code></h2>
+<h2 id="module-mubendataset"><kbd>module</kbd> <a href="../muben.dataset/"><code>muben.dataset</code></a></h2>
 <p>Provides functionality for loading, processing, and handling datasets.</p>
 <ul>
 <li>Dataset loading</li>
@@ -133,25 +133,25 @@ Below is a detailed overview of each sub-package and its purpose:</p>
 <li>Batching functions</li>
 <li>Collating functions</li>
 </ul>
-<h2 id="mubenlayers"><code>muben.layers</code></h2>
+<h2 id="module-mubenlayers"><kbd>module</kbd> <a href="../muben.layers/"><code>muben.layers</code></a></h2>
 <p>Defines the output layer for compatibility with various objects (classification/regression), number of tasks, and UQ method (especially for Bayes-by-Backprop).</p>
 <ul>
 <li>Custom the output layer</li>
 </ul>
-<h2 id="mubenmodel"><code>muben.model</code></h2>
+<h2 id="module-mubenmodel"><kbd>module</kbd> <code>muben.model</code></h2>
 <p>Focuses on model definition and implementation.</p>
 <ul>
 <li>Model architecture and forward functions</li>
 <li>Loading functions for pre-trained model weights</li>
 </ul>
-<h2 id="mubenuncertainty"><code>muben.uncertainty</code></h2>
+<h2 id="module-mubenuncertainty"><kbd>module</kbd> <code>muben.uncertainty</code></h2>
 <p>Specializes in uncertainty estimation model architecture and training schemes.
 Notice that some UQ methods without special training steps or the need for modifying backbone layers are directly incorporated in the trainer.</p>
 <ul>
 <li>Uncertainty estimation functions</li>
 <li>Uncertainty estimation training schemes</li>
 </ul>
-<h2 id="mubentrain"><code>muben.train</code></h2>
+<h2 id="module-mubentrain"><kbd>module</kbd> <a href="../muben.train/"><code>muben.train</code></a></h2>
 <p>Dedicated to the training process, including batch processing, epoch management, and callback functionalities.
 This module ensures efficient and effective model training, providing a robust framework for different training regimes.</p>
 <ul>
@@ -159,7 +159,7 @@ This module ensures efficient and effective model training, providing a robust f
 <li>Callbacks and training hooks</li>
 <li>Training metrics and evaluation</li>
 </ul>
-<h2 id="mubenutils"><code>muben.utils</code></h2>
+<h2 id="module-mubenutils"><kbd>module</kbd> <a href="../muben.utils/"><code>muben.utils</code></a></h2>
 <p>Offers a collection of utility functions and helper tools that support the broader functionality of the <code>muben</code> package.
 This module includes miscellaneous functionalities such as logging, data manipulation, and performance metrics.</p>
 <ul>
