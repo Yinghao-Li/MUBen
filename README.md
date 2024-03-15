@@ -1,7 +1,7 @@
 # MUBen: **M**olecular **U**ncertainty **Ben**mark
 Code associated with paper *MUBen: Benchmarking the Uncertainty of Pre-Trained Models for Molecular Property Prediction* [[arXiv](https://arxiv.org/abs/2306.10060)].
 
-[![arXiv](https://img.shields.io/badge/arXiv-2402.13364-b31b1b.svg)](https://arxiv.org/abs/2402.13364)
+[![arXiv](https://img.shields.io/badge/arXiv-2306.10060-b31b1b.svg)](https://arxiv.org/abs/2306.10060)
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg?color=purple)](https://www.python.org/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Yinghao-Li/MUBen/)
 [![PyPI version](https://badge.fury.io/py/muben.svg)](https://badge.fury.io/py/muben)
