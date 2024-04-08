@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 29th, 2024
+# Modified: April 8th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with various backbone models.
@@ -10,10 +10,9 @@ import os
 import sys
 import logging
 from datetime import datetime
-from transformers import set_seed
+from transformers import set_seed, HfArgumentParser
 
 from muben.utils.io import set_logging, set_log_path
-from muben.utils.argparser import ArgumentParser
 from muben.utils.selectors import argument_selector, configure_selector, dataset_selector, model_selector
 from muben.args import DescriptorArguments
 from muben.train import Trainer
@@ -53,17 +52,21 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(DescriptorArguments)
+    parser = HfArgumentParser(DescriptorArguments)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        (arguments,) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+        (arguments,) = parser.parse_json_file(os.path.abspath(sys.argv[1]), allow_extra_keys=True)
+    elif len(sys.argv) == 2 and sys.argv[1].endswith((".yaml", ".yml")):
+        (arguments,) = parser.parse_yaml_file(os.path.abspath(sys.argv[1]), allow_extra_keys=True)
     else:
         (arguments,) = parser.parse_args_into_dataclasses()
 
     argument_class = argument_selector(arguments.descriptor_type)
-    parser = ArgumentParser(argument_class)
+    parser = HfArgumentParser(argument_class)
 
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        (arguments,) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+        (arguments,) = parser.parse_json_file(os.path.abspath(sys.argv[1]), allow_extra_keys=True)
+    elif len(sys.argv) == 2 and sys.argv[1].endswith((".yaml", ".yml")):
+        (arguments,) = parser.parse_yaml_file(os.path.abspath(sys.argv[1]), allow_extra_keys=True)
     else:
         (arguments,) = parser.parse_args_into_dataclasses()
 

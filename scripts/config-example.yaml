@@ -1,0 +1,45 @@
+# descriptor settings
+descriptor_type: "2D"
+
+# dataset settings
+dataset_name: "freesolv"
+data_folder: "./data/files"
+ignore_preprocessed_dataset: false
+
+num_preprocess_workers: 8
+
+# output settings
+result_folder: "./output/"
+
+# training settings
+retrain_model: true
+lr: 0.0001
+batch_size: 128
+n_epochs: 200
+valid_tolerance: 50
+regression_with_variance: true
+time_training: true
+
+seed: 0
+no_mps: true
+
+# model-specific settings
+feature_type: "rdkit"
+
+n_gin_layers: 5
+d_gin_hidden: 128
+
+# UQ-specific settings
+uncertainty_method: "none"
+
+n_langevin_samples: 20
+sgld_sampling_interval: 1
+
+n_test: 30
+n_ensembles: 5
+
+apply_temperature_scaling_after_focal_loss: false
+
+# logging settings
+disable_wandb: true
+disable_result_saving: false

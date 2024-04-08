@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 28th, 2024
+# Modified: April 8th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with Uni-Mol backbone model.
@@ -10,10 +10,9 @@ import os
 import sys
 import logging
 from datetime import datetime
-from transformers import set_seed
+from transformers import set_seed, HfArgumentParser
 
 from muben.utils.io import set_logging, set_log_path
-from muben.utils.argparser import ArgumentParser
 from muben.dataset import DatasetUniMol, DictionaryUniMol, CollatorUniMol
 from muben.model import UniMol
 from muben.args import ArgumentsUniMol as ArgumentsUniMol, ConfigUniMol as ConfigUniMol
@@ -56,11 +55,11 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(ArgumentsUniMol)
+    parser = HfArgumentParser(ArgumentsUniMol)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        # If we pass only one argument to the script, and it's the path to a json file,
-        # let's parse it to get our arguments.
-        (arguments,) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+        (arguments,) = parser.parse_json_file(os.path.abspath(sys.argv[1]))
+    elif len(sys.argv) == 2 and sys.argv[1].endswith((".yaml", ".yml")):
+        (arguments,) = parser.parse_json_file(os.path.abspath(sys.argv[1]))
     else:
         (arguments,) = parser.parse_args_into_dataclasses()
 

@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 28th, 2024
+# Modified: April 8th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with GROVER backbone model.
@@ -12,10 +12,9 @@ import logging
 from rdkit import RDLogger
 from datetime import datetime
 
-from transformers import set_seed
+from transformers import set_seed, HfArgumentParser
 
 from muben.utils.io import set_logging, set_log_path
-from muben.utils.argparser import ArgumentParser
 from muben.model import GROVER
 from muben.dataset import DatasetGrover, CollatorGrover
 from muben.args import ArgumentsGrover as ArgumentsGrover, ConfigGrover as ConfigGrover
@@ -54,11 +53,11 @@ if __name__ == "__main__":
     _time = datetime.now().strftime("%m.%d.%y-%H.%M")
 
     # --- set up arguments ---
-    parser = ArgumentParser(ArgumentsGrover)
+    parser = HfArgumentParser(ArgumentsGrover)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        # If we pass only one argument to the script, and it's the path to a json file,
-        # let's parse it to get our arguments.
-        (arguments,) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+        (arguments,) = parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
+    elif len(sys.argv) == 2 and sys.argv[1].endswith((".yaml", ".yml")):
+        (arguments,) = parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
     else:
         (arguments,) = parser.parse_args_into_dataclasses()
 
