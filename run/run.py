@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 8th, 2024
+# Modified: April 9th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with various backbone models.
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     elif len(sys.argv) == 2 and sys.argv[1].endswith((".yaml", ".yml")):
         (arguments,) = parser.parse_yaml_file(os.path.abspath(sys.argv[1]), allow_extra_keys=True)
     else:
-        (arguments,) = parser.parse_args_into_dataclasses()
+        (arguments, _) = parser.parse_args_into_dataclasses(return_remaining_strings=True)
 
     argument_class = argument_selector(arguments.descriptor_type)
     parser = HfArgumentParser(argument_class)
