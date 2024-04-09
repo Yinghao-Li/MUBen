@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 29th, 2024
+# Modified: April 8th, 2024
 # ---------------------------------------
 # Description:
 
@@ -161,6 +161,8 @@ class Trainer:
 
         # initialize training modules
         # self.initialize()
+        self._init_args = None
+        self._init_kwargs = None
 
     @property
     def model(self):
@@ -248,7 +250,19 @@ class Trainer:
             self.freeze_backbone()
 
         logger.info(f"Trainer initialized. The model contains {self.n_model_parameters} parameters")
+
+        self._init_args = args
+        self._init_kwargs = kwargs
+
         return self
+
+    def re_initialize(self):
+        """Reinitializes the trainer's status and key components. Designed for Deep Ensembles.
+
+        Returns:
+            Trainer: The reinitialized Trainer instance.
+        """
+        return self.initialize(*self._init_args, **self._init_kwargs)
 
     def initialize_model(self, *args, **kwargs):
         """Abstract method to initialize the model.
@@ -511,12 +525,13 @@ class Trainer:
 
         if apply_test:
             test_metrics = self.test()
-            logger.info("[Single Shot] Test results:")
-            self.log_results(test_metrics)
+            if test_metrics is not None:
+                logger.info("[Single Shot] Test results:")
+                self.log_results(test_metrics)
 
-            # log results to wandb
-            for k, v in test_metrics.items():
-                wandb.run.summary[f"test-single_shot/{k}"] = v
+                # log results to wandb
+                for k, v in test_metrics.items():
+                    wandb.run.summary[f"test-single_shot/{k}"] = v
 
             if self.config.test_on_training_data:
                 logger.info("[Single Shot] Testing on training data.")
@@ -542,7 +557,7 @@ class Trainer:
 
             del self._model
             set_seed(individual_seed)
-            self.initialize()
+            self.re_initialize()
             logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
 
             # update result dir
@@ -560,12 +575,13 @@ class Trainer:
                 self.train()
 
             test_metrics = self.test()
-            logger.info(f"[Ensemble {ensemble_idx}] Test results:")
-            self.log_results(test_metrics)
+            if test_metrics is not None:
+                logger.info(f"[Ensemble {ensemble_idx}] Test results:")
+                self.log_results(test_metrics)
 
-            # log results to wandb
-            for k, v in test_metrics.items():
-                wandb.run.summary[f"test-ensemble_{ensemble_idx}/{k}"] = v
+                # log results to wandb
+                for k, v in test_metrics.items():
+                    wandb.run.summary[f"test-ensemble_{ensemble_idx}/{k}"] = v
 
             if self.config.test_on_training_data:
                 logger.info(f"[Ensemble {ensemble_idx}] Testing on training data.")
@@ -594,12 +610,13 @@ class Trainer:
         self.swa_session()
 
         test_metrics = self.test(load_best_model=False)
-        logger.info("[SWAG] Test results:")
-        self.log_results(test_metrics)
+        if test_metrics is not None:
+            logger.info("[SWAG] Test results:")
+            self.log_results(test_metrics)
 
-        # log results to wandb
-        for k, v in test_metrics.items():
-            wandb.run.summary[f"test-swag/{k}"] = v
+            # log results to wandb
+            for k, v in test_metrics.items():
+                wandb.run.summary[f"test-swag/{k}"] = v
 
         if self.config.test_on_training_data:
             logger.info("[SWAG] Testing on training data.")
@@ -654,12 +671,13 @@ class Trainer:
         self.ts_session()
 
         test_metrics = self.test(load_best_model=False)
-        logger.info("[Temperature Scaling] Test results:")
-        self.log_results(test_metrics)
+        if test_metrics is not None:
+            logger.info("[Temperature Scaling] Test results:")
+            self.log_results(test_metrics)
 
-        # log results to wandb
-        for k, v in test_metrics.items():
-            wandb.run.summary[f"test-temperature_scaling/{k}"] = v
+            # log results to wandb
+            for k, v in test_metrics.items():
+                wandb.run.summary[f"test-temperature_scaling/{k}"] = v
 
         if self.config.test_on_training_data:
             logger.info("[Temperature Scaling] Testing on training data.")
@@ -738,12 +756,14 @@ class Trainer:
             self.ts_session()
 
             test_metrics = self.test(load_best_model=False)
-            logger.info("[Temperature Scaling] Test results:")
-            self.log_results(test_metrics)
 
-            # log results to wandb
-            for k, v in test_metrics.items():
-                wandb.run.summary[f"test-temperature_scaling/{k}"] = v
+            if test_metrics is not None:
+                logger.info("[Temperature Scaling] Test results:")
+                self.log_results(test_metrics)
+
+                # log results to wandb
+                for k, v in test_metrics.items():
+                    wandb.run.summary[f"test-temperature_scaling/{k}"] = v
 
             if self.config.test_on_training_data:
                 logger.info("[Temperature Scaling] Testing on training data.")
@@ -772,12 +792,13 @@ class Trainer:
         self.train()
 
         test_metrics = self.test(load_best_model=False)
-        logger.info("[SGLD] Test results:")
-        self.log_results(test_metrics)
+        if test_metrics is not None:
+            logger.info("[SGLD] Test results:")
+            self.log_results(test_metrics)
 
-        # log results to wandb
-        for k, v in test_metrics.items():
-            wandb.run.summary[f"test-sgld/{k}"] = v
+            # log results to wandb
+            for k, v in test_metrics.items():
+                wandb.run.summary[f"test-sgld/{k}"] = v
 
         if self.config.test_on_training_data:
             logger.info("[SGLD] Testing on training data.")
@@ -1150,6 +1171,10 @@ class Trainer:
             dict, or tuple[dict, numpy.ndarray or Tuple[numpy.ndarray, numpy.ndarray]]: Evaluation metrics (and predictions)
             for the test dataset.
         """
+        if self.config.disable_test:
+            logger.warning("Test is disabled!")
+            return None
+
         self.set_mode("test")
 
         if load_best_model and self._checkpoint_container.state_dict:

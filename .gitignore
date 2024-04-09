@@ -146,4 +146,5 @@ test.ipynb
 *.lmdb
 *.json
 *.sh
+*.yaml
 

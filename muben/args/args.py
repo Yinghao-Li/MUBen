@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: March 4th, 2024
+# Modified: April 8th, 2024
 # ---------------------------------------
 # Description: 
 
@@ -86,6 +86,7 @@ class Arguments:
         freeze_backbone (bool): Freeze the backbone model during training. Only update the output layers. Default is False.
         valid_epoch_interval (int): Interval of training epochs between each validation step. Set to 0 to disable validation. Default is 1.
         valid_tolerance (int): Maximum allowed validation steps without performance increase. Default is 20.
+        disable_test (bool): Disable test evaluation after training. Default is False.
         n_test (int): Number of test loops in one training process. Default is 1. For some Bayesian methods, default is 20.
         test_on_training_data (bool): Include test results on training data. Default is False.
         uncertainty_method (str): Method for uncertainty estimation. Default is UncertaintyMethods.none. Choices are defined in UncertaintyMethods.
@@ -104,7 +105,6 @@ class Arguments:
         evidential_reg_loss_weight (float): Weight of evidential loss. Default is 1.
         evidential_clx_loss_annealing_epochs (int): Epochs before evidential loss weight increases to 1. Default is 10.
         no_cuda (bool): Disable CUDA even when available. Default is False.
-        no_mps (bool): Disable Metal Performance Shaders (MPS) even when available. Default is False.
         num_workers (int): Number of threads for processing the dataset. Default is 0.
         num_preprocess_workers (int): Number of threads for preprocessing the dataset. Default is 8.
         pin_memory (bool): Pin memory for data loader for faster data transfer to CUDA devices. Default is False.
@@ -257,6 +257,10 @@ class Arguments:
         default=20,
         metadata={"help": "Maximum validation steps allowed for non-increasing model performance."},
     )
+    disable_test: bool = field(
+        default=False,
+        metadata={"help": "Disable test evaluation after training."},
+    )
     n_test: int = field(
         default=1,
         metadata={
@@ -344,10 +348,6 @@ class Arguments:
         default=False,
         metadata={"help": "Disable CUDA even when it is available."},
     )
-    no_mps: bool = field(
-        default=False,
-        metadata={"help": "Disable MPS even when it is available."},
-    )
     num_workers: int = field(
         default=0,
         metadata={"help": "The number of threads to process the dataset."},
@@ -423,9 +423,7 @@ class Arguments:
         except AttributeError:
             mps_available = False
 
-        if mps_available and not self.no_mps:
-            device = "mps"
-        elif self.no_cuda or not torch.cuda.is_available():
+        if self.no_cuda or not torch.cuda.is_available():
             device = "cpu"
         else:
             device = "cuda"

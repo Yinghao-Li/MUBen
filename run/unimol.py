@@ -59,7 +59,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         (arguments,) = parser.parse_json_file(os.path.abspath(sys.argv[1]))
     elif len(sys.argv) == 2 and sys.argv[1].endswith((".yaml", ".yml")):
-        (arguments,) = parser.parse_json_file(os.path.abspath(sys.argv[1]))
+        (arguments,) = parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
     else:
         (arguments,) = parser.parse_args_into_dataclasses()
 

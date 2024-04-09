@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 29th, 2024
+# Modified: April 8th, 2024
 # ---------------------------------------
 # Description: This module includes base classes for dataset creation and batch processing.
 """
@@ -78,6 +78,11 @@ class Dataset(TorchDataset):
         if self.has_standardized_lbs and self._use_standardized_lbs:
             return self._lbs_standardized
         return self._lbs
+
+    @property
+    def ori_ids(self) -> np.ndarray:
+        """Returns the original IDs of the data points."""
+        return self._ori_ids
 
     def toggle_standardized_lbs(self, use_standardized_lbs: bool = None):
         """Toggle between using standardized and unstandardized labels.
@@ -241,7 +246,8 @@ class Dataset(TorchDataset):
         Raises:
             NotImplementedError: This method should be implemented by subclasses.
         """
-        raise NotImplementedError
+        logger.warning("Method `create_features` is not implemented! Make sure this is intended.")
+        return self
 
     def get_instances(self):
         """Gets the instances of the dataset. This method should be implemented by subclasses
@@ -250,7 +256,8 @@ class Dataset(TorchDataset):
         Raises:
             NotImplementedError: This method should be implemented by subclasses.
         """
-        raise NotImplementedError
+        logger.warning("Method `get_instances` is not implemented! Make sure this is intended.")
+        return self
 
     def save(self, file_path: str):
         """Saves the entire dataset for future use.
