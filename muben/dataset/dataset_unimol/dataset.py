@@ -47,6 +47,18 @@ class DatasetUniMol(Dataset):
         self.processing_pipeline = None
         self.data_processor = None
 
+    @property
+    def atoms(self):
+        if self.selected_ids is not None:
+            return [self._atoms[idx] for idx in self.selected_ids]
+        return self._atoms
+
+    @property
+    def coordinates(self):
+        if self.selected_ids is not None:
+            return [self._coordinates[idx] for idx in self.selected_ids]
+        return self._coordinates
+
     def __getitem__(self, idx):
         """
         Retrieve a specific instance from the dataset.
@@ -62,7 +74,7 @@ class DatasetUniMol(Dataset):
             Dictionary containing features of the specific instance.
         """
         atoms, coordinates, distances, edge_types = self.data_processor(
-            atoms=self._atoms[idx], coordinates=self._coordinates[idx]
+            atoms=self.atoms[idx], coordinates=self.coordinates[idx]
         )
         feature_dict = {
             "atoms": atoms,

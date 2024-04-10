@@ -123,9 +123,7 @@ class Dataset(TorchDataset):
 
     def __len__(self):
         """Returns the length of the dataset."""
-        if self.data_instances is not None:
-            return len(self.data_instances)
-        return len(self._smiles)
+        return len(self.smiles)
 
     def __getitem__(self, idx):
         """Gets the dataset item at the specified index."""
@@ -231,7 +229,10 @@ class Dataset(TorchDataset):
                 ids = json.load(f)
 
         self.selected_ids = ids
-        self.data_instances_selected = [self.data_instances_all[idx] for idx in self.selected_ids]
+
+        if self.data_instances_all:
+            self.data_instances_selected = [self.data_instances_all[idx] for idx in self.selected_ids]
+
         return self
 
     def add_sample_by_ids(self, ids: list[int] = None):
