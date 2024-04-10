@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 8th, 2024
+# Modified: April 10th, 2024
 # ---------------------------------------
 # Description:
 
@@ -16,7 +16,7 @@ import copy
 import wandb
 import logging
 import numpy as np
-import os.path as op
+import os.path as osp
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -561,12 +561,12 @@ class Trainer:
             logger.info(f"[Ensemble {ensemble_idx}] seed: {individual_seed}")
 
             # update result dir
-            self._status.result_dir = op.join(
-                op.dirname(op.normpath(self._status.result_dir)),
+            self._status.result_dir = osp.join(
+                osp.dirname(osp.normpath(self._status.result_dir)),
                 f"seed-{individual_seed}",
             )
-            self._status.result_dir_no_uncertainty = op.join(
-                op.dirname(op.normpath(self._status.result_dir_no_uncertainty)),
+            self._status.result_dir_no_uncertainty = osp.join(
+                osp.dirname(osp.normpath(self._status.result_dir_no_uncertainty)),
                 f"seed-{individual_seed}",
             )
 
@@ -1197,7 +1197,16 @@ class Trainer:
             raise ValueError("Unrecognized type or shape of `preds`.")
 
         for idx, (pred, variance) in enumerate(zip(preds, variances)):
-            file_path = op.join(self._status.result_dir, "preds", f"{idx}.pt")
+            if self.config.test_subset_ids_file_name:
+                subset_ids_file_name_no_ext = (
+                    osp.splitext(self.config.test_subset_ids_file_name)[0]
+                    if "." in self.config.test_subset_ids_file_name
+                    else self.config.test_subset_ids_file_name
+                )
+                file_path = osp.join(self._status.result_dir, f"preds-{subset_ids_file_name_no_ext}", f"{idx}.pt")
+            else:
+                file_path = osp.join(self._status.result_dir, "preds", f"{idx}.pt")
+
             self.save_results(
                 path=file_path,
                 preds=pred,
@@ -1248,7 +1257,7 @@ class Trainer:
 
         if not disable_result_saving:
             for idx, (mean, variance) in enumerate(zip(means, variances)):
-                file_path = op.join(self._status.result_dir, "preds-train", f"{idx}.pt")
+                file_path = osp.join(self._status.result_dir, "preds-train", f"{idx}.pt")
                 self.save_results(
                     path=file_path,
                     preds=mean,
@@ -1372,7 +1381,7 @@ class Trainer:
         """
         if not self.config.disable_result_saving:
             init_dir(self._status.result_dir, clear_original_content=False)
-            self._checkpoint_container.save(op.join(self._status.result_dir, self._status.model_name))
+            self._checkpoint_container.save(osp.join(self._status.result_dir, self._status.model_name))
         else:
             logger.warning("Model is not saved because of `disable_result_saving` flag is set to `True`.")
 
@@ -1401,7 +1410,7 @@ class Trainer:
         Returns:
             bool: True if the model is successfully loaded, otherwise False.
         """
-        if not op.exists(model_path):
+        if not osp.exists(model_path):
             return False
         logger.info(f"Loading trained model from {model_path}.")
         self._checkpoint_container.load(model_path)
@@ -1422,12 +1431,12 @@ class Trainer:
             return False
 
         if not self.config.ignore_uncertainty_output:
-            model_path = op.join(self._status.result_dir, self._status.model_name)
+            model_path = osp.join(self._status.result_dir, self._status.model_name)
             if self._load_from_container(model_path):
                 return True
 
         if not self.config.ignore_no_uncertainty_output:
-            model_path = op.join(self._status.result_dir_no_uncertainty, self._status.model_name)
+            model_path = osp.join(self._status.result_dir_no_uncertainty, self._status.model_name)
             if self._load_from_container(model_path):
                 return True
 

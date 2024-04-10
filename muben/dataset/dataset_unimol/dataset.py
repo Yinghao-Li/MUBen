@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 28th, 2024
+# Modified: April 10th, 2024
 # ---------------------------------------
 # Description: Dataset class for Uni-Mol
 """
@@ -95,7 +95,7 @@ class DatasetUniMol(Dataset):
         self.data_processor = getattr(self.processing_pipeline, f"process_{variant}")
         return self
 
-    def prepare(self, config, partition, dictionary=None):
+    def prepare(self, config, partition, dictionary=None, **kwargs):
         """
         Prepare the dataset based on the given configuration.
 
@@ -129,7 +129,7 @@ class DatasetUniMol(Dataset):
         )
         self.set_processor_variant(processor_variant)
 
-        super().prepare(config, partition)
+        super().prepare(config, partition, **kwargs)
 
         return self
 

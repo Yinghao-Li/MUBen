@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 8th, 2024
+# Modified: April 10th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with Uni-Mol backbone model.
@@ -31,9 +31,24 @@ def main(args: ArgumentsUniMol):
     dictionary.add_symbol("[MASK]", is_special=True)
 
     # --- prepare dataset ---
-    training_dataset = DatasetUniMol().prepare(config=config, partition="train", dictionary=dictionary)
-    valid_dataset = DatasetUniMol().prepare(config=config, partition="valid", dictionary=dictionary)
-    test_dataset = DatasetUniMol().prepare(config=config, partition="test", dictionary=dictionary)
+    training_dataset = DatasetUniMol().prepare(
+        config=config,
+        partition="train",
+        dictionary=dictionary,
+        subset_ids_file_name=config.training_subset_ids_file_name,
+    )
+    valid_dataset = DatasetUniMol().prepare(
+        config=config,
+        partition="valid",
+        dictionary=dictionary,
+        subset_ids_file_name=config.valid_subset_ids_file_name,
+    )
+    test_dataset = DatasetUniMol().prepare(
+        config=config,
+        partition="test",
+        dictionary=dictionary,
+        subset_ids_file_name=config.test_subset_ids_file_name,
+    )
 
     # --- initialize trainer ---
     trainer = TrainerUnimol(

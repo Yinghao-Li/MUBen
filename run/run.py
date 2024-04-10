@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 9th, 2024
+# Modified: April 10th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with various backbone models.
@@ -27,10 +27,22 @@ def main(args):
     config = config_class().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
-    dataset_class, collator_class = dataset_selector(args.descriptor_type)
-    training_dataset = dataset_class().prepare(config=config, partition="train")
-    valid_dataset = dataset_class().prepare(config=config, partition="valid")
-    test_dataset = dataset_class().prepare(config=config, partition="test")
+    dataset_class, collator_class = dataset_selector(config.descriptor_type)
+    training_dataset = dataset_class().prepare(
+        config=config,
+        partition="train",
+        subset_ids_file_name=config.training_subset_ids_file_name,
+    )
+    valid_dataset = dataset_class().prepare(
+        config=config,
+        partition="valid",
+        subset_ids_file_name=config.valid_subset_ids_file_name,
+    )
+    test_dataset = dataset_class().prepare(
+        config=config,
+        partition="test",
+        subset_ids_file_name=config.test_subset_ids_file_name,
+    )
 
     # --- initialize trainer ---
     trainer = Trainer(

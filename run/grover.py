@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 8th, 2024
+# Modified: April 10th, 2024
 # ---------------------------------------
 # Description: Run the uncertainty quantification experiments
                with GROVER backbone model.
@@ -29,9 +29,21 @@ def main(args: ArgumentsGrover):
     config = ConfigGrover().from_args(args).get_meta().validate().log()
 
     # --- prepare dataset ---
-    training_dataset = DatasetGrover().prepare(config=config, partition="train")
-    valid_dataset = DatasetGrover().prepare(config=config, partition="valid")
-    test_dataset = DatasetGrover().prepare(config=config, partition="test")
+    training_dataset = DatasetGrover().prepare(
+        config=config,
+        partition="train",
+        subset_ids_file_name=config.training_subset_ids_file_name,
+    )
+    valid_dataset = DatasetGrover().prepare(
+        config=config,
+        partition="valid",
+        subset_ids_file_name=config.valid_subset_ids_file_name,
+    )
+    test_dataset = DatasetGrover().prepare(
+        config=config,
+        partition="test",
+        subset_ids_file_name=config.test_subset_ids_file_name,
+    )
 
     # --- initialize trainer ---
     trainer = TrainerGrover(

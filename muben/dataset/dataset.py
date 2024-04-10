@@ -1,12 +1,13 @@
 """
 # Author: Yinghao Li
-# Modified: April 8th, 2024
+# Modified: April 10th, 2024
 # ---------------------------------------
 # Description: This module includes base classes for dataset creation and batch processing.
 """
 
 import json
 import os
+import os.path as osp
 import regex
 import torch
 import logging
@@ -70,18 +71,27 @@ class Dataset(TorchDataset):
     @property
     def smiles(self) -> list[str]:
         """Returns the chemical structures represented as strings."""
+        if self.selected_ids is not None:
+            return [self._smiles[idx] for idx in self.selected_ids]
         return self._smiles
 
     @property
     def lbs(self) -> np.ndarray:
         """Returns the label data, considering whether standardized labels are being used."""
         if self.has_standardized_lbs and self._use_standardized_lbs:
+            if self.selected_ids is not None:
+                return self._lbs_standardized[self.selected_ids]
             return self._lbs_standardized
+
+        if self.selected_ids is not None:
+            return self._lbs[self.selected_ids]
         return self._lbs
 
     @property
     def ori_ids(self) -> np.ndarray:
         """Returns the original IDs of the data points."""
+        if self.selected_ids is not None:
+            return self._ori_ids[self.selected_ids]
         return self._ori_ids
 
     def toggle_standardized_lbs(self, use_standardized_lbs: bool = None):
@@ -103,10 +113,13 @@ class Dataset(TorchDataset):
                 self.data_instances = self.get_instances()
         return self
 
-    @cached_property
+    @property
     def masks(self) -> np.ndarray:
         """Returns the data masks, generating masks with ones if not present."""
-        return self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
+        mks = self._masks if self._masks is not None else np.ones_like(self.lbs).astype(int)
+        if self.selected_ids is not None:
+            return mks[self.selected_ids]
+        return mks
 
     def __len__(self):
         """Returns the length of the dataset."""
@@ -144,12 +157,13 @@ class Dataset(TorchDataset):
         self.has_standardized_lbs = True
         return self
 
-    def prepare(self, config, partition, **kwargs):
+    def prepare(self, config, partition, subset_ids_file_name=None, **kwargs):
         """Prepares the dataset for training and testing.
 
         Args:
             config: Configuration parameters.
             partition (str): The dataset partition; should be one of 'train', 'valid', 'test'.
+            subset_ids_file_name (str, optional): The file name containing the subset IDs.
 
         Raises:
             ValueError: If `partition` is not one of 'train', 'valid', 'test'.
@@ -165,8 +179,8 @@ class Dataset(TorchDataset):
         method_identifier = (
             f"{config.model_name}-{config.feature_type}" if config.feature_type != "none" else config.model_name
         )
-        preprocessed_path = os.path.normpath(
-            os.path.join(
+        preprocessed_path = osp.normpath(
+            osp.join(
                 config.data_dir,
                 "processed",
                 method_identifier,
@@ -174,7 +188,7 @@ class Dataset(TorchDataset):
             )
         )
         # Load Pre-processed dataset if exist
-        if os.path.exists(preprocessed_path) and not config.ignore_preprocessed_dataset:
+        if osp.exists(preprocessed_path) and not config.ignore_preprocessed_dataset:
             logger.info(f"Loading pre-processed dataset {preprocessed_path}")
             self.load(preprocessed_path)
         # else, load dataset from csv and generate features
@@ -190,6 +204,11 @@ class Dataset(TorchDataset):
                 self.save(preprocessed_path)
 
         self.data_instances = self.get_instances()
+
+        if subset_ids_file_name is not None:
+            subset_ids_file_path = osp.normpath(osp.join(config.data_dir, subset_ids_file_name))
+            self.downsample_by(file_path=subset_ids_file_path)
+
         return self
 
     def downsample_by(self, file_path: str = None, ids: list[int] = None):
@@ -273,7 +292,7 @@ class Dataset(TorchDataset):
             if regex.match(f"^_[a-z]", attr):
                 attr_dict[attr] = value
 
-        os.makedirs(os.path.dirname(os.path.normpath(file_path)), exist_ok=True)
+        os.makedirs(osp.dirname(osp.normpath(file_path)), exist_ok=True)
         torch.save(attr_dict, file_path)
 
         return self
@@ -310,10 +329,10 @@ class Dataset(TorchDataset):
         Returns:
             self (Dataset)
         """
-        file_path = os.path.normpath(os.path.join(data_dir, f"{partition}.csv"))
+        file_path = osp.normpath(osp.join(data_dir, f"{partition}.csv"))
         logger.info(f"Loading dataset {file_path}")
 
-        if not (file_path and os.path.exists(file_path)):
+        if not (file_path and osp.exists(file_path)):
             raise FileNotFoundError(f"File {file_path} does not exist!")
 
         df = pd.read_csv(file_path)

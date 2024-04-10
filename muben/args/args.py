@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 8th, 2024
+# Modified: April 10th, 2024
 # ---------------------------------------
 # Description: 
 
@@ -160,6 +160,18 @@ class Arguments:
     descriptor_type: str = field(
         default=None,
         metadata={"help": "Descriptor type", "choices": ["RDKit", "Linear", "2D", "3D"]},
+    )
+    training_subset_ids_file_name: str = field(
+        default=None,
+        metadata={"help": "Path to the file that contains a subset training ids."},
+    )
+    valid_subset_ids_file_name: str = field(
+        default=None,
+        metadata={"help": "Path to the file that contains a subset validation ids."},
+    )
+    test_subset_ids_file_name: str = field(
+        default=None,
+        metadata={"help": "Path to the file that contains a subset test ids."},
     )
 
     # --- Model Arguments ---
@@ -564,7 +576,8 @@ class Config(Arguments):
             AssertionError: If an incompatible configuration is detected that cannot be automatically resolved.
         """
 
-        assert not (self.model_name == "DNN" and self.feature_type == "none"), "`feature_type` is required for DNN!"
+        if self.model_name == "DNN" and self.feature_type == "none":
+            logger.warning("No feature type specified for DNN model! Make sure this is intended!")
 
         # Check whether the task type and uncertainty estimation method are compatible
         assert self.uncertainty_method in UncertaintyMethods.options(self.task_type), (
