@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 9th, 2024
+# Modified: April 11th, 2024
 # ---------------------------------------
 # Description:
 
@@ -138,15 +138,20 @@ def main(args: Arguments):
 
         sorted_indices = np.argsort(sims_avg)
 
+        groups = list()
         group_size = len(test_smiles) // args.n_groups
         for i in range(args.n_groups):
             if i == args.n_groups - 1:
                 group = sorted_indices[i * group_size :]
             else:
                 group = sorted_indices[i * group_size : (i + 1) * group_size]
+            groups.append(group)
 
             output_path = osp.join(args.data_folder, dataset_name, f"test-group-{i}.json")
             save_json(group.tolist(), output_path)
+
+        sims_avg_group = {i: sims_avg[gp].mean() for i, gp in enumerate(groups)}
+        save_json(sims_avg_group, osp.join(args.data_folder, dataset_name, f"test-group-sims.json"))
 
     logger.info("Done.")
     return None
