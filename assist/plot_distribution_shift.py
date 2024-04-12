@@ -128,13 +128,14 @@ def plot_by_metric_backbone(model_names, metric_vecs_w_backbone, metric, output_
 
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
+    ax.tick_params(labelsize=12)
 
-    ax.set_xlabel("Test Group ID", fontsize=12)
-    ax.set_ylabel(f"{METRICS_MAPPING[metric]}", fontsize=12)
+    # ax.set_xlabel("Test Group ID", fontsize=12)
+    # ax.set_ylabel(f"{METRICS_MAPPING[metric]}", fontsize=12)
     # ax.yaxis.set_major_formatter(StrMethodFormatter("{x:,.3f}"))
 
     if metric == "nll":
-        plt.legend()
+        plt.legend(prop={"size": 12})
 
     init_dir(output_dir, clear_original_content=False)
     f_name = f"test-distr-uqavg-{metric}.pdf"
@@ -176,13 +177,14 @@ def plot_by_metric_uq(uq_names, metric_vecs_w_uq, metric, output_dir):
 
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
+    ax.tick_params(labelsize=12)
 
-    ax.set_xlabel("Test Group ID", fontsize=12)
-    ax.set_ylabel(f"{METRICS_MAPPING[metric]}", fontsize=12)
+    # ax.set_xlabel("Test Group ID", fontsize=12)
+    # ax.set_ylabel(f"{METRICS_MAPPING[metric]}", fontsize=12)
     # ax.yaxis.set_major_formatter(StrMethodFormatter("{x:,.3f}"))
 
     if metric == "nll":
-        plt.legend()
+        plt.legend(prop={"size": 12})
 
     init_dir(output_dir, clear_original_content=False)
     f_name = f"test-distr-backboneavg-{metric}.pdf"
