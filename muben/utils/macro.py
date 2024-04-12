@@ -1,10 +1,9 @@
 """
 # Author: Yinghao Li
-# Modified: December 1st, 2023
+# Modified: April 11th, 2024
 # ---------------------------------------
 # Description: Constants
 """
-
 
 import logging
 from enum import Enum
@@ -19,7 +18,7 @@ __all__ = [
     "EVAL_METRICS",
     "CLASSIFICATION_METRICS",
     "REGRESSION_METRICS",
-    "metrics_mapping",
+    "METRICS_MAPPING",
     "MODEL_NAMES",
     "UncertaintyMethods",
     "DatasetNames",
@@ -136,7 +135,7 @@ MODEL_NAMES = ["DNN", "ChemBERTa", "GROVER", "Uni-Mol", "TorchMD-NET", "GIN"]
 
 CLASSIFICATION_METRICS = ["roc-auc", "ece", "nll", "brier"]
 REGRESSION_METRICS = ["rmse", "mae", "nll", "ce"]
-metrics_mapping = {
+METRICS_MAPPING = {
     "roc-auc": "ROC-AUC",
     "ece": "ECE",
     "nll": "NLL",

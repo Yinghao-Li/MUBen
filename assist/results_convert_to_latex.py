@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: August 23rd, 2023
+# Modified: April 11th, 2024
 # ---------------------------------------
 # Description: automatically generate the result tables in the appendix.
 """
@@ -22,7 +22,7 @@ from muben.utils.macro import (
     DATASET_NAMES,
     FINGERPRINT_FEATURE_TYPES,
     dataset_mapping,
-    metrics_mapping,
+    METRICS_MAPPING,
 )
 
 
@@ -68,15 +68,9 @@ class Arguments:
         default="./output/RESULTS/",
         metadata={"help": "The folder which holds the results."},
     )
-    output_dir: Optional[str] = field(
-        default="latex", metadata={"help": "Directory to save the latex tables."}
-    )
-    dataset_names: Optional[str] = field(
-        default=None, metadata={"nargs": "*", "help": "A list of dataset names."}
-    )
-    model_names: Optional[str] = field(
-        default=None, metadata={"nargs": "*", "help": "A list of model names."}
-    )
+    output_dir: Optional[str] = field(default="latex", metadata={"help": "Directory to save the latex tables."})
+    dataset_names: Optional[str] = field(default=None, metadata={"nargs": "*", "help": "A list of dataset names."})
+    model_names: Optional[str] = field(default=None, metadata={"nargs": "*", "help": "A list of model names."})
     feature_type: Optional[str] = field(
         default="rdkit",
         metadata={
@@ -84,9 +78,7 @@ class Arguments:
             "help": "Feature type that the DNN model uses.",
         },
     )
-    filename_prefix: Optional[str] = field(
-        default="tb3.result.dataset", metadata={"help": "Prefix of the file names."}
-    )
+    filename_prefix: Optional[str] = field(default="tb3.result.dataset", metadata={"help": "Prefix of the file names."})
     label_prefix: Optional[str] = field(
         default="apptb:result.dataset", metadata={"help": "Prefix of the table labels."}
     )
@@ -99,9 +91,7 @@ class Arguments:
 
         for idx, model_name in enumerate(self.model_names):
             if model_name == "DNN":
-                assert self.feature_type != "none", ValueError(
-                    "Invalid feature type for DNN!"
-                )
+                assert self.feature_type != "none", ValueError("Invalid feature type for DNN!")
                 self.model_names[idx] = f"DNN-{self.feature_type}"
 
         if self.dataset_names is None:
@@ -118,7 +108,7 @@ def main(args: Arguments):
     score_path = op.join(args.result_dir, "scores")
 
     # for classification datasets
-    mapped_metrics = [metrics_mapping[m] for m in CLASSIFICATION_METRICS]
+    mapped_metrics = [METRICS_MAPPING[m] for m in CLASSIFICATION_METRICS]
     for dataset in CLASSIFICATION_DATASET:
         if dataset not in args.dataset_names:
             continue
@@ -128,24 +118,15 @@ def main(args: Arguments):
             df = pd.read_csv(result_file, index_col="method")
             for metrics in CLASSIFICATION_METRICS:
                 try:
-                    df[metrics_mapping[metrics]] = [
-                        (f"{m:.4f}" if m == m else "-")
-                        + " $\\pm$ "
-                        + (f"{s:.4f}" if s == s else "-")
+                    df[METRICS_MAPPING[metrics]] = [
+                        (f"{m:.4f}" if m == m else "-") + " $\\pm$ " + (f"{s:.4f}" if s == s else "-")
                         for m, s in zip(df[f"{metrics}-mean"], df[f"{metrics}-std"])
                     ]
                 except KeyError:
-                    df[metrics_mapping[metrics]] = [
-                        "- $\\pm$ -" for _ in df[f"roc-auc-mean"]
-                    ]
+                    df[METRICS_MAPPING[metrics]] = ["- $\\pm$ -" for _ in df[f"roc-auc-mean"]]
             df = df[mapped_metrics]
-            df = df.reindex(
-                [f"{model_name}-{unc}" for unc in CLASSIFICATION_UNCERTAINTY]
-            )
-            index_mapping = {
-                f"{model_name}-{unc}": uncertainty_mapping[unc]
-                for unc in CLASSIFICATION_UNCERTAINTY
-            }
+            df = df.reindex([f"{model_name}-{unc}" for unc in CLASSIFICATION_UNCERTAINTY])
+            index_mapping = {f"{model_name}-{unc}": uncertainty_mapping[unc] for unc in CLASSIFICATION_UNCERTAINTY}
             df = df.rename(index=index_mapping)
             index = pd.MultiIndex.from_tuples([(model_name, unc) for unc in df.index])
             df = df.set_index(index)
@@ -162,7 +143,7 @@ def main(args: Arguments):
         )
 
     # for regression datasets
-    mapped_metrics = [metrics_mapping[m] for m in REGRESSION_METRICS]
+    mapped_metrics = [METRICS_MAPPING[m] for m in REGRESSION_METRICS]
     for dataset in REGRESSION_DATASET:
         if dataset not in args.dataset_names:
             continue
@@ -172,22 +153,15 @@ def main(args: Arguments):
             df = pd.read_csv(result_file, index_col="method")
             for metrics in REGRESSION_METRICS:
                 try:
-                    df[metrics_mapping[metrics]] = [
-                        (f"{m:.4f}" if m == m else "-")
-                        + " $\\pm$ "
-                        + (f"{s:.4f}" if s == s else "-")
+                    df[METRICS_MAPPING[metrics]] = [
+                        (f"{m:.4f}" if m == m else "-") + " $\\pm$ " + (f"{s:.4f}" if s == s else "-")
                         for m, s in zip(df[f"{metrics}-mean"], df[f"{metrics}-std"])
                     ]
                 except KeyError:
-                    df[metrics_mapping[metrics]] = [
-                        "- $\\pm$ -" for _ in df[f"rmse-mean"]
-                    ]
+                    df[METRICS_MAPPING[metrics]] = ["- $\\pm$ -" for _ in df[f"rmse-mean"]]
             df = df[mapped_metrics]
             df = df.reindex([f"{model_name}-{unc}" for unc in REGRESSION_UNCERTAINTY])
-            index_mapping = {
-                f"{model_name}-{unc}": uncertainty_mapping[unc]
-                for unc in REGRESSION_UNCERTAINTY
-            }
+            index_mapping = {f"{model_name}-{unc}": uncertainty_mapping[unc] for unc in REGRESSION_UNCERTAINTY}
             df = df.rename(index=index_mapping)
             index = pd.MultiIndex.from_tuples([(model_name, unc) for unc in df.index])
             df = df.set_index(index)
