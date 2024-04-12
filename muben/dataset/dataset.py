@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 10th, 2024
+# Modified: April 12th, 2024
 # ---------------------------------------
 # Description: This module includes base classes for dataset creation and batch processing.
 """
@@ -15,8 +15,7 @@ import pandas as pd
 import numpy as np
 
 from ast import literal_eval
-from typing import Union, Optional
-from functools import cached_property
+from typing import Union
 from torch.utils.data import Dataset as TorchDataset
 
 
@@ -267,7 +266,7 @@ class Dataset(TorchDataset):
             NotImplementedError: This method should be implemented by subclasses.
         """
         logger.warning("Method `create_features` is not implemented! Make sure this is intended.")
-        return self
+        return None
 
     def get_instances(self):
         """Gets the instances of the dataset. This method should be implemented by subclasses
@@ -277,7 +276,7 @@ class Dataset(TorchDataset):
             NotImplementedError: This method should be implemented by subclasses.
         """
         logger.warning("Method `get_instances` is not implemented! Make sure this is intended.")
-        return self
+        return None
 
     def save(self, file_path: str):
         """Saves the entire dataset for future use.
