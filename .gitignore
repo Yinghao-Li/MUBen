@@ -135,6 +135,7 @@ unused/
 data/
 wandb/
 test/
+plots/
 __MACOSX/
 test.ipynb
 *.bin

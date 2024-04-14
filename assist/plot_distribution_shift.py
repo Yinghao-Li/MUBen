@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 11th, 2024
+# Modified: April 14th, 2024
 # ---------------------------------------
 # Description: Plot classification calibration curves.
 """
@@ -93,6 +93,57 @@ class MetricVector:
         return txt
 
 
+def plot_by_metric(model_names, uq_names, metric_vecs, metric, output_dir):
+    for model in model_names:
+        uq_curves = []
+        for uq in uq_names:
+            uq_curve = []
+            for metric_vec in metric_vecs:
+                uq_curve.append(metric_vec.get({"backbone": model, "uq": uq, "metric": metric}))
+            uq_curves.append(uq_curve)
+
+        # plot figure
+        fig, ax = plt.subplots(figsize=(4, 3), dpi=300)
+        palette = sns.color_palette("coolwarm_r", len(uq_curves))
+        ax.set_prop_cycle(cycler("color", palette))
+
+        marker = iter(["o", "^", "x", "*", "v", "X"])
+        for uq_curve, uq_name in zip(uq_curves, uq_names):
+            ax.plot(
+                range(1, len(uq_curve) + 1),
+                uq_curve,
+                alpha=0.95,
+                linewidth=2,
+                zorder=10,
+                label=f"_{UQ_MAPPING[uq_name]}",
+            )
+            ax.scatter(
+                range(1, len(uq_curve) + 1),
+                uq_curve,
+                marker=next(marker),
+                s=60,
+                alpha=0.95,
+                zorder=100,
+                label=UQ_MAPPING[uq_name],
+            )
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.tick_params(labelsize=12)
+
+        # ax.set_xlabel("Test Group ID", fontsize=12)
+        # ax.set_ylabel(f"{METRICS_MAPPING[metric]}", fontsize=12)
+        # ax.yaxis.set_major_formatter(StrMethodFormatter("{x:,.3f}"))
+
+        if metric == "nll" and model == "ChemBERTa":
+            plt.legend(prop={"size": 12})
+
+        init_dir(output_dir, clear_original_content=False)
+        f_name = f"test-distr-{model}-{metric}.pdf"
+        fig.savefig(osp.join(output_dir, f_name), bbox_inches="tight")
+    return None
+
+
 def plot_by_metric_backbone(model_names, metric_vecs_w_backbone, metric, output_dir):
     model_curves = []
     for model in model_names:
@@ -140,6 +191,7 @@ def plot_by_metric_backbone(model_names, metric_vecs_w_backbone, metric, output_
     init_dir(output_dir, clear_original_content=False)
     f_name = f"test-distr-uqavg-{metric}.pdf"
     fig.savefig(osp.join(output_dir, f_name), bbox_inches="tight")
+    return None
 
 
 def plot_by_metric_uq(uq_names, metric_vecs_w_uq, metric, output_dir):
@@ -189,6 +241,7 @@ def plot_by_metric_uq(uq_names, metric_vecs_w_uq, metric, output_dir):
     init_dir(output_dir, clear_original_content=False)
     f_name = f"test-distr-backboneavg-{metric}.pdf"
     fig.savefig(osp.join(output_dir, f_name), bbox_inches="tight")
+    return None
 
 
 @dataclass
@@ -223,11 +276,6 @@ class Arguments:
     )
     output_dir: Optional[str] = field(default="plots", metadata={"help": "Directory to save the plots."})
 
-    average_over_backbone: Optional[bool] = field(default=False, metadata={"help": "Average over base models."})
-    average_over_uq: Optional[bool] = field(
-        default=False, metadata={"help": "Average over uncertainty quantification methods."}
-    )
-
     def __post_init__(self):
         if isinstance(self.model_names, str):
             self.model_names = [self.model_names]
@@ -242,6 +290,7 @@ def main(args: Arguments):
     # load results
     metric_vecs_backbone = list()
     metric_vecs_uq = list()
+    metric_vecs = list()
 
     for test_subset_ids_file_id in args.test_subset_ids_file_ids:
         report_dir = osp.join(args.report_dir, f"{args.test_subset_ids_file_base_name}-{test_subset_ids_file_id}")
@@ -282,8 +331,10 @@ def main(args: Arguments):
 
         metric_vecs_backbone.append(metric_vec_backbone)
         metric_vecs_uq.append(metric_vec_uq)
+        metric_vecs.append(metric_vec)
 
     for metric in REGRESSION_METRICS:
+        plot_by_metric(args.model_names, REGRESSION_UNCERTAINTY, metric_vecs, metric, args.output_dir)
         plot_by_metric_backbone(args.model_names, metric_vecs_backbone, metric, args.output_dir)
         plot_by_metric_uq(REGRESSION_UNCERTAINTY, metric_vecs_uq, metric, args.output_dir)
 
