@@ -1,9 +1,9 @@
 # MUBen: **M**olecular **U**ncertainty **Ben**mark
 Code associated with paper *MUBen: Benchmarking the Uncertainty of Pre-Trained Models for Molecular Property Prediction* [[arXiv](https://arxiv.org/abs/2306.10060)].
 
-[![Documentation](https://img.shields.io/badge/%F0%9F%93%96%20Documentation-Link-orange)](https://yinghao-li.github.io/MUBen/)
+[![Documentation](https://img.shields.io/badge/%F0%9F%93%96%20Documentation-Link-blue)](https://yinghao-li.github.io/MUBen/)
+[![Static Badge](https://img.shields.io/badge/%F0%9F%94%97%20OpenReview-TMLR-darkred)](https://openreview.net/forum?id=qYceFeHgm4)
 [![arXiv](https://img.shields.io/badge/arXiv-2306.10060-b31b1b.svg)](https://arxiv.org/abs/2306.10060)
-[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg?color=purple)](https://www.python.org/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Yinghao-Li/MUBen/)
 [![PyPI version](https://badge.fury.io/py/muben.svg)](https://badge.fury.io/py/muben)
 
@@ -53,7 +53,7 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 Please check [MoleculeNet](https://moleculenet.org/datasets-1) for a detailed description.
 We use a subset of the MoleculeNet benchmark, including BBBP, Tox21, ToxCast, SIDER, ClinTox, BACE, MUV, HIV, ESOL, FreeSolv, Lipophilicity, QM7, QM8, QM9.
 
-## CITATION
+## Citation
 
 If you find our work helpful, please consider citing it as
 ```latex
