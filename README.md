@@ -1,6 +1,7 @@
 # MUBen: **M**olecular **U**ncertainty **Ben**mark
 Code associated with paper *MUBen: Benchmarking the Uncertainty of Pre-Trained Models for Molecular Property Prediction* [[arXiv](https://arxiv.org/abs/2306.10060)].
 
+[![Documentation](https://img.shields.io/badge/%F0%9F%93%96%20Documentation-Link-orange)](https://yinghao-li.github.io/MUBen/)
 [![arXiv](https://img.shields.io/badge/arXiv-2306.10060-b31b1b.svg)](https://arxiv.org/abs/2306.10060)
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg?color=purple)](https://www.python.org/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Yinghao-Li/MUBen/)
@@ -17,21 +18,23 @@ We are actively expanding the benchmark to include more backbones, UQ methods, a
 This is an arduous task, and we welcome contribution or collaboration in any form.
 
 ## Backbones
-| Backbone Models      | Paper | Official Repo | Our Implementation|
-| ----------- | ----------- | ----------- | ----------- |
-|*Pre-Trained Backbones* |||
-| ChemBERTa |[link](https://arxiv.org/abs/2209.01712) | [link](https://github.com/seyonechithrananda/bert-loves-chemistry) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/chemberta) | 
-| GROVER   | [link](https://arxiv.org/abs/2007.02835) | [link](https://github.com/tencent-ailab/grover)| [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/grover)|
-|Uni-Mol| [link](https://openreview.net/forum?id=6K2RM6wVqKu) | [link](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/unimol)|
-|TorchMD-NET | [Architecture](https://arxiv.org/abs/2202.02541); [Pre-training](https://arxiv.org/abs/2206.00133) | [link](https://github.com/shehzaidi/pre-training-via-denoising) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/torchmdnet)|
-| *Non-Pre-Trained Backbones* |||
-|DNN|-|-|[link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/dnn)|
-|GIN| [link](https://arxiv.org/pdf/1810.00826.pdf) | [pyg](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.GIN.html) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/gin)|
+
+| Backbone Models      | Paper | Official Repo |
+| ----------- | ----------- | ----------- |
+|***Pre-Trained*** |||
+| ChemBERTa |[link](https://arxiv.org/abs/2209.01712) | [link](https://github.com/seyonechithrananda/bert-loves-chemistry) | 
+| GROVER   | [link](https://arxiv.org/abs/2007.02835) | [link](https://github.com/tencent-ailab/grover)|
+|Uni-Mol| [link](https://openreview.net/forum?id=6K2RM6wVqKu) | [link](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol) |
+|TorchMD-NET | [Architecture](https://arxiv.org/abs/2202.02541); [Pre-training](https://arxiv.org/abs/2206.00133) | [link](https://github.com/shehzaidi/pre-training-via-denoising) |
+| ***Trained from Scratch*** |||
+|DNN|-|-|
+|GIN| [link](https://arxiv.org/pdf/1810.00826.pdf) | [pyg](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.GIN.html) |
+
 
 ## Uncertainty Quantification Methods
 | UQ Method | Classification | Regression | Paper |
 | ----------- | ----------- | ----------- | ----------- |
-| *Included* |||
+| ***Included in Paper*** |||
 | Deterministic | ✅︎ | ✅︎ | - |
 | Temperature Scaling | ✅︎ | - | [link](https://arxiv.org/abs/1706.04599) |
 | Focal Loss | ✅︎ | - | [link](https://arxiv.org/abs/1708.02002) |
@@ -40,6 +43,10 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 | Bayes by Backprop | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1505.05424) |
 | SGLD | ✅︎ | ✅︎ | [link](https://www.stats.ox.ac.uk/~teh/research/compstats/WelTeh2011a.pdf) |
 | MC Dropout | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1506.02142) |
+| ***Additional in Repo*** |||
+| Evidential Networks |✅︎|✅︎|[link](https://openreview.net/forum?id=xqS8k9E75c)|
+| Conformal Prediction |-|✅︎| [link](https://arxiv.org/abs/2107.07511) |
+| Isotonic Calibration| - | ✅︎ | [link](https://arxiv.org/abs/1905.06023)|
 
 ## Data
 
