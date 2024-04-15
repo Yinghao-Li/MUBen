@@ -1,9 +1,11 @@
 site_name: MUBen - Documentation
 
 nav:
-  - About MUBen:
+  - Introduction:
     - About: index.md
-    - Get Started: started.md
+    - Environment: env.md
+    - Running Experiments: train.cli.md 
+    - Using MUBen Package: train.python.md
   - MUBen API:
     - Overview: overview.md
     - muben.args: muben.args.md

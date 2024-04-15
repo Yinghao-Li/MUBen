@@ -1,12 +1,19 @@
 # MUBen Documentation
 
-This is the documentation for [MUBen](https://github.com/Yinghao-Li/MUBen/): Mulecular Uncertainty Benchmark.
 
-The code is built to expose implementation details as much as possible and be easily extendable.
-Questions and suggestions are welcome if you find any issues while using our code.
+[![GitHub](https://img.shields.io/badge/GitHub-MUBen-white)](https://github.com/Yinghao-Li/MUBen)
+[![OpenReview](https://img.shields.io/badge/%F0%9F%94%97%20OpenReview-TMLR-darkred)](https://openreview.net/forum?id=qYceFeHgm4)
+[![arXiv](https://img.shields.io/badge/arXiv-2306.10060-b31b1b.svg)](https://arxiv.org/abs/2306.10060)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Yinghao-Li/MUBen/)
+[![PyPI version](https://badge.fury.io/py/muben.svg)](https://badge.fury.io/py/muben)
 
 
-## About
+!!! info
+    This is the documentation for **[MUBen](https://github.com/Yinghao-Li/MUBen/): Mulecular Uncertainty Benchmark**.
+    The code is built to expose implementation details as much as possible and be easily extendable.
+    Questions and suggestions are welcome if you find any issues while using our code.
+
+
 
 ![](./img/f1.summarization.png)
 
@@ -15,21 +22,36 @@ It implements 6 backbone models (4 pre-trained and 2 non-pre-trained), 8 UQ meth
 We are actively expanding the benchmark to include more backbones, UQ methods and datasets.
 This is an arduous task, and we welcome contribution or collaboration in any form.
 
-### Backbones
-| Backbone Models      | Paper | Official Repo | Our Implementation|
-| ----------- | ----------- | ----------- | ----------- |
-|*Pre-Trained Backbones* |||
-| ChemBERTa |[link](https://arxiv.org/abs/2209.01712) | [link](https://github.com/seyonechithrananda/bert-loves-chemistry) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/chemberta) | 
-| GROVER   | [link](https://arxiv.org/abs/2007.02835) | [link](https://github.com/tencent-ailab/grover)| [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/grover)|
-|Uni-Mol| [link](https://openreview.net/forum?id=6K2RM6wVqKu) | [link](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/unimol)|
-|TorchMD-NET | [Architecture](https://arxiv.org/abs/2202.02541); [Pre-training](https://arxiv.org/abs/2206.00133) | [link](https://github.com/shehzaidi/pre-training-via-denoising) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/torchmdnet)|
-| *Non-Pre-Trained Backbones* |||
-|DNN|-|-|[link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/dnn)|
-|GIN| [link](https://arxiv.org/pdf/1810.00826.pdf) | [pyg](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.GIN.html) | [link](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/gin)|
+!!! info
+    The following of this page introduces the basic information and structure of the MUBen project.
+    For its utilization or customization, please visit the [Experiments](./train.cli.md) or [Customization](./customize.md) pages.
 
-### Uncertainty Quantification Methods
+## Backbones
+
+The following backbone models are implemented in MUBen, and their performance discussed in the published article.
+
+| Backbone Models      | Paper | Official Repo |
+| ----------- | ----------- | ----------- |
+|***Pre-Trained*** |||
+| ChemBERTa |[link](https://arxiv.org/abs/2209.01712) | [link](https://github.com/seyonechithrananda/bert-loves-chemistry) | 
+| GROVER   | [link](https://arxiv.org/abs/2007.02835) | [link](https://github.com/tencent-ailab/grover)|
+|Uni-Mol| [link](https://openreview.net/forum?id=6K2RM6wVqKu) | [link](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol) |
+|TorchMD-NET | [Architecture](https://arxiv.org/abs/2202.02541); [Pre-training](https://arxiv.org/abs/2206.00133) | [link](https://github.com/shehzaidi/pre-training-via-denoising) |
+| ***Trained from Scratch*** |||
+|DNN|-|-|
+|GIN| [link](https://arxiv.org/pdf/1810.00826.pdf) | [pyg](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.GIN.html) |
+
+MUBen also support easy integration of your own backbone models.
+To use your own backbones, please check the [customization guide](./customize.md).
+
+## Uncertainty Quantification Methods
+
+Currently, MUBen supports the following uncertainty quantification methods.
+Notice that some methods only work with one of the classification/regression task.
+
 | UQ Method | Classification | Regression | Paper |
 | ----------- | ----------- | ----------- | ----------- |
+| ***Included in Paper*** |||
 | Deterministic | ✅︎ | ✅︎ | - |
 | Temperature Scaling | ✅︎ | - | [link](https://arxiv.org/abs/1706.04599) |
 | Focal Loss | ✅︎ | - | [link](https://arxiv.org/abs/1708.02002) |
@@ -38,38 +60,54 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 | Bayes by Backprop | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1505.05424) |
 | SGLD | ✅︎ | ✅︎ | [link](https://www.stats.ox.ac.uk/~teh/research/compstats/WelTeh2011a.pdf) |
 | MC Dropout | ✅︎ | ✅︎ | [link](https://arxiv.org/abs/1506.02142) |
+| ***Additional in Repo*** |||
+| Evidential Networks |✅︎|✅︎|[link](https://openreview.net/forum?id=xqS8k9E75c)|
+| Conformal Prediction |-|✅︎| [link](https://arxiv.org/abs/2107.07511) |
+| Isotonic Calibration| - | ✅︎ | [link](https://arxiv.org/abs/1905.06023)|
 
-### Data
-
-Please check [MoleculeNet](https://moleculenet.org/datasets-1) for a detailed description.
-We use a subset of the MoleculeNet benckmark, including BBBP, Tox21, ToxCast, SIDER, ClinTox, BACE, MUV, HIV, ESOL, FreeSolv, Lipophilicity, QM7, QM8, QM9.
 
 ## Data
 
 !!! info
-    A set of partitioned datasets are already included in this repo. You can find them under the `./data/` folder: [[scaffold split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files)]; [[random split](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files-random)].
+    The prepared scaffold-split data is available in the [./data/files/](https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files) directory on GitHub.
 
-We utilize the datasets prepared by [Uni-Mol](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol).
-You find the data [here](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol#:~:text=pockets.tar.gz-,molecular%20property,-3.506GB) or directly download it through [this link](https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz).
-We place the unzipped files into `./data/UniMol` by default.
-For convenience, you are suggested to rename the `qm7dft`, `qm8dft`, and `qm9dft` folders to `qm7`, `qm8`, and `qm9`.
+This documentation utilizes a selection from the MoleculeNet benchmark, which includes datasets such as BBBP, Tox21, ToxCast, SIDER, ClinTox, BACE, MUV, HIV, ESOL, FreeSolv, Lipophilicity, QM7, QM8, and QM9.
+For detailed descriptions of these datasets, please refer to the [MoleculeNet website](https://moleculenet.org/datasets-1).
 
-Afterwards, you can transfer the dataset format into ours by running
-```bash
-PYTHONPATH="." python ./assist/dataset_build_from_unimol.py
-``` 
-suppose you are in the project root directory.
-You can specify the input (Uni-Mol) and output data directories with `--unimol_data_dir` and `--output_dir` arguments.
-The script will convert *all* datasets by default (excluding PCBA).
-If you want to specify a subset of datasets, you can specify the argument `--dataset_names` with the target dataset names with lowercase letters.
+We employ the "molecular property" datasets curated by [Uni-Mol](https://github.com/dptech-corp/Uni-Mol/tree/main/unimol), which are accessible for download [here](https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz).
+While the original Uni-Mol dataset is generally not necessary, it is used to provide pre-defined molecule conformations for running the Uni-Mol model.
+To use the Uni-Mol data, download and unzip the files into the `./data/UniMol/` directory.
+For ease of reference, you are suggested to rename the `qm7dft`, `qm8dft`, and `qm9dft` directories to `qm7`, `qm8`, and `qm9`, respectively.
+The conversion of the dataset format from Uni-Mol to our specifications can be viewed in the script [dataset_build_from_unimol.py](https://github.com/Yinghao-Li/MUBen/blob/main/assist/dataset_build_from_unimol.py).
 
-**Notice**: If you would like to run the Uni-Mol model, you are suggested to keep the original `UniMol` data as we will use the pre-defined molecule conformations.
-Otherwise, it is safe to remove the original data.
+Typically, each dataset comprises 4 files: `train.csv`, `valid.csv`, `test.csv`, and `meta.json`.
+The `.csv` files partition the data into training, validation, and testing sets, while `meta.json` contains metadata such as task type (classification or regression), number of tasks, and number of classes (for classification tasks).
+Each `.csv` file contains three columns:
+- `smiles`: A string representing the SMILES notation of a molecule.
+- `labels`: A list of integers or floats representing the property values to be predicted for each molecule. The length of the list corresponds to the number of tasks.
+- `masks`: A binary list (containing 0s and 1s) where 1 indicates a valid property value and 0 indicates an invalid value to be ignored during training and testing.
 
+The dataset is automatically loaded during training through the method `muben.dataset.Dataset.prepare()`.
+For a practical example, visit the [example](./train.python.md) page.
 
-## Ongoing Works
+## Experimental Results
 
-### Active Learning
+We have made our experimental results available in the [./reports/](https://github.com/Yinghao-Li/MUBen/tree/main/reports) directory on GitHub.
+These results are organized into different folders based on the nature of the experiments:
+
+- `primary`: Contains the most comprehensive set of results derived from experiments on scaffold-split datasets.
+- `random`: Includes results from experiments conducted on datasets that were split randomly.
+- `frozen`: Features results from experiments where the pre-trained model's weights were frozen, except for the last output layer, which was updatable.
+- `distribution`: Offers results from the QM9 dataset, where the test set was categorized into five bins based on the average Tanimoto similarities to the training scaffolds.
+
+Files within these directories are named following the pattern `<backbone>-<dataset>.csv`.
+Each file provides a comparison of different UQ methods.
+The rows detail the performance of each UQ method, while the columns display the mean and standard deviation from three random runs for each metric.
+
+Additional post-processing scripts can be found in the [./assist/](https://github.com/Yinghao-Li/MUBen/tree/main/assist) directory, which include files starting with `plot_` or `results_`.
+These scripts are useful for further analysis and visualization of the experimental data.
+
+## Ongoing Works: Active Learning
 
 We are developing code to integrate *active learning* into the pipeline.
 Specifically, we assume we have a small set of labeled data points (`--n_init_instances`) at the beginning.
