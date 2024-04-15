@@ -40,33 +40,29 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption"><span class="caption-text">About MUBen</span></p>
+              <p class="caption"><span class="caption-text">Introduction</span></p>
               <ul class="current">
                   <li class="toctree-l1 current"><a class="reference internal current" href=".">About</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#about">About</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#backbones">Backbones</a>
+    <li class="toctree-l2"><a class="reference internal" href="#backbones">Backbones</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#uncertainty-quantification-methods">Uncertainty Quantification Methods</a>
+    <li class="toctree-l2"><a class="reference internal" href="#uncertainty-quantification-methods">Uncertainty Quantification Methods</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#data">Data</a>
+    <li class="toctree-l2"><a class="reference internal" href="#data">Data</a>
     </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#experimental-results">Experimental Results</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#data_1">Data</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#ongoing-works">Ongoing Works</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#active-learning">Active Learning</a>
-    </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#ongoing-works-active-learning">Ongoing Works: Active Learning</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#citation">Citation</a>
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="started/">Get Started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="env/">Environment</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="train.cli/">Running Experiments</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="train.python/">Using MUBen Package</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">MUBen API</span></p>
@@ -103,7 +99,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">About MUBen</li>
+          <li class="breadcrumb-item">Introduction</li>
       <li class="breadcrumb-item active">About</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -114,29 +110,40 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="muben-documentation">MUBen Documentation</h1>
-<p>This is the documentation for <a href="https://github.com/Yinghao-Li/MUBen/">MUBen</a>: Mulecular Uncertainty Benchmark.</p>
-<p>The code is built to expose implementation details as much as possible and be easily extendable.
+<p><a href="https://github.com/Yinghao-Li/MUBen"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-MUBen-white" /></a>
+<a href="https://openreview.net/forum?id=qYceFeHgm4"><img alt="OpenReview" src="https://img.shields.io/badge/%F0%9F%94%97%20OpenReview-TMLR-darkred" /></a>
+<a href="https://arxiv.org/abs/2306.10060"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-2306.10060-b31b1b.svg" /></a>
+<a href="https://github.com/Yinghao-Li/MUBen/"><img alt="Maintenance" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg" /></a>
+<a href="https://badge.fury.io/py/muben"><img alt="PyPI version" src="https://badge.fury.io/py/muben.svg" /></a></p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>This is the documentation for <strong><a href="https://github.com/Yinghao-Li/MUBen/">MUBen</a>: Mulecular Uncertainty Benchmark</strong>.
+The code is built to expose implementation details as much as possible and be easily extendable.
 Questions and suggestions are welcome if you find any issues while using our code.</p>
-<h2 id="about">About</h2>
+</div>
 <p><img alt="" src="img/f1.summarization.png" /></p>
 <p>MUBen is a benchmark that aims to investigate the performance of uncertainty quantification (UQ) methods built upon backbone molecular representation models.
 It implements 6 backbone models (4 pre-trained and 2 non-pre-trained), 8 UQ methods (8 compatible for classification and 6 for regression), and 14 datasets from <a href="https://moleculenet.org/">MoleculeNet</a> (8 for classification and 6 for regression).
 We are actively expanding the benchmark to include more backbones, UQ methods and datasets.
 This is an arduous task, and we welcome contribution or collaboration in any form.</p>
-<h3 id="backbones">Backbones</h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The following of this page introduces the basic information and structure of the MUBen project.
+For its utilization or customization, please visit the <a href="train.cli/">Experiments</a> or <a href="customize/">Customization</a> pages.</p>
+</div>
+<h2 id="backbones">Backbones</h2>
+<p>The following backbone models are implemented in MUBen, and their performance discussed in the published article.</p>
 <table>
 <thead>
 <tr>
 <th>Backbone Models</th>
 <th>Paper</th>
 <th>Official Repo</th>
-<th>Our Implementation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><em>Pre-Trained Backbones</em></td>
-<td></td>
+<td><strong><em>Pre-Trained</em></strong></td>
 <td></td>
 <td></td>
 </tr>
@@ -144,29 +151,24 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 <td>ChemBERTa</td>
 <td><a href="https://arxiv.org/abs/2209.01712">link</a></td>
 <td><a href="https://github.com/seyonechithrananda/bert-loves-chemistry">link</a></td>
-<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/chemberta">link</a></td>
 </tr>
 <tr>
 <td>GROVER</td>
 <td><a href="https://arxiv.org/abs/2007.02835">link</a></td>
 <td><a href="https://github.com/tencent-ailab/grover">link</a></td>
-<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/grover">link</a></td>
 </tr>
 <tr>
 <td>Uni-Mol</td>
 <td><a href="https://openreview.net/forum?id=6K2RM6wVqKu">link</a></td>
 <td><a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol">link</a></td>
-<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/unimol">link</a></td>
 </tr>
 <tr>
 <td>TorchMD-NET</td>
 <td><a href="https://arxiv.org/abs/2202.02541">Architecture</a>; <a href="https://arxiv.org/abs/2206.00133">Pre-training</a></td>
 <td><a href="https://github.com/shehzaidi/pre-training-via-denoising">link</a></td>
-<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/torchmdnet">link</a></td>
 </tr>
 <tr>
-<td><em>Non-Pre-Trained Backbones</em></td>
-<td></td>
+<td><strong><em>Trained from Scratch</em></strong></td>
 <td></td>
 <td></td>
 </tr>
@@ -174,17 +176,19 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 <td>DNN</td>
 <td>-</td>
 <td>-</td>
-<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/dnn">link</a></td>
 </tr>
 <tr>
 <td>GIN</td>
 <td><a href="https://arxiv.org/pdf/1810.00826.pdf">link</a></td>
 <td><a href="https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.GIN.html">pyg</a></td>
-<td><a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/muben/gin">link</a></td>
 </tr>
 </tbody>
 </table>
-<h3 id="uncertainty-quantification-methods">Uncertainty Quantification Methods</h3>
+<p>MUBen also support easy integration of your own backbone models.
+To use your own backbones, please check the <a href="customize/">customization guide</a>.</p>
+<h2 id="uncertainty-quantification-methods">Uncertainty Quantification Methods</h2>
+<p>Currently, MUBen supports the following uncertainty quantification methods.
+Notice that some methods only work with one of the classification/regression task.</p>
 <table>
 <thead>
 <tr>
@@ -195,6 +199,12 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><strong><em>Included in Paper</em></strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
 <tr>
 <td>Deterministic</td>
 <td>✅︎</td>
@@ -243,31 +253,67 @@ This is an arduous task, and we welcome contribution or collaboration in any for
 <td>✅︎</td>
 <td><a href="https://arxiv.org/abs/1506.02142">link</a></td>
 </tr>
+<tr>
+<td><strong><em>Additional in Repo</em></strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Evidential Networks</td>
+<td>✅︎</td>
+<td>✅︎</td>
+<td><a href="https://openreview.net/forum?id=xqS8k9E75c">link</a></td>
+</tr>
+<tr>
+<td>Conformal Prediction</td>
+<td>-</td>
+<td>✅︎</td>
+<td><a href="https://arxiv.org/abs/2107.07511">link</a></td>
+</tr>
+<tr>
+<td>Isotonic Calibration</td>
+<td>-</td>
+<td>✅︎</td>
+<td><a href="https://arxiv.org/abs/1905.06023">link</a></td>
+</tr>
 </tbody>
 </table>
-<h3 id="data">Data</h3>
-<p>Please check <a href="https://moleculenet.org/datasets-1">MoleculeNet</a> for a detailed description.
-We use a subset of the MoleculeNet benckmark, including BBBP, Tox21, ToxCast, SIDER, ClinTox, BACE, MUV, HIV, ESOL, FreeSolv, Lipophilicity, QM7, QM8, QM9.</p>
-<h2 id="data_1">Data</h2>
+<h2 id="data">Data</h2>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
-<p>A set of partitioned datasets are already included in this repo. You can find them under the <code>./data/</code> folder: [<a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files">scaffold split</a>]; [<a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files-random">random split</a>].</p>
+<p>The prepared scaffold-split data is available in the <a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/data/files">./data/files/</a> directory on GitHub.</p>
 </div>
-<p>We utilize the datasets prepared by <a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol">Uni-Mol</a>.
-You find the data <a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol#:~:text=pockets.tar.gz-,molecular%20property,-3.506GB">here</a> or directly download it through <a href="https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz">this link</a>.
-We place the unzipped files into <code>./data/UniMol</code> by default.
-For convenience, you are suggested to rename the <code>qm7dft</code>, <code>qm8dft</code>, and <code>qm9dft</code> folders to <code>qm7</code>, <code>qm8</code>, and <code>qm9</code>.</p>
-<p>Afterwards, you can transfer the dataset format into ours by running</p>
-<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./assist/dataset_build_from_unimol.py
-</code></pre>
-<p>suppose you are in the project root directory.
-You can specify the input (Uni-Mol) and output data directories with <code>--unimol_data_dir</code> and <code>--output_dir</code> arguments.
-The script will convert <em>all</em> datasets by default (excluding PCBA).
-If you want to specify a subset of datasets, you can specify the argument <code>--dataset_names</code> with the target dataset names with lowercase letters.</p>
-<p><strong>Notice</strong>: If you would like to run the Uni-Mol model, you are suggested to keep the original <code>UniMol</code> data as we will use the pre-defined molecule conformations.
-Otherwise, it is safe to remove the original data.</p>
-<h2 id="ongoing-works">Ongoing Works</h2>
-<h3 id="active-learning">Active Learning</h3>
+<p>This documentation utilizes a selection from the MoleculeNet benchmark, which includes datasets such as BBBP, Tox21, ToxCast, SIDER, ClinTox, BACE, MUV, HIV, ESOL, FreeSolv, Lipophilicity, QM7, QM8, and QM9.
+For detailed descriptions of these datasets, please refer to the <a href="https://moleculenet.org/datasets-1">MoleculeNet website</a>.</p>
+<p>We employ the "molecular property" datasets curated by <a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol">Uni-Mol</a>, which are accessible for download <a href="https://bioos-hermite-beijing.tos-cn-beijing.volces.com/unimol_data/finetune/molecular_property_prediction.tar.gz">here</a>.
+While the original Uni-Mol dataset is generally not necessary, it is used to provide pre-defined molecule conformations for running the Uni-Mol model.
+To use the Uni-Mol data, download and unzip the files into the <code>./data/UniMol/</code> directory.
+For ease of reference, you are suggested to rename the <code>qm7dft</code>, <code>qm8dft</code>, and <code>qm9dft</code> directories to <code>qm7</code>, <code>qm8</code>, and <code>qm9</code>, respectively.
+The conversion of the dataset format from Uni-Mol to our specifications can be viewed in the script <a href="https://github.com/Yinghao-Li/MUBen/blob/main/assist/dataset_build_from_unimol.py">dataset_build_from_unimol.py</a>.</p>
+<p>Typically, each dataset comprises 4 files: <code>train.csv</code>, <code>valid.csv</code>, <code>test.csv</code>, and <code>meta.json</code>.
+The <code>.csv</code> files partition the data into training, validation, and testing sets, while <code>meta.json</code> contains metadata such as task type (classification or regression), number of tasks, and number of classes (for classification tasks).
+Each <code>.csv</code> file contains three columns:
+- <code>smiles</code>: A string representing the SMILES notation of a molecule.
+- <code>labels</code>: A list of integers or floats representing the property values to be predicted for each molecule. The length of the list corresponds to the number of tasks.
+- <code>masks</code>: A binary list (containing 0s and 1s) where 1 indicates a valid property value and 0 indicates an invalid value to be ignored during training and testing.</p>
+<p>The dataset is automatically loaded during training through the method <code>muben.dataset.Dataset.prepare()</code>.
+For a practical example, visit the <a href="train.python/">example</a> page.</p>
+<h2 id="experimental-results">Experimental Results</h2>
+<p>We have made our experimental results available in the <a href="https://github.com/Yinghao-Li/MUBen/tree/main/reports">./reports/</a> directory on GitHub.
+These results are organized into different folders based on the nature of the experiments:</p>
+<ul>
+<li><code>primary</code>: Contains the most comprehensive set of results derived from experiments on scaffold-split datasets.</li>
+<li><code>random</code>: Includes results from experiments conducted on datasets that were split randomly.</li>
+<li><code>frozen</code>: Features results from experiments where the pre-trained model's weights were frozen, except for the last output layer, which was updatable.</li>
+<li><code>distribution</code>: Offers results from the QM9 dataset, where the test set was categorized into five bins based on the average Tanimoto similarities to the training scaffolds.</li>
+</ul>
+<p>Files within these directories are named following the pattern <code>&lt;backbone&gt;-&lt;dataset&gt;.csv</code>.
+Each file provides a comparison of different UQ methods.
+The rows detail the performance of each UQ method, while the columns display the mean and standard deviation from three random runs for each metric.</p>
+<p>Additional post-processing scripts can be found in the <a href="https://github.com/Yinghao-Li/MUBen/tree/main/assist">./assist/</a> directory, which include files starting with <code>plot_</code> or <code>results_</code>.
+These scripts are useful for further analysis and visualization of the experimental data.</p>
+<h2 id="ongoing-works-active-learning">Ongoing Works: Active Learning</h2>
 <p>We are developing code to integrate <em>active learning</em> into the pipeline.
 Specifically, we assume we have a small set of labeled data points (<code>--n_init_instances</code>) at the beginning.
 Within each active learning iteration, we use the labeled dataset to fine-tune the model parameters and select a batch of data points (<code>--n_al_select</code>) from the unlabeled set with the least predicted certainty (<em>i.e.</em>, max predicted entropy for classification and max predicted variance for regression).
@@ -303,7 +349,7 @@ In addition, several points are worth attention:</p>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="started/" class="btn btn-neutral float-right" title="Get Started">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="env/" class="btn btn-neutral float-right" title="Environment">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -327,7 +373,7 @@ In addition, several points are worth attention:</p>
     
     
     
-      <span><a href="started/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="env/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

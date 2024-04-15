@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Get Started - MUBen - Documentation</title>
+    <title>Using MUBen Package - MUBen - Documentation</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,8 +13,8 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Get Started";
-        var mkdocs_page_input_path = "started.md";
+        var mkdocs_page_name = "Using MUBen Package";
+        var mkdocs_page_input_path = "train.python.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -40,45 +40,23 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption"><span class="caption-text">About MUBen</span></p>
+              <p class="caption"><span class="caption-text">Introduction</span></p>
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="..">About</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Get Started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../env/">Environment</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../train.cli/">Running Experiments</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Using MUBen Package</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    <li class="toctree-l2"><a class="reference internal" href="#importing-packages">Importing packages</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#docker">Docker</a>
+    <li class="toctree-l2"><a class="reference internal" href="#deterministic-method-training">Deterministic method -- training</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#external-dependencies">External dependencies</a>
+    <li class="toctree-l2"><a class="reference internal" href="#temperature-scaling-training">Temperature Scaling -- training</a>
     </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#a-simple-example">A simple example</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#importing-packages">Importing packages</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#deterministic-method-training">Deterministic method -- training</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#temperature-scaling-training">Temperature Scaling -- training</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#evaluation">Evaluation</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#model-training-with-cli">Model Training with CLI</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#logging-and-wandb">Logging and WandB</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#data-loading">Data Loading</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#calculating-metrics">Calculating Metrics</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#results">Results</a>
-    </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#evaluation">Evaluation</a>
     </li>
     </ul>
                   </li>
@@ -117,8 +95,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">About MUBen</li>
-      <li class="breadcrumb-item active">Get Started</li>
+          <li class="breadcrumb-item">Introduction</li>
+      <li class="breadcrumb-item active">Using MUBen Package</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -127,64 +105,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="get-started">Get Started</h1>
-<p>In the following, we give a brief introduction to our experiment pipeline, which might be helpful if you would like to replicate our results or extend MUBen to other datasets, backbone models, or uncertainty quantification (UQ) methods.
-You can also find the example in this <a href="https://github.com/Yinghao-Li/MUBen/blob/main/demo/demo.ipynb">Jupyter Notebook</a>.</p>
-<h2 id="installation">Installation</h2>
-<p>Our project is hosted on <a href="https://pypi.org/project/muben/">pypi</a> as a Python package.
-If you would like to use <code>MUBen</code> as a package without editing the source code, you can install it via <code>pip install</code>.</p>
-<pre><code class="language-bash">pip install muben
-</code></pre>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Our current package does not include data or post-processing functions.
-To access the data, you still need to clone the repo or download the files manually.</p>
-</div>
-<p>As an alternative approach, you are recommended to directly use or modify the source code to conduct your experiments.
-To do that, you can first <code>fork</code> the project and <code>clone</code> it to local with <code>git clone</code>.</p>
-<pre><code class="language-bash">git clone https://github.com/&lt;your GitHub username&gt;/MUBen.git
-</code></pre>
-<p>Or, you can directly clone this repository with <code>git</code> or GitHub CLI suppose you do not intend to do change tracking.</p>
-<pre><code class="language-bash"># clone with git
-git clone https://github.com/Yinghao-Li/MUBen.git
-
-# or, you can clone with GitHub CLI
-gh repo clone Yinghao-Li/MUBen
-</code></pre>
-<p>The following operations assume that you are already in the project root directory <code>MUBen/</code>.</p>
-<h2 id="requirements">Requirements</h2>
-<p>Our code is developed with <code>Python 3.10</code>.
-Notice that it may <strong>not</strong> work with <code>Python &lt; 3.9</code>.
-It is recommended to create a new <code>conda</code> environment for this project.</p>
-<pre><code class="language-bash">conda create -n muben python=3.10
-</code></pre>
-<p>The required packages are listed in <code>requirements.txt</code>.
-It is recommended to install these dependencies with <code>pip install</code> as <code>conda install</code> may sometimes encounter dependency resolution issue.</p>
-<pre><code class="language-bash">conda activate muben
-pip install -r requirements.txt
-</code></pre>
-<h3 id="docker">Docker</h3>
-<p>You can also run this project in a docker container.
-The docker image can be built through <code>docker build</code>.</p>
-<pre><code class="language-bash">docker build -t muben ./docker
-</code></pre>
-<p>And <code>docker run</code> is the command to start your container in the terminal.</p>
-<pre><code class="language-bash">docker run --gpus all -it --rm  muben
-</code></pre>
-<h3 id="external-dependencies">External dependencies</h3>
-<p>The backbone models <code>GROVER</code> and <code>Uni-Mol</code> require loading pre-trained model checkpoints.</p>
-<ul>
-<li>The <code>GROVER-base</code> checkpoint is available at GROVER's <a href="https://github.com/tencent-ailab/grover">project repo</a> or can be directly downloaded through <a href="https://ai.tencent.com/ailab/ml/ml-data/grover-models/pretrain/grover_base.tar.gz">this link</a>.
-Unzip the downloaded <code>.tar.gz</code> file to get the <code>.pt</code> checkpoint.</li>
-<li>The <code>Uni-Mol</code> checkpoint is available at Uni-Mol's <a href="https://github.com/dptech-corp/Uni-Mol/tree/main/unimol">project repo</a> or can be directly downloaded through <a href="https://github.com/dptech-corp/Uni-Mol/releases/download/v0.1/mol_pre_no_h_220816.pt">this link</a>.</li>
-</ul>
-<p>By default, the code will look for the models at locations <code>./models/grover_base.pt</code> and <code>./models/unimol_base.pt</code>, respectively.
-You need to specify the <code>--checkpoint_path</code> argument if you prefer other locations and checkpoint names.</p>
-<h2 id="a-simple-example">A simple example</h2>
+                <h1 id="using-muben-package">Using <code>muben</code> Package</h1>
 <p>In this demonstration, we'll guide you through foundational training and testing of MUBen using the BBBP dataset as a minimal example.
 We've chosen the DNN as our backbone model because it is both efficient and offers satisfactory performance.
-For uncertainty quantification (UQ), we'll evaluate both the Deterministic method (referred to as "none" within MUBen) and Temperature Scaling.
+For UQ, we'll evaluate both the Deterministic method (referred to as "none" within MUBen) and Temperature Scaling.
 While the procedures for other backbone models, UQ methods, or datasets are largely similar, you can explore specific variations by referring to API documentation.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>For a practical example of our setup, refer to the <a href="https://github.com/Yinghao-Li/MUBen/blob/main/demo/demo.ipynb">demo Jupyter Notebook</a> provided on GitHub.</p>
+</div>
 <h3 id="importing-packages">Importing packages</h3>
 <p>The first step is to import all the necessary packages from the MUBen source code that defines the datasets, backbone models, UQ methods, and trainers.</p>
 <pre><code class="language-python">import logging
@@ -329,58 +258,11 @@ det_metrics_df = pd.DataFrame({&quot;Deterministic&quot;: det_metrics, &quot;Tem
 print(det_metrics_df.T)
 </code></pre>
 <p>The result will be presented as a table the columns being metrics and rows being the UQ method.</p>
-<h2 id="model-training-with-cli">Model Training with CLI</h2>
-<p>To run each of the four backbone models with uncertainty estimation methods, you can check the <code>run_*.py</code> files in the root directory.
-Example shell scripts are provided in the <code>./scripts</code> folder as <code>.sh</code> files.
-For example, you can start running through</p>
-<pre><code class="language-bash">./scripts/run_dnn.sh &lt;CUDA_VISIBLE_DEVICES&gt;
-</code></pre>
-<p>Notice that we need to comment out the variables <code>train_on_&lt;dataset name&gt;</code> in the <code>.sh</code> files to skip training on the corresponding datasets.
-Setting their value to <code>false</code> <strong>does not work</strong>.</p>
-<p>Another way of specifying arguments is through the <code>.json</code> scripts, for example:</p>
-<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; CUDA_VISIBLE_DEVICES=0 python ./run/dnn.py ./scripts/config_dnn.json
-</code></pre>
-<p>This approach could be helpful for debugging the code through vscode.</p>
-<p>To get a detailed description of each argument, you can use <code>--help</code>:</p>
-<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./run/dnn.py --help
-</code></pre>
-<h3 id="logging-and-wandb">Logging and WandB</h3>
-<p>By default, this project uses local logging files (<code>*.log</code>) and <a href="https://wandb.ai/site">WandB</a> to track training status.</p>
-<p>The log files are stored as <code>./logs/&lt;dataset&gt;/&lt;model&gt;/&lt;uncertainty&gt;/&lt;running_time&gt;.log</code>.
-You can change the file path by specifying the <code>--log_path</code> argument, or disable log saving by setting <code>--log_path="disabled"</code>.</p>
-<p>To use WandB, you first need to register an account and sign in on your machine with <code>wandb login</code>.
-If you are running your code on a public device, you can instead use program-wise signing in by specifying the <code>--wandb_api_key</code> argument while running our code.
-You can find your API key in your browser here: https://wandb.ai/authorize.
-To disable WandB, use <code>--disable_wandb [true]</code>.
-By default, we use <code>MUBen-&lt;dataset&gt;</code> as WandB project name and <code>&lt;model&gt;-&lt;uncertainty&gt;</code> as the model name.
-You can change this behavior by specifying the <code>--wandb_project</code> and <code>--wandb_name</code> arguments.</p>
-<h3 id="data-loading">Data Loading</h3>
-<p>The progress will automatically create the necessary features (molecular descriptors) required by backbone models from the SMILES strings if they are loaded properly.
-The processed features are stored in the <code>&lt;bottom-level data folder&gt;/processed/</code> directory as <code>&lt;train/valid/test&gt;.pt</code> files by default, and will be automatically loaded the next time you apply the same backbone model on the same dataset.
-You can change this behavior with <code>--disable_dataset_saving</code> for disabling dataset saving or <code>--ignore_preprocessed_dataset</code> for not loading from the saved (processed) dataset.</p>
-<p>Constructing Morgan fingerprint, RDKit features or 3D conformations for Uni-Mol may take a while.
-You can accelerate this process by utilizing multiple threads <code>--num_preprocess_workers=n&gt;1</code> (default is 8).
-For 3D conformations, we directly take advantage of the results from Uni-Mol but still keep the choice of generating them by ourselves if the Uni-Mol data files are not found.</p>
-<h3 id="calculating-metrics">Calculating Metrics</h3>
-<p>During training, we only calculate metrics necessary for early stopping and simple prediction performance evaluation.
-To get other metrics, you need to use the <code>./assist/results_get_metrics.py</code> file.</p>
-<p>Specifically, you need to save the model predictions by <strong>not</strong> setting <code>--disable_dataset_saving</code>.
-The results are saved as <code>./&lt;result_folder&gt;/&lt;dataset_name&gt;/&lt;model_name&gt;/&lt;uncertainty_method&gt;/seed-&lt;seed&gt;/preds/&lt;test_idx&gt;.pt</code> files.
-When the training is finished, you can run the <code>./assist/results_get_metrics.py</code> file to generate all metrics for your model predictions.
-For example:</p>
-<pre><code class="language-bash">PYTHONPATH=&quot;.&quot; python ./assist/results_get_metrics.py ./scripts/config_metrics.json
-</code></pre>
-<p>Make sure the hyper-parameters in the configuration file are updated to your needs.</p>
-<p>The metrics will be saved in the <code>./&lt;result_folder&gt;/RESULTS/&lt;model_name&gt;-&lt;dataset_name&gt;.csv</code> files.
-~~Notice that these files already exist in the repo if you keep the default <code>--result_folder=./output</code> argument and you need to check whether it is updated to reveal your experiment results.~~</p>
-<h3 id="results">Results</h3>
-<p>We provided a more comprehensive copy of our experiment results <a href="https://github.com/Yinghao-Li/UncertaintyBenchmark/tree/main/output">here</a> that are presented in the tables in our paper's appendix.
-We hope it can ease some effort if you want to further analyze the behavior of our backbone models and uncertainty quantification methods. </p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href=".." class="btn btn-neutral float-left" title="About"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../train.cli/" class="btn btn-neutral float-left" title="Running Experiments"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../overview/" class="btn btn-neutral float-right" title="Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -404,7 +286,7 @@ We hope it can ease some effort if you want to further analyze the behavior of o
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../train.cli/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../overview/" style="color: #fcfcfc">Next &raquo;</a></span>
