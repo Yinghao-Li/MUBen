@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 10th, 2024
+# Modified: April 16th, 2024
 # ---------------------------------------
 # Description: 
 
@@ -414,7 +414,7 @@ class Arguments:
             self.init_inst_path = osp.join(self.data_dir, f"al-{self.n_init_instances}.json")
 
         # wandb arguments
-        self.apply_wandb = not self.disable_wandb and (self.wandb_api_key or os.getenv("WANDB_API_KEY"))
+        self.apply_wandb = not self.disable_wandb
         if not self.wandb_name:
             self.wandb_name = (
                 f"{self.model_name}{'' if self.feature_type == 'none' else f'-{self.feature_type}'}"
@@ -575,6 +575,9 @@ class Config(Arguments):
         Raises:
             AssertionError: If an incompatible configuration is detected that cannot be automatically resolved.
         """
+        if self.apply_wandb and not (self.wandb_api_key or os.getenv("WANDB_API_KEY")):
+            logger.warning("Weights & Biases API key is not provided! Disabling WandB.")
+            self.apply_wandb = False
 
         if self.model_name == "DNN" and self.feature_type == "none":
             logger.warning("No feature type specified for DNN model! Make sure this is intended!")
@@ -670,6 +673,14 @@ class Config(Arguments):
         logger.info(f"Configurations:\n{prettify_json(json.dumps(elements, indent=2), collapse_level=2)}")
 
         return self
+
+    def to_dict(self):
+        """Convert the configuration to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the configuration.
+        """
+        return asdict(self)
 
     def save(self, file_dir: str, file_name: str = "config"):
         """Save the current configuration to a JSON file.

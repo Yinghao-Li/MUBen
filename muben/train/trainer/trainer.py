@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: April 11th, 2024
+# Modified: April 16th, 2024
 # ---------------------------------------
 # Description:
 
@@ -110,11 +110,13 @@ class Trainer:
         # --- initialize wandb ---
         if config.apply_wandb and config.wandb_api_key:
             wandb.login(key=config.wandb_api_key)
+        elif config.apply_wandb:  # use default login if not specified
+            wandb.login()
 
         wandb.init(
             project=config.wandb_project,
             name=config.wandb_name,
-            config=config.__dict__,
+            config=config.to_dict(),
             mode="online" if config.apply_wandb else "disabled",
         )
 
@@ -1145,7 +1147,7 @@ class Trainer:
         valid_results = self.evaluate(self.valid_dataset)
 
         result_dict = {f"valid/{k}": v for k, v in valid_results.items()}
-        wandb.log(data=result_dict, step=self._status.eval_log_idx)
+        wandb.log(data=result_dict, step=self._status.train_log_idx)
 
         logger.info(f"[Valid step {self._status.eval_log_idx}] results:")
         self.log_results(valid_results)
