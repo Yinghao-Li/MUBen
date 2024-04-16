@@ -1,4 +1,20 @@
-.wy-nav-content {
+/* .wy-nav-content {
     max-width: 80% !important;
     margin: 0 auto;
+} */
+
+/* When the viewport is below 1200px wide */
+@media (max-width: 1200px) {
+    .wy-nav-content {
+        max-width: 100% !important;
+        margin: 0 auto;
+    }
+}
+
+/* When the viewport is more than 1200px wide */
+@media (min-width: 1201px) {
+    .wy-nav-content {
+        max-width: 960px !important; /* or any other fixed width you prefer */
+        margin: 0 auto;
+    }
 }
