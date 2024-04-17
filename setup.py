@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="muben",
-    version="0.0.1",
+    version="0.0.2",
     author="Yinghao Li",
     author_email="yinghaoli@gatech.edu",
     license="MIT",

@@ -1,13 +1,12 @@
 # MUBen: **M**olecular **U**ncertainty **Ben**mark
 Code associated with paper *MUBen: **Ben**chmarking the **U**ncertainty of **M**olecular Representation Models*.
 
-[![Documentation](https://img.shields.io/badge/%F0%9F%93%96%20Documentation-Link-blue)](https://yinghao-li.github.io/MUBen/)
+[![Documentation](https://img.shields.io/badge/%F0%9F%93%96%20Documentation-Link-purple)](https://yinghao-li.github.io/MUBen/)
 [![OpenReview](https://img.shields.io/badge/%F0%9F%94%97%20OpenReview-TMLR-darkred)](https://openreview.net/forum?id=qYceFeHgm4)
-[![arXiv](https://img.shields.io/badge/arXiv-2306.10060-b31b1b.svg)](https://arxiv.org/abs/2306.10060)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Yinghao-Li/MUBen/)
+[![arXiv](https://img.shields.io/badge/%F0%9F%94%97%20arXiv-2306.10060-b31b1b.svg)](https://arxiv.org/abs/2306.10060)
+[![Static Badge](https://img.shields.io/badge/Python-%E2%89%A53.9-blue)](https://www.python.org/)
 [![PyPI version](https://badge.fury.io/py/muben.svg)](https://badge.fury.io/py/muben)
 
-Please visit [📕 Documentation](https://yinghao-li.github.io/MUBen/) for the full documentation of this project, which contains more comprehensive API introductions and examples.
 
 ![](./figures/f1.summarization.png)
 
@@ -16,6 +15,9 @@ MUBen is a benchmark that aims to investigate the performance of uncertainty qua
 It implements 6 backbone models (4 pre-trained and 2 non-pre-trained), 8 UQ methods (8 compatible for classification and 6 for regression), and 14 datasets from [MoleculeNet](https://moleculenet.org/) (8 for classification and 6 for regression).
 We are actively expanding the benchmark to include more backbones, UQ methods, and datasets.
 This is an arduous task, and we welcome contribution or collaboration in any form.
+
+Please visit [![Documentation](https://img.shields.io/badge/%F0%9F%93%96%20Documentation-Link-purple)](https://yinghao-li.github.io/MUBen/)
+ for the full documentation of this project, which contains more comprehensive API introductions and examples.
 
 ## Backbones
 
