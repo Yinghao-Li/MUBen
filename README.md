@@ -17,7 +17,7 @@ We are actively expanding the benchmark to include more backbones, UQ methods, a
 This is an arduous task, and we welcome contribution or collaboration in any form.
 
 Please visit [![Documentation](https://img.shields.io/badge/%F0%9F%93%96%20Documentation-Link-purple)](https://yinghao-li.github.io/MUBen/)
- for the full documentation of this project, which contains more comprehensive API introductions and examples.
+ for a more comprehensive usage guidance.
 
 ## Backbones
 
