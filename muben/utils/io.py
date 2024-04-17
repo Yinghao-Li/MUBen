@@ -1,6 +1,6 @@
 """
 # Author: Yinghao Li
-# Modified: February 29th, 2024
+# Modified: April 17th, 2024
 # ---------------------------------------
 # Description: IO functions
 """
@@ -17,6 +17,7 @@ import logging
 import numpy as np
 from pathlib import Path
 from typing import Optional
+from rich.logging import RichHandler
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +54,50 @@ def set_log_path(args, time):
     return log_path
 
 
+# def set_logging(log_path: Optional[str] = None):
+#     """Sets up logging format and file handler.
+
+#     Args:
+#         log_path (Optional[str]): Path where to save the logging file. If None, no log file is saved.
+#     """
+#     stream_handler = logging.StreamHandler()
+#     stream_handler.setLevel(logging.INFO)
+
+#     if log_path and log_path != "disabled":
+#         log_path = op.abspath(log_path)
+#         if not op.isdir(op.split(log_path)[0]):
+#             os.makedirs(op.abspath(op.normpath(op.split(log_path)[0])))
+#         if op.isfile(log_path):
+#             os.remove(log_path)
+
+#         file_handler = logging.FileHandler(filename=log_path)
+#         file_handler.setLevel(logging.DEBUG)
+
+#         logging.basicConfig(
+#             format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+#             datefmt="%m/%d/%Y %H:%M:%S",
+#             level=0,
+#             handlers=[stream_handler, file_handler],
+#         )
+#     else:
+#         logging.basicConfig(
+#             format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+#             datefmt="%m/%d/%Y %H:%M:%S",
+#             level=logging.INFO,
+#             handlers=[stream_handler],
+#         )
+
+#     return None
+
+
 def set_logging(log_path: Optional[str] = None):
     """Sets up logging format and file handler.
 
     Args:
         log_path (Optional[str]): Path where to save the logging file. If None, no log file is saved.
     """
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO)
+    rh = RichHandler()
+    rh.setFormatter(logging.Formatter("%(message)s", datefmt="[%m/%d %X]"))
 
     if log_path and log_path != "disabled":
         log_path = op.abspath(log_path)
@@ -73,17 +110,17 @@ def set_logging(log_path: Optional[str] = None):
         file_handler.setLevel(logging.DEBUG)
 
         logging.basicConfig(
-            format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-            datefmt="%m/%d/%Y %H:%M:%S",
-            level=0,
-            handlers=[stream_handler, file_handler],
+            level="NOTSET",
+            format="%(asctime)s %(levelname)-8s %(message)-80s     @ %(pathname)-s:%(lineno)d",
+            datefmt="[%m/%d %X]",
+            handlers=[file_handler, rh],
         )
+
     else:
         logging.basicConfig(
-            format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-            datefmt="%m/%d/%Y %H:%M:%S",
-            level=logging.INFO,
-            handlers=[stream_handler],
+            datefmt="[%m/%d %X]",
+            level="NOTSET",
+            handlers=[rh],
         )
 
     return None
